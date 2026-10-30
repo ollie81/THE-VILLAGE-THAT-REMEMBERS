@@ -115,7 +115,7 @@ func _update_light() -> void:
 	var colors := _sample_keyframes(hour)
 	sun.light_color = colors[2]
 	if sun_dir.y > -0.02:
-		sun.light_energy = sun_strength * 1.25
+		sun.light_energy = sun_strength * 1.05
 		_set_shadows(GameSettings.shadows_enabled() and sun_strength > 0.05)
 	else:
 		sun.light_energy = moon_strength * 0.3
@@ -141,9 +141,9 @@ func _update_environment() -> void:
 	sky_material.set_shader_parameter("star_intensity", night_factor)
 
 	environment.ambient_light_color = colors[3]
-	environment.ambient_light_energy = lerpf(1.0, 0.55, night_factor)
+	environment.ambient_light_energy = lerpf(0.62, 0.5, night_factor)
 	environment.fog_light_color = colors[4]
-	environment.fog_density = lerpf(0.0055, 0.009, night_factor)
+	environment.fog_density = lerpf(0.003, 0.008, night_factor)
 
 	var glow := Materials.window_glow()
 	glow.emission_energy_multiplier = night_factor * 2.4 + smoothstep(16.5, 19.0, hour) * (1.0 - night_factor) * 0.4

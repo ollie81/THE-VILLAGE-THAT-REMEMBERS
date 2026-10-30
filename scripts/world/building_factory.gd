@@ -470,8 +470,8 @@ static func _fence_rail(m: MeshBuilder, world_origin: Vector3, from: Vector3, to
 static func _build_plaza(kit: Kit, root: Node3D) -> void:
 	var m := kit.mesh
 	var r := VillageLayout.PLAZA_RADIUS
-	m.add_cylinder_at(Vector3(0, -0.58, 0), r, r, 0.62, 24, Color(0.6, 0.58, 0.53))
-	m.add_cylinder_at(Vector3(0, -0.58, 0), r * 0.62, r * 0.62, 0.645, 18, Color(0.66, 0.62, 0.55))
+	m.add_cylinder_at(Vector3(0, -0.58, 0), r, r, 0.62, 24, Color(0.5, 0.48, 0.44))
+	m.add_cylinder_at(Vector3(0, -0.58, 0), r * 0.62, r * 0.62, 0.645, 18, Color(0.56, 0.52, 0.46))
 	# Paving stones dotted over the surface.
 	for i in 36:
 		var angle := m.rng.randf() * TAU

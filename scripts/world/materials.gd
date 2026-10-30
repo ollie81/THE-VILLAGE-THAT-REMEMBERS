@@ -15,7 +15,7 @@ static func vertex_color() -> StandardMaterial3D:
 		# Vertex colours are authored as sRGB Color values.
 		material.vertex_color_is_srgb = true
 		material.roughness = 0.9
-		material.metallic_specular = 0.25
+		material.metallic_specular = 0.08
 		_cache["vertex_color"] = material
 	return _cache["vertex_color"]
 

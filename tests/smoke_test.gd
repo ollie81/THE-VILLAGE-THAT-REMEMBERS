@@ -26,13 +26,13 @@ func _run() -> void:
 	# 1. World content
 	_check(_main.get_node_or_null("World/TerrainMesh") != null, "terrain mesh exists")
 	_check(_main.get_node_or_null("World/TerrainBody") != null, "terrain collision exists")
-	var village := _main.get_node_or_null("World/Village")
+	var village: Node = _main.get_node_or_null("World/Village")
 	_check(village != null and village.get_child_count() >= 13, "village buildings exist (%d nodes)" % (village.get_child_count() if village else 0))
 	for id in ["HouseMara", "HouseElias", "HouseNia", "HouseTomas", "HouseSera", "Storage", "Workshop", "Garden", "Farm", "Plaza"]:
 		_check(village != null and village.get_node_or_null(id) != null, "building %s exists" % id)
 	_check(_main.get_node_or_null("World/River/Water") != null, "river water exists")
 	_check(_main.get_node_or_null("World/River/Bridge") != null, "bridge exists")
-	var nature := _main.get_node_or_null("World/Nature")
+	var nature: Node = _main.get_node_or_null("World/Nature")
 	_check(nature != null and nature.get_child_count() > 10, "nature batches spawned")
 
 	# 2. Villagers
@@ -108,7 +108,16 @@ func _run() -> void:
 			asleep += 1
 	_check(asleep == 5, "everyone heads home at night (%d/5)" % asleep)
 
-	# 6. Villagers move during the day
+	# 6. Villagers come out and walk to work in the morning.
+	# Wait until everyone is actually indoors first (at most ~40 s of game).
+	for i in 2400:
+		var inside := 0
+		for villager in GameManager.villagers:
+			if villager.state == Villager.State.INSIDE:
+				inside += 1
+		if inside == 5:
+			break
+		await get_tree().physics_frame
 	WorldClock.set_time(9.0)
 	WorldClock.set_time_scale(0.0)
 	await _physics_frames(90)

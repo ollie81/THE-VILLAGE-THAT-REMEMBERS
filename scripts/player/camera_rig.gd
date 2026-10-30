@@ -161,7 +161,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Touch drags are handled by TouchControls; ignore their emulated mouse copies.
 		if motion.device == InputEvent.DEVICE_ID_EMULATION:
 			return
-		var orbit := _held_buttons.get(MOUSE_BUTTON_RIGHT, false) or _held_buttons.get(MOUSE_BUTTON_MIDDLE, false)
+		var orbit: bool = _held_buttons.get(MOUSE_BUTTON_RIGHT, false) or _held_buttons.get(MOUSE_BUTTON_MIDDLE, false)
 		if mode == GameManager.CameraMode.EXPLORATION:
 			if orbit:
 				InputRouter.add_look(motion.relative)

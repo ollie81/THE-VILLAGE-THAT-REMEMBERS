@@ -6,8 +6,17 @@ A 3D civilisation and life simulation for Android, built with Godot 4 and GDScri
 You arrive in a small village of five people who each have their own personality, daily
 routine and memory of you.
 
-**Current state: Milestone 1, the first playable village.** See [Status](#status) for what is
-done, and what has not been checked in the engine yet.
+**Current state: Milestone 1, the first playable village.** See [Status](#status) for what has been
+verified.
+
+| Morning | Village View |
+| --- | --- |
+| ![Exploring in the morning](docs/screenshots/explore_morning.png) | ![Management camera](docs/screenshots/village_view.png) |
+| **Night** | **Meeting a villager** |
+| ![The village at night](docs/screenshots/night.png) | ![Dialogue with Mara](docs/screenshots/dialogue.png) |
+
+*Screenshots are from Godot 4.3's OpenGL (Compatibility) fallback renderer on a CPU rasteriser. On
+phones the Mobile renderer is used, and lighting will look slightly different.*
 
 ---
 
@@ -186,23 +195,22 @@ tests/                     Headless smoke test
 
 Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
-### Not yet verified in the engine
+### Verified
 
-This milestone was written in an environment without Godot. The checks that **were** done:
+Tested with **Godot 4.3-stable** (official Linux build):
 
-- every `.gd` file parses (`gdtoolkit` 4.5 `gdparse`), and `gdlint` reports style-only findings (long lines)
-- a manual review for the GDScript type-inference errors that the parser cannot catch
-- scene and resource paths checked against the files on disk
-- layout geometry checked by hand: paths clear of buildings, bridge gap in the river walls, spots reachable
+- The headless smoke test passes **51/51 checks** (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
+- Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
+  a conversation.
 
-The game has **not** yet been opened in the Godot editor, run, profiled, or installed on an Android
-device. Expect a first-run pass to fix small issues such as an off-by-a-bit prop, a lighting value or
-any engine-reported script error. The first things to do are:
+### Not yet verified
 
-1. Open the project in Godot 4.3+ and check the *Output* and *Debugger* panels for errors.
-2. Run `godot --headless --path . res://tests/smoke_test.tscn`.
-3. Play through a full day at ×20 time speed.
-4. Export to a mid-range Android phone and check FPS with *Menu → Show FPS* on each quality preset.
+- The **Mobile (Vulkan) renderer**. The screenshots used the OpenGL fallback because this machine has no GPU.
+- **Performance and touch controls on a real Android device**, and the APK export itself.
+- Two engine messages, `Parameter "m" is null` (`mesh_get_surface_count`), appear only in headless mode,
+  when the terrain and river meshes are freed at shutdown. They come from the dummy renderer and don't
+  affect gameplay or test results.
 
 ### Known limitations
 

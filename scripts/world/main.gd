@@ -9,8 +9,8 @@ const VILLAGER_DATA_PATHS: Array[String] = [
 	"res://data/villagers/tomas.tres",
 	"res://data/villagers/sera.tres",
 ]
-## South of the meeting circle, on the garden path, facing north.
-const PLAYER_START := Vector3(0.0, 0.0, 10.5)
+## East of the meeting circle on the bridge path, facing west toward the homes.
+const PLAYER_START := Vector3(14.0, 0.0, 0.0)
 
 var navigation: VillageNavigation
 var day_night: DayNightCycle
@@ -48,7 +48,7 @@ func _spawn_player() -> void:
 	player.position = player.spawn_point
 	add_child(player)
 	# Start facing the meeting circle.
-	player.model.rotation.y = PI
+	player.model.rotation.y = -PI * 0.5
 
 	camera_rig = CameraRig.new()
 	camera_rig.target = player
