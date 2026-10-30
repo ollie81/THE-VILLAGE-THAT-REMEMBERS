@@ -12,7 +12,7 @@ const B := HumanoidRig.Bone
 const LEATHER := Color(0.36, 0.23, 0.13)
 ## Stylised proportions: heads slightly larger than life read better from
 ## the high management camera and give faces room for expression.
-const HEAD_SCALE := 1.12
+const HEAD_SCALE := 1.15
 
 ## Head cross-sections relative to the Head joint: [y, half_width, front, back, z_offset].
 const HEAD_PROFILE := [
@@ -23,8 +23,9 @@ const HEAD_PROFILE := [
 	[0.12, 0.095, 0.095, 0.104, 0.0],
 	[0.16, 0.094, 0.09, 0.108, -0.005],
 	[0.2, 0.086, 0.078, 0.1, -0.008],
-	[0.235, 0.062, 0.052, 0.076, -0.012],
-	[0.258, 0.022, 0.016, 0.026, -0.014],
+	[0.235, 0.067, 0.057, 0.081, -0.012],
+	[0.251, 0.045, 0.037, 0.054, -0.013],
+	[0.262, 0.014, 0.011, 0.016, -0.014],
 ]
 
 var look: CharacterAppearance
@@ -36,6 +37,19 @@ var _shirt: Color
 var _pants: Color
 var _hair: Color
 var _torso_rows: Array = []
+## Facial controls for the head currently being built (see FaceExpressions).
+var _controls: Dictionary = {}
+
+## Accessories that belong to the head mesh (and so follow expressions).
+const HEAD_ACCESSORIES := ["beard", "long_beard", "glasses", "straw_hat", "wide_hat", "headband", "headwrap", "flower", "earrings"]
+## Rows of the sculpted head grid, in unscaled profile units above the head
+## joint. Dense around the eyes, nose and mouth where detail matters.
+const SKIN_ROWS := [-0.042, -0.033, -0.022, -0.011, 0.0, 0.012, 0.023, 0.032, 0.039, 0.045, 0.051, 0.058,
+	0.066, 0.075, 0.085, 0.095, 0.104, 0.112, 0.12, 0.128, 0.137, 0.146, 0.156, 0.168, 0.182, 0.198, 0.215,
+	0.232, 0.246, 0.258]
+const SKIN_SEGMENTS := 32
+const MOUTH_Y := 0.044
+const EYE_Y := 0.116
 
 
 func _init(appearance: CharacterAppearance, humanoid_rig: HumanoidRig) -> void:
@@ -50,18 +64,60 @@ func _init(appearance: CharacterAppearance, humanoid_rig: HumanoidRig) -> void:
 
 func build() -> ArrayMesh:
 	_build_torso()
-	_build_neck()
-	for side in [1.0, -1.0]:
+	for side: float in [1.0, -1.0]:
 		_build_arm(side)
 		_build_hand(side)
 		_build_leg(side)
 		_build_shoe(side)
-	_build_head()
-	_build_face()
-	_build_hair()
 	_build_clothing_details()
-	_build_accessories()
+	_build_all_accessories(false)
 	return t.build(Materials.vertex_color())
+
+
+## The head as its own skinned mesh (same skeleton) with one blend shape per
+## facial expression, plus "blink" and "talk".
+func build_head() -> ArrayMesh:
+	var body_tool := t
+	var base := _build_head_tool(FaceExpressions.resting(look), PackedByteArray(), null)
+	var shapes: Array = []
+	for shape in FaceExpressions.SHAPES:
+		shapes.append(_build_head_tool(FaceExpressions.controls_for(shape, look), base.flip_log, base))
+	t = body_tool
+	head_triangle_count = base.get_triangle_count()
+	return base.build_with_shapes(Materials.skin(), FaceExpressions.SHAPES, shapes)
+
+
+var head_triangle_count: int = 0
+
+
+func _build_head_tool(controls: Dictionary, replay: PackedByteArray, base: SkinnedMeshTool) -> SkinnedMeshTool:
+	var tool := SkinnedMeshTool.new(hash(look.hair_style) ^ hash(look.skin_color) ^ 7919)
+	tool.color_jitter = 0.0
+	tool.replay_flips(replay)
+	tool.static_source = base
+	tool.deformer = _face_deform
+	t = tool
+	_controls = controls
+	# Parts that never change with expression are built once (static).
+	if t.begin_static():
+		_build_neck()
+		_build_ears()
+		_build_hair()
+	t.end_static()
+	# Same random sequence for the expression-dependent parts in every build.
+	t.rng.seed = hash(look.skin_color) ^ 104729
+	_build_head_skin()
+	_build_eyes()
+	_build_brows()
+	_build_nose()
+	_build_mouth()
+	_build_skin_details()
+	if look.has_accessory("beard") or look.has_accessory("long_beard"):
+		_build_beard(look.has_accessory("long_beard"))
+	if t.begin_static():
+		_build_all_accessories(true)
+	t.end_static()
+	return tool
 
 
 func get_triangle_count() -> int:
@@ -86,6 +142,12 @@ func _head_origin() -> Vector3:
 ## unscaled profile units). Returns [y, half_width, front, back, z] in metres,
 ## with HEAD_SCALE applied.
 func _head_section(y: float) -> Array:
+	var row := _profile_raw(y)
+	return [y * HEAD_SCALE, row[1] * HEAD_SCALE * look.face_width, row[2] * HEAD_SCALE, row[3] * HEAD_SCALE, row[4] * HEAD_SCALE]
+
+
+## Unscaled profile row at height y: [y, half_width, front, back, z].
+func _profile_raw(y: float) -> Array:
 	var row: Array = HEAD_PROFILE[HEAD_PROFILE.size() - 1]
 	var first: Array = HEAD_PROFILE[0]
 	if y <= first[0]:
@@ -98,7 +160,7 @@ func _head_section(y: float) -> Array:
 				var k: float = (y - a[0]) / (b[0] - a[0])
 				row = [y, lerpf(a[1], b[1], k), lerpf(a[2], b[2], k), lerpf(a[3], b[3], k), lerpf(a[4], b[4], k)]
 				break
-	return [y * HEAD_SCALE, row[1] * HEAD_SCALE, row[2] * HEAD_SCALE, row[3] * HEAD_SCALE, row[4] * HEAD_SCALE]
+	return row
 
 
 ## Offset from the head joint, given in unscaled profile units.
@@ -179,7 +241,7 @@ func _build_torso() -> void:
 
 	# Shoulder caps: a short sleeve-coloured bridge from the collarbone into
 	# the top of each arm, so the arms grow out of the body.
-	for side in [1.0, -1.0]:
+	for side: float in [1.0, -1.0]:
 		var upper := HumanoidRig.sided(B.LEFT_UPPER_ARM, side)
 		var shoulder := rig.joint(upper)
 		t.loft([
@@ -344,56 +406,379 @@ func _build_shoe(side: float) -> void:
 	t.box(Transform3D(Basis.IDENTITY, Vector3(x + side * 0.003, 0.006, ankle.z + 0.045)), Vector3(0.084, 0.012, 0.21), shoe.darkened(0.45), bind)
 
 
-# --- Head and face --------------------------------------------------------------------
+# --- Face ---------------------------------------------------------------------------
+# Everything below works in "profile units": metres relative to the head joint
+# before HEAD_SCALE is applied. _hp() converts a profile-space point to model
+# space.
 
-func _build_head() -> void:
-	var rings: Array = []
-	for row in HEAD_PROFILE:
-		var s := _head_section(row[0])
-		rings.append(SkinnedMeshTool.ring(_head_origin() + Vector3(0, s[0], s[4]), s[1], s[2], s[3], _bind(B.HEAD), _skin))
-	t.loft(rings, 14)
-	# Ears.
-	for side in [1.0, -1.0]:
-		var ear := _head_surface(0.105, PI if side > 0 else 0.0, -0.004)
-		var ear_basis := Basis(Vector3.UP, side * 0.25).scaled(Vector3(0.014, 0.03, 0.021))
-		t.ellipsoid(Transform3D(ear_basis, ear), _skin.darkened(0.04), _bind(B.HEAD), 7, 4)
+func _hp(local: Vector3) -> Vector3:
+	return _head_origin() + local * HEAD_SCALE
 
 
-func _build_face() -> void:
+func _c(control: String) -> float:
+	return float(_controls.get(control, 0.0))
+
+
+static func _gauss(dx: float, dy: float, radius: float) -> float:
+	return exp(-(dx * dx + dy * dy) / (radius * radius))
+
+
+## Head cross-section with this character's face proportions: [rx, front, back, z].
+func _face_section(y: float) -> Array:
+	var row := _profile_raw(y)
+	var rx: float = row[1] * look.face_width * lerpf(look.jaw_width, 1.0, smoothstep(0.0, 0.085, y))
+	var front: float = row[2]
+	if y < 0.02:
+		front += (look.chin - 1.0) * 0.012 * (1.0 - smoothstep(-0.04, 0.02, y))
+	return [rx, front, row[3], row[4]]
+
+
+## Point on the sculpted skin (profile units). a = 0 right side, PI/2 front.
+func _skin_local(y: float, a: float, sculpt: bool = true) -> Vector3:
+	var sec := _face_section(y)
+	var f := sin(a)
+	var y_out := y
+	if y < 0.0:
+		y_out -= (look.chin - 1.0) * 0.02 * smoothstep(0.0, -0.042, y)
+	var p := Vector3(-cos(a) * float(sec[0]), y_out, float(sec[3]) + f * float(sec[1] if f > 0.0 else sec[2]))
+	if sculpt:
+		p += _sculpt(p, f)
+	return p
+
+
+## Anatomy layered over the base head shape: brow ridge, eye sockets,
+## cheekbones, nose bridge, muzzle, chin.
+func _sculpt(p: Vector3, facing: float) -> Vector3:
+	var front := smoothstep(0.15, 0.7, facing)
+	if front <= 0.0:
+		return Vector3.ZERO
+	var d := Vector3.ZERO
+	var es := 0.0375 * look.eye_spacing
+	for s: float in [1.0, -1.0]:
+		d.z -= 0.011 * _gauss(p.x - s * es, (p.y - EYE_Y) * 1.15, 0.024) * front
+		var cheek := _gauss(p.x - s * 0.058, p.y - 0.086, 0.024) * front * (0.4 + look.cheekbones)
+		d += Vector3(s * 0.004, 0.0, 0.004) * cheek
+		d.z -= 0.003 * look.wrinkles * _gauss(p.x - s * 0.055, p.y - 0.045, 0.02) * front
+	d.z += 0.0045 * (0.4 + look.brow_ridge) * _gauss(p.x * 0.6, p.y - 0.15, 0.022) * front
+	d.z += 0.005 * _gauss(p.x, p.y - 0.12, 0.012) * front
+	d.z += 0.006 * _gauss(p.x * 0.8, p.y - 0.047, 0.03) * front
+	d.z -= 0.0025 * _gauss(p.x * 0.5, p.y - 0.024, 0.01) * front
+	d.z += 0.006 * look.chin * _gauss(p.x * 0.9, p.y + 0.012, 0.018) * front
+	return d
+
+
+## Skin point in front of the face at (x, y), pushed out by `grow`.
+func _skin_xy(x: float, y: float, grow: float = 0.0) -> Vector3:
+	var sec := _face_section(y)
+	var a := acos(clampf(-x / float(sec[0]), -0.999, 0.999))
+	var p := _skin_local(y, a)
+	var outward := (p - Vector3(0, y, float(sec[3]))).normalized()
+	return p + outward * grow
+
+
+## Natural skin colour variation: warm cheeks, nose and chin, soft shadow
+## around the eyes, a lighter forehead.
+func _skin_tint(p: Vector3, facing: float) -> Color:
+	var front := smoothstep(0.1, 0.6, facing)
+	var es := 0.0375 * look.eye_spacing
+	var blush := 0.12 * _gauss(p.x, p.y - 0.085, 0.016) + 0.06 * _gauss(p.x, p.y, 0.025)
+	var shade := 0.0
+	for s: float in [1.0, -1.0]:
+		blush += 0.16 * _gauss(p.x - s * 0.052, p.y - 0.074, 0.026)
+		shade += 0.08 * _gauss(p.x - s * es, p.y - 0.1, 0.014)
+		shade += 0.05 * _gauss(p.x - s * es * 1.05, p.y - 0.128, 0.012)
+	var light := 0.035 * _gauss(p.x * 0.5, p.y - 0.18, 0.03)
+	var warm := _skin.lerp(Color(0.86, 0.38, 0.34), 0.55)
+	return _skin.lerp(warm, blush * front).darkened(shade * front).lightened(light * front)
+
+
+func _face_deform(p: Vector3) -> Vector3:
+	var q := (p - _head_origin()) / HEAD_SCALE
+	var front := smoothstep(-0.03, 0.05, q.z)
+	if front <= 0.0:
+		return p
+	var smile := _c("smile")
+	var d := Vector3.ZERO
+	var open := _c("open")
+	if open > 0.0:
+		var jaw := smoothstep(MOUTH_Y + 0.002, MOUTH_Y - 0.016, q.y) * front
+		d.y -= 0.022 * open * jaw
+		d.z -= 0.003 * open * jaw
+	var mw := 0.024 * look.mouth_width
+	for s: float in [1.0, -1.0]:
+		var corner := _gauss(q.x - s * mw, q.y - MOUTH_Y, 0.017) * front
+		var lift := 0.011 * smile - 0.01 * _c("frown") + (0.01 * _c("smirk") if s > 0.0 else 0.0)
+		d += Vector3(s * (0.003 * smile - 0.006 * _c("round")), lift, -0.002 * smile) * corner
+		var cheek := _gauss(q.x - s * 0.05, q.y - 0.074, 0.022) * front
+		var raise := smile + 0.5 * _c("squint") + (0.5 * _c("smirk") if s > 0.0 else 0.0)
+		d += Vector3(s * 0.0012, 0.0035, 0.0028) * cheek * raise
+	var band := _gauss(0.0, q.y - 0.15, 0.022) * front * (1.0 - smoothstep(0.06, 0.1, absf(q.x)))
+	d.y += 0.004 * _c("brow_up") * band
+	var inner := _gauss(absf(q.x) - 0.018, q.y - 0.142, 0.016) * front
+	d.y += inner * (0.004 * _c("brow_sad") - 0.0045 * _c("brow_down"))
+	d.z += inner * 0.0015 * _c("brow_down")
+	return p + d * HEAD_SCALE
+
+
+func _build_head_skin() -> void:
 	var head := _bind(B.HEAD)
-	var white := Color(0.95, 0.94, 0.9)
-	var lip := _skin.darkened(0.22).lerp(Color(0.72, 0.32, 0.3), 0.3)
-	var brow := _hair.darkened(0.15) if look.hair_style != "balding" else _hair.darkened(0.35)
-	for side in [1.0, -1.0]:
-		var a: float = PI * 0.5 + side * 0.42
-		var eye := _head_surface(0.115, a, -0.006)
-		var outward := (eye - _head_point(Vector3(0, 0.115, 0))).normalized()
-		var eye_basis := Basis.looking_at(-outward, Vector3.UP)
-		t.ellipsoid(Transform3D(eye_basis.scaled(Vector3(0.019, 0.013, 0.008)), eye), white, head, 8, 4)
-		t.ellipsoid(Transform3D(eye_basis.scaled(Vector3(0.009, 0.0105, 0.006)), eye + outward * 0.006), look.eye_color, head, 7, 4)
-		t.ellipsoid(Transform3D(eye_basis.scaled(Vector3(0.004, 0.0045, 0.003)), eye + outward * 0.0105 + Vector3(0, 0.002, 0)), Color(0.05, 0.04, 0.04), head, 6, 3)
-		# Upper eyelid and brow.
-		var lid := _head_surface(0.127, a, 0.001)
-		t.ellipsoid(Transform3D(eye_basis.scaled(Vector3(0.022, 0.006, 0.008)), lid), _skin.darkened(0.12), head, 7, 3)
-		var brow_pos := _head_surface(0.148, a + side * 0.04, 0.002)
-		var brow_basis := eye_basis * Basis(Vector3.BACK, -side * 0.12)
-		t.ellipsoid(Transform3D(brow_basis.scaled(Vector3(0.026, 0.0065, 0.008)), brow_pos), brow, head, 7, 3)
-		# A touch of warmth on the cheeks.
-		var cheek := _head_surface(0.07, PI * 0.5 + side * 0.62, -0.003)
-		t.ellipsoid(Transform3D(eye_basis.scaled(Vector3(0.02, 0.012, 0.004)), cheek), _skin.lerp(Color(0.9, 0.45, 0.42), 0.12), head, 7, 3)
-	# Nose.
-	var nose_root := _head_surface(0.11, PI * 0.5, -0.004)
-	var nose_tip := _head_surface(0.082, PI * 0.5, 0.014)
+	var start := t.vertex_count()
+	var grid: Array = []
+	var tints: Array = []
+	for y in SKIN_ROWS:
+		var points: Array[Vector3] = []
+		var colors: Array[Color] = []
+		for k in SKIN_SEGMENTS:
+			var a := TAU * float(k) / SKIN_SEGMENTS
+			var local := _skin_local(y, a)
+			points.append(_face_deform(_hp(local)))
+			colors.append(_skin_tint(local, sin(a)))
+		grid.append(points)
+		tints.append(colors)
+	for i in SKIN_ROWS.size() - 1:
+		var y_mid: float = (SKIN_ROWS[i] + SKIN_ROWS[i + 1]) * 0.5
+		var center := _hp(Vector3(0, y_mid, float(_face_section(y_mid)[3])))
+		var lower: Array[Vector3] = grid[i]
+		var upper: Array[Vector3] = grid[i + 1]
+		var cl: Array[Color] = tints[i]
+		var cu: Array[Color] = tints[i + 1]
+		for k in SKIN_SEGMENTS:
+			var k1 := (k + 1) % SKIN_SEGMENTS
+			t.triangle_colors(lower[k], lower[k1], upper[k1], cl[k], cl[k1], cu[k1], center, head, head, head)
+			t.triangle_colors(lower[k], upper[k1], upper[k], cl[k], cu[k1], cu[k], center, head, head, head)
+	# Close the chin and the crown.
+	var first: Array[Vector3] = grid[0]
+	var first_c: Array[Color] = tints[0]
+	var chin := _face_deform(_hp(Vector3(0, float(SKIN_ROWS[0]) - 0.008, float(_face_section(-0.04)[3]) + 0.01)))
+	var last: Array[Vector3] = grid[SKIN_ROWS.size() - 1]
+	var last_c: Array[Color] = tints[SKIN_ROWS.size() - 1]
+	var crown := _hp(Vector3(0, 0.265, -0.014))
+	for k in SKIN_SEGMENTS:
+		var k1 := (k + 1) % SKIN_SEGMENTS
+		t.triangle_colors(chin, first[k], first[k1], _skin, first_c[k], first_c[k1], chin + Vector3(0, 0.02, 0), head, head, head)
+		t.triangle_colors(crown, last[k], last[k1], _skin, last_c[k], last_c[k1], crown - Vector3(0, 0.02, 0), head, head, head)
+	t.smooth_from(start)
+
+
+func _build_ears() -> void:
+	var head := _bind(B.HEAD)
+	var warm := _skin.lerp(Color(0.86, 0.38, 0.34), 0.08)
+	for s: float in [1.0, -1.0]:
+		var sec := _face_section(0.105)
+		var c := Vector3(s * (float(sec[0]) - 0.003), 0.103, float(sec[3]) - 0.012)
+		var turn := Basis(Vector3.UP, s * 0.38)
+		t.ellipsoid(Transform3D((turn * Basis.from_scale(Vector3(0.0075, 0.03, 0.019))).scaled(Vector3.ONE * HEAD_SCALE), _hp(c)), warm, head, 10, 6)
+		t.ellipsoid(Transform3D((turn * Basis.from_scale(Vector3(0.0035, 0.017, 0.011))).scaled(Vector3.ONE * HEAD_SCALE),
+			_hp(c + Vector3(s * 0.0045, -0.002, 0.002))), _skin.darkened(0.22), head, 8, 4)
+		t.ellipsoid(Transform3D((turn * Basis.from_scale(Vector3(0.0055, 0.0075, 0.0065))).scaled(Vector3.ONE * HEAD_SCALE),
+			_hp(c + Vector3(0, -0.025, 0.004))), warm, head, 7, 4)
+
+
+## Eye placement in profile units: centre, radius and forward direction.
+func _eye(s: float) -> Dictionary:
+	var x := 0.0375 * look.eye_spacing * s
+	var r := 0.0128 * look.eye_size
+	var sec := _face_section(EYE_Y)
+	var a := acos(clampf(-x / float(sec[0]), -0.999, 0.999))
+	var surface := _skin_local(EYE_Y, a, false)
+	var forward := Vector3(s * 0.12, 0.0, 1.0).normalized()
+	return {"c": Vector3(x, EYE_Y, surface.z - r * 0.72), "r": r, "fwd": forward}
+
+
+func _build_eyes() -> void:
+	var head := _bind(B.HEAD)
+	var lid_skin := _skin.darkened(0.05)
+	var lash := Color(0.07, 0.05, 0.04).lerp(_hair.darkened(0.5), 0.3)
+	for s: float in [1.0, -1.0]:
+		var e := _eye(s)
+		var c := _hp(e["c"])
+		var r: float = float(e["r"]) * HEAD_SCALE
+		var fwd: Vector3 = e["fwd"]
+		var x_axis := Vector3.UP.cross(fwd).normalized()
+		var y_axis := fwd.cross(x_axis).normalized()
+		var basis := Basis(x_axis, y_axis, fwd)
+		# Eyeball, iris (darker rim), pupil and a catchlight.
+		t.ellipsoid(Transform3D(basis.scaled(Vector3.ONE * r), c), Color(0.95, 0.93, 0.89), head, 14, 9)
+		var iris := look.eye_color
+		var rings: Array = []
+		for step in [[0.64, iris.darkened(0.6)], [0.57, iris.darkened(0.1)], [0.42, iris.lightened(0.22)], [0.27, Color(0.03, 0.03, 0.03)], [0.0, Color(0.03, 0.03, 0.03)]]:
+			var psi: float = step[0]
+			var radius := r * sin(psi)
+			rings.append(SkinnedMeshTool.ring(c + fwd * r * (cos(psi) + 0.03), radius, radius, radius, head, step[1]))
+		t.loft(rings, 14, y_axis, false, true)
+		t.ellipsoid_at(c + fwd * r * 1.06 + y_axis * r * 0.3 - x_axis * r * 0.25 * s, Vector3.ONE * r * 0.12, Color(1, 1, 1), head, 6, 4)
+		t.ellipsoid_at(c - x_axis * r * 0.92 * s - y_axis * r * 0.05 + fwd * r * 0.25, Vector3(r * 0.2, r * 0.15, r * 0.15), Color(0.86, 0.55, 0.52), head, 6, 4)
+		# Eyelids: caps around the eyeball whose opening follows the expression.
+		var tilt := s * (0.5 * look.eye_tilt + 0.32 * _c("brow_down") - 0.28 * _c("brow_sad"))
+		var lid_basis := Basis(fwd, tilt) * basis
+		var upper := clampf(0.98 - 0.38 * _c("wide") + 0.32 * _c("squint") + 0.18 * _c("brow_sad") + 0.12 * _c("brow_down"), 0.5, 2.0)
+		upper = lerpf(upper, 2.24, _c("blink"))
+		var lower := clampf(0.72 + 0.4 * _c("squint") + 0.15 * _c("smile") - 0.15 * _c("wide"), 0.4, 1.3)
+		lower = lerpf(lower, 0.98, _c("blink"))
+		_lid(c, lid_basis, r, upper, true, lid_skin, lash)
+		_lid(c, lid_basis, r, lower, false, lid_skin, _skin.darkened(0.2))
+
+
+## One eyelid: a cap around the eyeball from its pole down to `extent`
+## radians, with a darker rolled edge (the lash line).
+func _lid(c: Vector3, basis: Basis, r: float, extent: float, upper: bool, skin: Color, edge: Color) -> void:
+	var head := _bind(B.HEAD)
+	var start := t.vertex_count()
+	var pole := basis.y if upper else -basis.y
+	var ax := basis.x
+	var az := basis.z
+	var radius := r * (1.1 if upper else 1.07)
+	var lash_width := (0.06 + 0.1 * look.lash_weight) if upper else 0.05
+	var rows := [
+		[0.0, radius, skin], [extent * 0.4, radius, skin], [extent * 0.72, radius * 1.01, skin.darkened(0.06 if upper else 0.0)],
+		[extent - lash_width, radius * 1.02, edge], [extent - 0.02, radius * 1.07, edge], [extent, radius * 1.0, edge],
+	]
+	var segments := 16
+	var grid: Array = []
+	for row in rows:
+		var phi: float = row[0]
+		var rr: float = row[1]
+		var points: Array[Vector3] = []
+		for k in segments:
+			var theta := TAU * float(k) / segments
+			points.append(c + (pole * cos(phi) + (ax * cos(theta) + az * sin(theta)) * sin(phi)) * rr)
+		grid.append(points)
+	for i in rows.size() - 1:
+		var a: Array[Vector3] = grid[i]
+		var b: Array[Vector3] = grid[i + 1]
+		var color: Color = rows[i + 1][2]
+		for k in segments:
+			var k1 := (k + 1) % segments
+			t.triangle(a[k], a[k1], b[k1], color, c, head, head, head)
+			t.triangle(a[k], b[k1], b[k], color, c, head, head, head)
+	t.smooth_from(start)
+
+
+func _build_brows() -> void:
+	var head := _bind(B.HEAD)
+	var color := look.brow_color if look.brow_color.a > 0.0 else _hair.darkened(0.15)
+	var up := 0.012 * _c("brow_up")
+	var sad := _c("brow_sad")
+	var angry := _c("brow_down")
+	for s: float in [1.0, -1.0]:
+		var inner := Vector2(s * (0.015 - 0.005 * angry), 0.146 + up + 0.012 * sad - 0.011 * angry)
+		var peak := Vector2(s * 0.038, 0.153 + 0.006 * look.brow_arch + up + 0.005 * sad - 0.003 * angry)
+		var outer := Vector2(s * 0.062, 0.144 + up * 0.8 - 0.005 * sad + 0.004 * angry)
+		var rings: Array = []
+		var samples := 6
+		for i in samples:
+			var k := float(i) / (samples - 1)
+			var q := inner.lerp(peak, k).lerp(peak.lerp(outer, k), k)
+			var thick := lerpf(0.0062, 0.0026, pow(k, 1.3)) * look.brow_thickness
+			var p := _hp(_skin_xy(q.x, q.y, 0.0022))
+			rings.append(SkinnedMeshTool.ring(p, thick * HEAD_SCALE, 0.0024 * HEAD_SCALE, 0.0016 * HEAD_SCALE, head, color))
+		t.loft(rings, 6, Vector3.BACK)
+
+
+func _build_nose() -> void:
+	var head := _bind(B.HEAD)
+	var length := look.nose_length
+	var width := look.nose_width
+	var lift := 0.002 * _c("smile")
+	var root := _skin_xy(0.0, 0.122)
+	var tip := _skin_xy(0.0, 0.122 - 0.04 * length) + Vector3(0, 0.003 * look.nose_upturn + lift, 0.019 * length)
+	var bridge := root.lerp(tip, 0.45) + Vector3(0, 0, 0.003)
 	t.loft([
-		SkinnedMeshTool.ring(nose_root, 0.008, 0.005, 0.005, head, _skin),
-		SkinnedMeshTool.ring(nose_root.lerp(nose_tip, 0.6), 0.012, 0.01, 0.008, head, _skin),
-		SkinnedMeshTool.ring(nose_tip, 0.016, 0.011, 0.01, head, _skin),
-		SkinnedMeshTool.ring(nose_tip + Vector3(0, -0.009, -0.01), 0.012, 0.007, 0.007, head, _skin.darkened(0.04)),
-	], 7, Vector3.BACK)
-	# Lips.
-	var mouth := _head_surface(0.043, PI * 0.5, 0.0)
-	t.ellipsoid(Transform3D(Basis.from_scale(Vector3(0.026, 0.0065, 0.008)), mouth + Vector3(0, 0.004, 0)), lip, head, 8, 3)
-	t.ellipsoid(Transform3D(Basis.from_scale(Vector3(0.022, 0.0075, 0.008)), mouth - Vector3(0, 0.006, 0.001)), lip.lightened(0.06), head, 8, 3)
+		SkinnedMeshTool.ring(_hp(root), 0.0055 * width * HEAD_SCALE, 0.003 * HEAD_SCALE, 0.004 * HEAD_SCALE, head, _skin),
+		SkinnedMeshTool.ring(_hp(bridge), 0.0068 * width * HEAD_SCALE, 0.0045 * HEAD_SCALE, 0.005 * HEAD_SCALE, head, _skin),
+		SkinnedMeshTool.ring(_hp(root.lerp(tip, 0.82)), 0.0095 * width * HEAD_SCALE, 0.0065 * HEAD_SCALE, 0.007 * HEAD_SCALE, head, _skin),
+		SkinnedMeshTool.ring(_hp(tip), 0.006 * width * HEAD_SCALE, 0.004 * HEAD_SCALE, 0.004 * HEAD_SCALE, head, _skin),
+	], 9, Vector3.BACK)
+	var tip_color := _skin.lerp(Color(0.86, 0.38, 0.34), 0.1)
+	t.ellipsoid_at(_hp(tip + Vector3(0, -0.002, -0.001)), Vector3(0.012 * width, 0.0105, 0.0105) * HEAD_SCALE, tip_color, head, 10, 6)
+	var flare := 1.0 + 0.15 * _c("brow_down") + 0.1 * _c("smile")
+	for s: float in [1.0, -1.0]:
+		t.ellipsoid_at(_hp(tip + Vector3(s * 0.0112 * width * flare, -0.004 + lift, -0.008)), Vector3(0.0075, 0.0068, 0.0085) * HEAD_SCALE, tip_color.darkened(0.04), head, 8, 5)
+		t.ellipsoid_at(_hp(tip + Vector3(s * 0.0062 * width, -0.0098, -0.004)), Vector3(0.0042, 0.0018, 0.0032) * HEAD_SCALE, _skin.darkened(0.55), head, 6, 3)
+
+
+func _build_mouth() -> void:
+	var head := _bind(B.HEAD)
+	var smile := _c("smile")
+	var open := _c("open")
+	var round := _c("round")
+	var full := look.lip_fullness
+	var half := 0.024 * look.mouth_width * (1.0 + 0.12 * smile - 0.28 * round)
+	var corner_left := MOUTH_Y + 0.011 * smile - 0.01 * _c("frown") + 0.01 * _c("smirk")
+	var corner_right := MOUTH_Y + 0.011 * smile - 0.01 * _c("frown")
+	var upper_y := MOUTH_Y + 0.0025 + 0.003 * open + 0.001 * round
+	var lower_y := MOUTH_Y - 0.0015 - 0.022 * open - 0.002 * round
+	var lip := _skin.darkened(0.12).lerp(Color(0.72, 0.3, 0.3), 0.32)
+	# Mouth interior and teeth sit just over the skin, hidden until the lips part.
+	var mouth_z := _skin_xy(0.0, MOUTH_Y).z
+	t.ellipsoid_at(_hp(Vector3(0, (upper_y + lower_y) * 0.5, mouth_z + 0.0012)), Vector3(half * 0.92, 0.002 + 0.5 * (upper_y - lower_y), 0.004) * HEAD_SCALE,
+		Color(0.24, 0.07, 0.07), head, 12, 5)
+	t.ellipsoid_at(_hp(Vector3(0, upper_y - 0.0016, mouth_z + 0.002)), Vector3(half * 0.7, 0.0028, 0.003) * HEAD_SCALE, Color(0.95, 0.94, 0.88), head, 10, 4)
+	t.ellipsoid_at(_hp(Vector3(0, lower_y + 0.0022, mouth_z + 0.0016)), Vector3(half * 0.6, 0.0022, 0.0028) * HEAD_SCALE, Color(0.93, 0.92, 0.86), head, 10, 4)
+	for upper: bool in [true, false]:
+		var rings: Array = []
+		var samples := 9
+		for i in samples:
+			var k := float(i) / (samples - 1)
+			var x := lerpf(-half, half, k)
+			var center_weight := pow(maxf(1.0 - pow(2.0 * k - 1.0, 2.0), 0.0), 0.75)
+			var corner_y := lerpf(corner_right, corner_left, k)
+			var line_y := lerpf(corner_y, upper_y if upper else lower_y, center_weight)
+			var thick := 0.0012 + (0.0045 if upper else 0.0055) * full * center_weight
+			if upper:
+				line_y += 0.0008 * (_gauss(k - 0.36, 0.0, 0.08) + _gauss(k - 0.64, 0.0, 0.08))
+			var y := line_y + (thick * 0.6 if upper else -thick * 0.6)
+			var z := _skin_xy(x, y).z + 0.003 + 0.002 * center_weight * full + 0.004 * round * center_weight
+			var depth := (0.0012 + 0.0035 * full * center_weight) * HEAD_SCALE
+			rings.append(SkinnedMeshTool.ring(_hp(Vector3(x, y, z)), thick * HEAD_SCALE, depth, 0.002 * HEAD_SCALE, head,
+				lip.darkened(0.06) if upper else lip.lightened(0.04)))
+		t.loft(rings, 8, Vector3.BACK)
+	for corner: Vector3 in [Vector3(half, corner_left, 0.0), Vector3(-half, corner_right, 0.0)]:
+		var p := _skin_xy(corner.x, corner.y, 0.0018)
+		t.ellipsoid_at(_hp(p), Vector3(0.0018, 0.0018, 0.0012) * HEAD_SCALE, lip.darkened(0.3), head, 6, 3)
+
+
+## Age lines and freckles, drawn as fine creases and dots on the skin.
+func _build_skin_details() -> void:
+	t.deform = true
+	var w := look.wrinkles
+	if w > 0.0:
+		var crease := _skin.darkened(0.2 + 0.1 * w)
+		for i in 2:
+			var y := 0.17 + i * 0.011
+			_skin_crease([Vector2(-0.04, y + 0.002), Vector2(0.0, y - 0.001), Vector2(0.04, y + 0.002)], 0.0011 * w, crease)
+		for s: float in [1.0, -1.0]:
+			var corner := Vector2(s * 0.057 * look.eye_spacing, 0.118)
+			for angle: float in [-0.5, 0.0, 0.45]:
+				var dir := Vector2(s * cos(angle), sin(angle))
+				_skin_crease([corner, corner + dir * 0.006, corner + dir * 0.013], 0.0008 * w, crease)
+			_skin_crease([Vector2(s * 0.016, 0.076), Vector2(s * 0.029, 0.056), Vector2(s * 0.031, 0.034)], 0.0012 * w, crease)
+			_skin_crease([Vector2(s * 0.027, 0.102), Vector2(s * 0.038, 0.098), Vector2(s * 0.05, 0.102)], 0.001 * w, crease)
+	if look.freckles > 0.0:
+		var dot := _skin.darkened(0.16).lerp(Color(0.55, 0.32, 0.2), 0.3)
+		var count := int(34 * look.freckles)
+		for i in count:
+			var x := t.rng.randf_range(-0.058, 0.058)
+			var y := t.rng.randf_range(0.072, 0.112)
+			var near_eye := absf(absf(x) - 0.0375 * look.eye_spacing) < 0.016 and y > 0.1
+			if near_eye or (absf(x) < 0.012 and y < 0.08):
+				continue
+			var p := _skin_xy(x, y, 0.0004)
+			t.ellipsoid_at(_hp(p), Vector3(0.0015, 0.0015, 0.0005) * HEAD_SCALE, dot, _bind(B.HEAD), 5, 2)
+	t.deform = false
+
+
+func _skin_crease(points: Array, radius: float, color: Color) -> void:
+	var rings: Array = []
+	for i in 5:
+		var k := float(i) / 4.0
+		var a: Vector2 = points[0]
+		var b: Vector2 = points[1]
+		var c: Vector2 = points[2]
+		var q := a.lerp(b, k).lerp(b.lerp(c, k), k)
+		var r := radius * sin(PI * (0.15 + 0.7 * k)) * HEAD_SCALE
+		rings.append(SkinnedMeshTool.ring(_hp(_skin_xy(q.x, q.y, 0.0003)), r, r * 0.6, r * 0.6, _bind(B.HEAD), color))
+	t.loft(rings, 4, Vector3.BACK)
 
 
 # --- Hair ----------------------------------------------------------------------------
@@ -402,21 +787,17 @@ func _build_hair() -> void:
 	var head := _bind(B.HEAD)
 	match look.hair_style:
 		"balding":
-			_hair_back_shell(0.035, 0.16, 0.009, PI - 0.25, TAU + 0.25)
+			_hair_shell(0.3, 0.135, 0.03, 0.009, 0.17)
 		"long":
-			_hair_cap(0.016)
+			_hair_shell(0.196, 0.04, 0.0, 0.014)
 			_hair_long_drape()
-			_hair_fringe(0.016, 5)
 		"bun":
-			_hair_cap(0.012)
-			_hair_back_shell(0.075, 0.17, 0.012, PI + 0.35, TAU - 0.35)
+			_hair_shell(0.2, 0.15, 0.07, 0.008)
 			var bun := _head_point(Vector3(0, 0.24, -0.085))
-			t.ellipsoid_at(bun, Vector3(0.056, 0.05, 0.052), _hair, head, 9, 6, 0.08)
+			t.ellipsoid_at(bun, Vector3(0.056, 0.05, 0.052), _hair, head, 10, 7, 0.06)
 			t.ellipsoid_at(bun + Vector3(0, -0.035, 0.03), Vector3(0.04, 0.012, 0.03), look.accent_color.darkened(0.3), head, 8, 3)
 		"ponytail":
-			_hair_cap(0.012)
-			_hair_back_shell(0.04, 0.17, 0.012, PI + 0.1, TAU - 0.1)
-			_hair_fringe(0.012, 4)
+			_hair_shell(0.198, 0.14, 0.06, 0.01)
 			var root := _head_point(Vector3(0, 0.17, -0.112))
 			t.ellipsoid_at(root, Vector3(0.03, 0.022, 0.026), look.accent_color.darkened(0.2), head, 8, 4)
 			t.loft([
@@ -427,33 +808,116 @@ func _build_hair() -> void:
 				SkinnedMeshTool.ring(root + Vector3(0, -0.32, -0.03), 0.004, 0.004, 0.004, _bind(B.CHEST), _hair),
 			], 8)
 		"locs":
-			_hair_cap(0.014)
-			_hair_back_shell(0.04, 0.17, 0.014, PI + 0.1, TAU - 0.1)
+			_hair_shell(0.19, 0.13, 0.04, 0.012)
 			_hair_locs()
 		"curly":
-			_hair_cap(0.018)
-			_hair_back_shell(0.03, 0.17, 0.018, PI - 0.1, TAU + 0.1)
-			for i in 22:
-				var y := 0.1 + float(i % 4) * 0.045 + t.rng.randf_range(-0.01, 0.01)
-				var a := TAU * float(i) / 22.0 * 3.0 + t.rng.randf_range(-0.2, 0.2)
+			_hair_shell(0.19, 0.13, 0.03, 0.014)
+			for i in 44:
+				var y := 0.13 + float(i % 5) * 0.03 + t.rng.randf_range(-0.008, 0.008)
+				var a := TAU * float(i) / 44.0 * 4.0 + t.rng.randf_range(-0.15, 0.15)
 				var front := sin(a)
-				if front > 0.55 and y < 0.17:
+				if front > 0.35 and y < 0.21:
 					continue
-				var p := _head_surface(y, a, 0.02)
-				t.ellipsoid_at(p, Vector3(0.042, 0.038, 0.042), _hair.lightened(t.rng.randf_range(0.0, 0.06)), head, 7, 4, 0.12)
+				var p := _head_surface(y, a, 0.013)
+				var outward := (p - _head_point(Vector3(0, y, 0))).normalized()
+				var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.026, 0.022, 0.008))
+				t.ellipsoid(Transform3D(basis, p - outward * 0.003), _hair.lightened(t.rng.randf_range(-0.03, 0.06)), head, 7, 4, 0.12)
 		_:
-			_hair_cap(0.012)
-			_hair_back_shell(0.03, 0.17, 0.012, PI + 0.2, TAU - 0.2)
-			_hair_fringe(0.012, 5)
-			for side in [1.0, -1.0]:
-				var burn := _head_surface(0.1, PI if side > 0 else 0.0, 0.004) + Vector3(0, 0, 0.022)
-				t.ellipsoid_at(burn, Vector3(0.008, 0.026, 0.014), _hair, head, 6, 4)
+			_hair_shell(0.196, 0.135, 0.02, 0.012)
+
+
+## Hair grown over the sculpted scalp. Coverage is defined by a hairline
+## height at the front, sides (above the ears) and nape; the layer thins to
+## nothing at the hairline so it blends into the skin, and fine colour
+## variation suggests strands. `crown` > 0 leaves the top bare (balding).
+func _hair_shell(front_line: float, side_line: float, nape_line: float, thickness: float, crown: float = 0.0) -> void:
+	var head := _bind(B.HEAD)
+	var start := t.vertex_count()
+	var rows: Array[float] = []
+	var y := minf(nape_line, side_line) - 0.012
+	while y < 0.26:
+		rows.append(y)
+		y += 0.011
+	rows.append(0.262)
+	var segments := SKIN_SEGMENTS
+	var grid: Array = []
+	var masks: Array = []
+	var colors: Array = []
+	for row_y in rows:
+		var points: Array[Vector3] = []
+		var row_mask: Array[float] = []
+		var row_colors: Array[Color] = []
+		for k in segments:
+			var a := TAU * float(k) / segments
+			var f := sin(a)
+			var line := side_line
+			if f > 0.0:
+				line = lerpf(side_line, front_line, smoothstep(0.25, 0.85, f))
+			else:
+				line = lerpf(side_line, nape_line, smoothstep(0.0, 0.6, -f))
+			# Vertices outside the hair are snapped onto the hairline, so the
+			# edge is a smooth curve rather than a staircase of grid cells.
+			var inside := 1.0 if row_y >= line else 0.0
+			var sample_y := maxf(row_y, line)
+			if crown > 0.0:
+				inside *= 1.0 if row_y <= crown else 0.0
+				sample_y = minf(sample_y, crown)
+			var m := smoothstep(line, line + 0.016, sample_y)
+			if crown > 0.0:
+				m *= 1.0 - smoothstep(crown - 0.016, crown, sample_y)
+			var local := _skin_local(sample_y, a)
+			# Grow hair away from the middle of the skull so the crown stays round.
+			var outward := (local - Vector3(0, 0.12, -0.01)).normalized()
+			var volume := 0.6 + 0.4 * smoothstep(0.12, 0.2, sample_y) - 0.3 * smoothstep(0.225, 0.258, sample_y)
+			points.append(_hp(local + outward * (0.0012 + thickness * m * volume)))
+			row_mask.append(inside)
+			var strand := 0.035 * sin(a * 23.0 + row_y * 40.0) + 0.02 * sin(a * 57.0)
+			row_colors.append(_hair.lightened(maxf(strand, 0.0)).darkened(maxf(-strand, 0.0)))
+		grid.append(points)
+		masks.append(row_mask)
+		colors.append(row_colors)
+	for i in rows.size() - 1:
+		var lower: Array[Vector3] = grid[i]
+		var upper: Array[Vector3] = grid[i + 1]
+		var ml: Array[float] = masks[i]
+		var mu: Array[float] = masks[i + 1]
+		var cl: Array[Color] = colors[i]
+		var cu: Array[Color] = colors[i + 1]
+		var y_mid := (rows[i] + rows[i + 1]) * 0.5
+		var center := _hp(Vector3(0, y_mid, float(_face_section(y_mid)[3])))
+		for k in segments:
+			var k1 := (k + 1) % segments
+			if ml[k] + ml[k1] + mu[k] + mu[k1] < 0.5:
+				continue
+			t.triangle_colors(lower[k], lower[k1], upper[k1], cl[k], cl[k1], cu[k1], center, head, head, head)
+			t.triangle_colors(lower[k], upper[k1], upper[k], cl[k], cu[k1], cu[k], center, head, head, head)
+	if crown <= 0.0:
+		var top_row: Array[Vector3] = grid[rows.size() - 1]
+		var top_colors: Array[Color] = colors[rows.size() - 1]
+		var top := _hp(Vector3(0, 0.265, -0.014)) + Vector3(0, thickness * 0.55 * HEAD_SCALE, 0)
+		for k in segments:
+			var k1 := (k + 1) % segments
+			t.triangle_colors(top, top_row[k], top_row[k1], _hair, top_colors[k], top_colors[k1], top - Vector3(0, 0.03, 0), head, head, head)
+	t.smooth_from(start)
+
+
+## Hair at the temples, between the hairline and the ears, so the hairline
+## follows a natural curve instead of a straight helmet edge.
+func _hair_temples(thickness: float) -> void:
+	for side: float in [1.0, -1.0]:
+		var from := PI - 0.62 if side > 0.0 else 0.2
+		var to := PI - 0.2 if side > 0.0 else 0.62
+		var rings: Array = []
+		for y in [0.14, 0.165, 0.188, 0.21]:
+			rings.append(_head_ring(y, thickness, _bind(B.HEAD), _hair))
+		t.loft(rings, 6, Vector3.BACK, false, false, from, to)
 
 
 ## Hair covering the crown, from just above the brow line to the top.
 func _hair_cap(thickness: float) -> void:
+	_hair_temples(thickness)
 	var rings: Array = []
-	for y in [0.152, 0.175, 0.2, 0.222, 0.242, 0.258]:
+	for y in [0.196, 0.212, 0.228, 0.244, 0.258]:
 		rings.append(_head_ring(y, thickness, _bind(B.HEAD), _hair))
 	var top := _head_point(Vector3(0, 0.258, -0.014)) + Vector3(0, thickness * 0.9, 0)
 	rings.append(SkinnedMeshTool.ring(top, 0.003, 0.003, 0.003, _bind(B.HEAD), _hair))
@@ -470,14 +934,25 @@ func _hair_back_shell(y_from: float, y_to: float, thickness: float, arc_from: fl
 	t.loft(rings, 12, Vector3.BACK, false, false, arc_from, arc_to)
 
 
+## Soft clumps over the crown and back so short hair has volume and texture.
+func _hair_clumps(count: int, thickness: float) -> void:
+	for i in count:
+		var a := lerpf(PI * 0.5 + 0.9, PI * 0.5 + TAU - 0.9, float(i) / maxf(count - 1, 1))
+		var y := 0.2 + 0.035 * float(i % 3) - 0.05 * absf(sin(a)) * float(sin(a) < 0.0)
+		var p := _head_surface(y, a, thickness * 0.9)
+		var outward := (p - _head_point(Vector3(0, y, 0))).normalized()
+		var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.034, 0.024, 0.01))
+		t.ellipsoid(Transform3D(basis, p), _hair.lightened(0.04 * float(i % 3) - 0.02), _bind(B.HEAD), 7, 4, 0.1)
+
+
 ## Tufts along the hairline so the hair has a soft front edge.
 func _hair_fringe(thickness: float, count: int) -> void:
 	for i in count:
 		var a := lerpf(PI * 0.5 - 0.75, PI * 0.5 + 0.75, float(i) / maxf(count - 1, 1))
-		var p := _head_surface(0.162, a, thickness * 0.8)
-		var outward := (p - _head_point(Vector3(0, 0.162, 0))).normalized()
-		var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.03, 0.017, 0.012))
-		t.ellipsoid(Transform3D(basis, p), _hair.lightened(0.03 * (i % 2)), _bind(B.HEAD), 7, 4, 0.08)
+		var p := _head_surface(0.2, a, thickness * 0.8)
+		var outward := (p - _head_point(Vector3(0, 0.2, 0))).normalized()
+		var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.028, 0.011, 0.007))
+		t.ellipsoid(Transform3D(basis, p - outward * 0.004), _hair.lightened(0.03 * (i % 2)), _bind(B.HEAD), 7, 4, 0.06)
 
 
 ## Long hair falling over the back and framing the face.
@@ -595,26 +1070,39 @@ func _apron_color() -> Color:
 
 # --- Accessories ---------------------------------------------------------------------
 
-func _build_accessories() -> void:
+func _part(accessory: String, head_part: bool) -> bool:
+	return look.has_accessory(accessory) and HEAD_ACCESSORIES.has(accessory) == head_part
+
+
+## Builds the accessories that belong to the head mesh (head_part) or body.
+func _build_all_accessories(head_part: bool) -> void:
 	var accent := look.accent_color
 	var head := _bind(B.HEAD)
 	var chest := _bind(B.CHEST)
 	var hips := _bind(B.HIPS)
-	if look.has_accessory("beard") or look.has_accessory("long_beard"):
-		_build_beard(look.has_accessory("long_beard"))
-	if look.has_accessory("glasses"):
-		var frame := Color(0.3, 0.22, 0.14)
-		for side in [1.0, -1.0]:
-			var c := _head_surface(0.115, PI * 0.5 + side * 0.42, 0.012)
-			var lens_basis := Basis.looking_at(-(c - _head_point(Vector3(0, 0.115, 0))).normalized(), Vector3.UP)
-			t.loft([
-				SkinnedMeshTool.ring(c, 0.026, 0.02, 0.02, head, frame),
-				SkinnedMeshTool.ring(c + lens_basis.z * -0.004, 0.026, 0.02, 0.02, head, frame),
-			], 8, lens_basis.y, false, false)
-			var temple_end := _head_surface(0.115, PI if side > 0 else 0.0, 0.006) + Vector3(0, 0, -0.01)
-			t.tube(c + Vector3(side * 0.024, 0, -0.006), temple_end, 0.003, 0.003, frame, head, head, 4)
-		t.tube(_head_surface(0.118, PI * 0.5 + 0.14, 0.012), _head_surface(0.118, PI * 0.5 - 0.14, 0.012), 0.003, 0.003, frame, head, head, 4)
-	if look.has_accessory("straw_hat"):
+	if _part("glasses", head_part):
+		# Thin round wire frames: each rim is a loop of short tubes.
+		var frame := Color(0.3, 0.21, 0.12)
+		var wire := 0.0016 * HEAD_SCALE
+		var inner_ends: Array[Vector3] = []
+		for side: float in [1.0, -1.0]:
+			var e := _eye(side)
+			var r: float = e["r"]
+			var fwd: Vector3 = e["fwd"]
+			var lens := _hp(Vector3(e["c"]) + fwd * (r + 0.012))
+			var x_axis := Vector3.UP.cross(fwd).normalized()
+			var size := r * 1.6 * HEAD_SCALE
+			var points: Array[Vector3] = []
+			for k in 14:
+				var angle := TAU * float(k) / 14.0
+				points.append(lens + x_axis * cos(angle) * size + Vector3.UP * sin(angle) * size * 0.85)
+			for k in 14:
+				t.tube(points[k], points[(k + 1) % 14], wire, wire, frame, head, head, 4)
+			inner_ends.append(lens - x_axis * size * side)
+			var ear := _hp(Vector3(side * (float(_face_section(0.11)[0]) + 0.003), 0.114, -0.02))
+			t.tube(lens + x_axis * size * side, ear, wire, wire, frame, head, head, 4)
+		t.tube(inner_ends[0], inner_ends[1] , wire, wire, frame, head, head, 4)
+	if _part("straw_hat", head_part):
 		var straw := Color(0.88, 0.76, 0.46)
 		var o := _head_point(Vector3(0, 0.2, -0.008))
 		t.loft([
@@ -627,15 +1115,15 @@ func _build_accessories() -> void:
 			SkinnedMeshTool.ring(o + Vector3(0, 0.1, 0), 0.088, 0.082, 0.09, head, straw.darkened(0.05)),
 			SkinnedMeshTool.ring(o + Vector3(0, 0.11, 0), 0.06, 0.055, 0.062, head, straw),
 		], 14)
-	if look.has_accessory("headband"):
+	if _part("headband", head_part):
 		t.loft([_head_ring(0.205, 0.016, head, accent), _head_ring(0.18, 0.018, head, accent)], 14, Vector3.BACK, false, false)
-	if look.has_accessory("flower"):
+	if _part("flower", head_part):
 		var flower := _head_surface(0.2, PI * 0.5 + 0.9, 0.03)
 		for i in 5:
 			var a := TAU * float(i) / 5.0
 			t.ellipsoid_at(flower + Vector3(cos(a) * 0.016, sin(a) * 0.016, 0.004), Vector3(0.012, 0.012, 0.006), accent, head, 6, 3)
 		t.ellipsoid_at(flower + Vector3(0, 0, 0.008), Vector3(0.008, 0.008, 0.006), Color(1.0, 0.88, 0.35), head, 6, 3)
-	if look.has_accessory("scarf"):
+	if _part("scarf", head_part):
 		t.loft([
 			SkinnedMeshTool.ring(Vector3(0, 1.425, -0.012), 0.092, 0.085, 0.085, chest, accent),
 			SkinnedMeshTool.ring(Vector3(0, 1.47, -0.014), 0.08, 0.075, 0.078, chest, accent),
@@ -644,16 +1132,16 @@ func _build_accessories() -> void:
 		var knot := Vector3(0.035, 1.43, _torso_front(1.43) + 0.02)
 		t.ellipsoid_at(knot, Vector3(0.028, 0.025, 0.02), accent.darkened(0.1), chest, 7, 4)
 		t.box(Transform3D(Basis(Vector3.BACK, 0.12), knot + Vector3(0.012, -0.09, 0.004)), Vector3(0.042, 0.16, 0.012), accent, chest)
-	if look.has_accessory("apron"):
+	if _part("apron", head_part):
 		_build_apron()
-	if look.has_accessory("tool_belt"):
-		for side in [1.0, -1.0]:
+	if _part("tool_belt", head_part):
+		for side: float in [1.0, -1.0]:
 			var pouch := Vector3(side * 0.13, 0.99, _torso_front(0.99) - 0.01)
 			t.box(Transform3D(Basis(Vector3.UP, side * 0.5), pouch), Vector3(0.07, 0.085, 0.045), LEATHER.lightened(0.08), hips)
 		var loop := Vector3(0.16, 0.92, -0.03)
 		t.tube(loop + Vector3(0, 0.08, 0), loop - Vector3(0, 0.12, 0), 0.011, 0.011, Color(0.55, 0.4, 0.25), hips, hips, 5)
 		t.box(Transform3D(Basis.IDENTITY, loop + Vector3(0, 0.09, 0)), Vector3(0.03, 0.03, 0.09), Color(0.45, 0.45, 0.48), hips)
-	if look.has_accessory("satchel"):
+	if _part("satchel", head_part):
 		var strap := accent.darkened(0.35)
 		var shoulder := Vector3(0.1, 1.468, -0.015)
 		t.tube(shoulder, Vector3(0.0, 1.3, _torso_front(1.3) + 0.008), 0.013, 0.013, strap, chest, chest, 5)
@@ -667,52 +1155,102 @@ func _build_accessories() -> void:
 			SkinnedMeshTool.ring(bag - Vector3(0, 0.065, 0), 0.032, 0.088, 0.088, hips, accent.darkened(0.28)),
 		], 8)
 		t.box(Transform3D(Basis.IDENTITY, bag + Vector3(-0.036, 0.04, 0)), Vector3(0.012, 0.06, 0.15), accent.darkened(0.1), hips)
-	if look.has_accessory("suspenders"):
+	if _part("suspenders", head_part):
 		_build_suspenders()
-	if look.has_accessory("wide_hat"):
+	if _part("wide_hat", head_part):
 		_build_wide_hat()
-	if look.has_accessory("headwrap"):
+	if _part("headwrap", head_part):
 		_build_headwrap()
-	if look.has_accessory("earrings"):
-		for side in [1.0, -1.0]:
+	if _part("earrings", head_part):
+		for side: float in [1.0, -1.0]:
 			var lobe := _head_surface(0.075, PI if side > 0 else 0.0, 0.004)
 			t.loft([
 				SkinnedMeshTool.ring(lobe + Vector3(side * 0.006, -0.012, 0), 0.0, 0.012, 0.012, head, Color(0.95, 0.75, 0.3)),
 				SkinnedMeshTool.ring(lobe + Vector3(side * 0.006, -0.03, 0), 0.0, 0.012, 0.012, head, Color(0.95, 0.75, 0.3)),
 			], 8, Vector3.BACK)
-	if look.has_accessory("cloak"):
+	if _part("cloak", head_part):
 		_build_cloak()
-	if look.has_accessory("backpack"):
+	if _part("backpack", head_part):
 		_build_backpack()
 
 
+## Beard grown from the sculpted skin: a layer that follows the jaw and
+## cheeks, thickest on the chin and thinning to nothing at its edges.
 func _build_beard(long_beard: bool) -> void:
 	var head := _bind(B.HEAD)
 	var beard := _hair
+	var start := t.vertex_count()
+	var rows := [-0.046, -0.036, -0.024, -0.012, 0.0, 0.012, 0.022, 0.031, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+	var segments := SKIN_SEGMENTS
+	var grid: Array = []
+	var masks: Array = []
+	var tints: Array = []
+	for y in rows:
+		var points: Array[Vector3] = []
+		var row_mask: Array[float] = []
+		var row_tint: Array[Color] = []
+		for k in segments:
+			var a := TAU * float(k) / segments
+			var local := _skin_local(y, a)
+			var m := _beard_mask(local, sin(a), cos(a))
+			row_tint.append(_skin_tint(local, sin(a)).lerp(beard, smoothstep(0.0, 0.45, m)))
+			var outward := (local - Vector3(0, y, float(_face_section(y)[3]))).normalized()
+			var taper := lerpf(0.45, 1.0, smoothstep(-0.046, -0.024, float(y)))
+			points.append(_face_deform(_hp(local + outward * (0.0006 + 0.0075 * m * taper))))
+			row_mask.append(m)
+		grid.append(points)
+		masks.append(row_mask)
+		tints.append(row_tint)
+	for i in rows.size() - 1:
+		var lower: Array[Vector3] = grid[i]
+		var upper: Array[Vector3] = grid[i + 1]
+		var ml: Array[float] = masks[i]
+		var mu: Array[float] = masks[i + 1]
+		var cl: Array[Color] = tints[i]
+		var cu: Array[Color] = tints[i + 1]
+		var y_mid: float = (rows[i] + rows[i + 1]) * 0.5
+		var center := _hp(Vector3(0, y_mid, float(_face_section(y_mid)[3])))
+		for k in segments:
+			var k1 := (k + 1) % segments
+			if ml[k] + ml[k1] + mu[k] + mu[k1] < 0.02:
+				continue
+			t.triangle_colors(lower[k], lower[k1], upper[k1], cl[k], cl[k1], cu[k1], center, head, head, head)
+			t.triangle_colors(lower[k], upper[k1], upper[k], cl[k], cu[k1], cu[k], center, head, head, head)
+	t.smooth_from(start)
+	# Moustache over the upper lip.
 	var rings: Array = []
-	for y in [-0.048, -0.02, 0.01, 0.03]:
-		rings.append(_head_ring(y, 0.014, head, beard))
-	t.loft(rings, 12, Vector3.BACK, false, false, -0.25, PI + 0.25)
-	# Cheeks and jawline up to the sideburns.
-	for side in [1.0, -1.0]:
-		var from := PI + 0.25 if side > 0 else -0.25
-		var to := PI - 0.75 if side > 0 else 0.75
-		var cheek_rings: Array = []
-		for y in [0.0, 0.05, 0.1]:
-			cheek_rings.append(_head_ring(y, 0.009, head, beard))
-		t.loft(cheek_rings, 4, Vector3.BACK, false, false, minf(from, to), maxf(from, to))
-	# Moustache.
-	for side in [1.0, -1.0]:
-		var m := _head_surface(0.058, PI * 0.5 + side * 0.2, 0.008)
-		t.ellipsoid(Transform3D(Basis(Vector3.BACK, side * 0.25).scaled(Vector3(0.026, 0.009, 0.01)), m), beard, head, 7, 3)
+	var half := 0.024 * look.mouth_width
+	for i in 7:
+		var k := float(i) / 6.0
+		var x := lerpf(-half - 0.006, half + 0.006, k)
+		var droop := 0.006 * pow(2.0 * k - 1.0, 2.0)
+		var y := MOUTH_Y + 0.011 - droop
+		var p := _skin_xy(x, y, 0.004)
+		var thick := 0.0035 + 0.0025 * (1.0 - pow(2.0 * k - 1.0, 2.0))
+		rings.append(SkinnedMeshTool.ring(_face_deform(_hp(p)), thick * HEAD_SCALE, 0.004 * HEAD_SCALE, 0.002 * HEAD_SCALE, head, beard.darkened(0.05)))
+	t.loft(rings, 6, Vector3.BACK)
 	if long_beard:
-		var chin := _head_surface(-0.03, PI * 0.5, 0.01)
+		var chin := _face_deform(_hp(_skin_xy(0.0, -0.035, 0.008)))
 		t.loft([
 			SkinnedMeshTool.ring(chin + Vector3(0, 0.02, -0.02), 0.06, 0.03, 0.03, head, beard),
 			SkinnedMeshTool.ring(chin + Vector3(0, -0.06, 0.0), 0.05, 0.032, 0.03, _blend(B.HEAD, B.NECK, 0.5), beard),
 			SkinnedMeshTool.ring(chin + Vector3(0, -0.14, 0.012), 0.032, 0.024, 0.022, _blend(B.NECK, B.CHEST, 0.5), beard),
 			SkinnedMeshTool.ring(chin + Vector3(0, -0.19, 0.016), 0.006, 0.006, 0.006, _bind(B.CHEST), beard),
 		], 9, Vector3.BACK, true, true)
+
+
+## 0..1 beard coverage at a skin point (profile units).
+func _beard_mask(p: Vector3, facing: float, side: float) -> float:
+	if facing < -0.35:
+		return 0.0
+	var mouth := _gauss(p.x / (0.032 * look.mouth_width), (p.y - MOUTH_Y) / 0.012, 1.0)
+	var jaw := 1.0 - smoothstep(0.02, 0.05, p.y)
+	var cheek := smoothstep(0.35, 0.75, absf(side)) * (1.0 - smoothstep(0.075, 0.098, p.y))
+	var chin_sides := (1.0 - smoothstep(0.045, 0.07, p.y)) * smoothstep(0.012, 0.03, absf(p.x))
+	var m := maxf(jaw, maxf(cheek, chin_sides))
+	m *= 1.0 - smoothstep(0.35, 0.8, mouth)
+	m *= smoothstep(-0.35, 0.0, facing)
+	return clampf(m, 0.0, 1.0)
 
 
 func _build_apron() -> void:
@@ -734,7 +1272,7 @@ func _build_apron() -> void:
 	t.loft(rings, 8)
 	# Pocket and neck strap.
 	t.box(Transform3D(Basis.IDENTITY, Vector3(0, 0.84, 0.125)), Vector3(0.16, 0.08, 0.008), cloth.darkened(0.15), _bind(B.HIPS))
-	for side in [1.0, -1.0]:
+	for side: float in [1.0, -1.0]:
 		t.tube(Vector3(side * 0.085, 1.36, _torso_front(1.36) + 0.012), Vector3(side * 0.05, 1.47, -0.03), 0.008, 0.008, cloth.darkened(0.2), _bind(B.CHEST), _bind(B.CHEST), 4)
 
 
@@ -773,7 +1311,7 @@ func _build_backpack() -> void:
 	], 10)
 	t.box(Transform3D(Basis(Vector3.RIGHT, 0.2), Vector3(0, 1.33, z - 0.05)), Vector3(0.22, 0.12, 0.02), pack.darkened(0.15), chest)
 	t.box(Transform3D(Basis.IDENTITY, Vector3(0, 1.15, z - 0.07)), Vector3(0.14, 0.09, 0.03), pack.darkened(0.08), chest)
-	for side in [1.0, -1.0]:
+	for side: float in [1.0, -1.0]:
 		var back_top := Vector3(side * 0.09, 1.39, z + 0.05)
 		var over := Vector3(side * 0.1, 1.47, -0.012)
 		var front := Vector3(side * 0.1, 1.37, _torso_front(1.37) + 0.008)
@@ -806,7 +1344,7 @@ func _hair_locs() -> void:
 func _build_suspenders() -> void:
 	var strap := LEATHER.lightened(0.05)
 	var chest := _bind(B.CHEST)
-	for side in [1.0, -1.0]:
+	for side: float in [1.0, -1.0]:
 		var front_low := Vector3(side * 0.085, 1.07, _torso_front(1.07) + 0.006)
 		var front_high := Vector3(side * 0.095, 1.36, _torso_front(1.36) + 0.006)
 		var over := Vector3(side * 0.095, 1.468, -0.015)

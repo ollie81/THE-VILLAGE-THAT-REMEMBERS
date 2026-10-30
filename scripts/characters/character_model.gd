@@ -5,7 +5,9 @@ extends Node3D
 ## Structure:
 ##   CharacterModel (Node3D, uniformly scaled by height)
 ##   ├─ Skeleton3D               HumanoidRig bones (Godot humanoid naming)
-##   │  ├─ Body (MeshInstance3D) one skinned mesh: body, face, clothes, hair
+##   │  ├─ Body (MeshInstance3D) skinned body and clothes
+##   │  ├─ Head (MeshInstance3D) skinned head, face and hair with facial
+##   │  │                         expression blend shapes
 ##   │  └─ ToolAttachment         BoneAttachment3D on the right hand
 ##   └─ AnimationPlayer          baked HumanoidAnimations clips
 ##
@@ -21,6 +23,22 @@ const WORK_ANIMATIONS: Array[StringName] = [&"work", &"gather"]
 var appearance: CharacterAppearance
 var skeleton: Skeleton3D
 var animation_player: AnimationPlayer
+var head: MeshInstance3D
+
+const EXPRESSION_FADE := 0.3
+const BLINK_TIME := 0.16
+
+var _expression: StringName = &"neutral"
+var _shape_index: Dictionary = {}
+var _weights: Dictionary = {}
+var _targets: Dictionary = {}
+var _fade_speed: float = 1.0 / EXPRESSION_FADE
+var _blink_timer: float = 2.0
+var _blink_time: float = -1.0
+var _talking: bool = false
+var _talk_phase: float = 0.0
+var _talk_weight: float = 0.0
+var _rng := RandomNumberGenerator.new()
 
 var _state: StringName = &""
 var _tool: Node3D
@@ -41,12 +59,36 @@ func _build() -> void:
 	skeleton = rig.create_skeleton()
 	add_child(skeleton)
 
+	# Meshes come from the offline cache when possible; otherwise they are
+	# generated (and cached for next time).
+	var key := CharacterCache.key_for(appearance)
+	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.vertex_color())
+	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.skin())
+	if body_mesh == null or head_mesh == null:
+		var builder := HumanoidMeshBuilder.new(appearance, rig)
+		body_mesh = builder.build()
+		head_mesh = builder.build_head()
+		CharacterCache.save_mesh(key, "body", body_mesh)
+		CharacterCache.save_mesh(key, "head", head_mesh)
+
 	var body := MeshInstance3D.new()
 	body.name = "Body"
-	body.mesh = HumanoidMeshBuilder.new(appearance, rig).build()
+	body.mesh = body_mesh
 	skeleton.add_child(body)
 	body.skeleton = NodePath("..")
 	body.skin = skeleton.create_skin_from_rest_transforms()
+
+	head = MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = head_mesh
+	skeleton.add_child(head)
+	head.skeleton = NodePath("..")
+	head.skin = body.skin
+	for i in head.mesh.get_blend_shape_count():
+		_shape_index[head.mesh.get_blend_shape_name(i)] = i
+		_weights[head.mesh.get_blend_shape_name(i)] = 0.0
+	_rng.seed = hash(appearance.skin_color) ^ hash(appearance.hair_color)
+	_blink_timer = _rng.randf_range(0.5, 4.0)
 
 	_tool = _create_tool(appearance.work_tool)
 	if _tool:
@@ -88,6 +130,78 @@ func set_animation(state: StringName, speed: float = 0.0) -> void:
 
 func get_animation() -> StringName:
 	return _state
+
+
+# --- Face ------------------------------------------------------------------------
+
+## Shows one of FaceExpressions.EXPRESSION_NAMES (neutral, happy, laughing,
+## sad, angry, surprised, worried) at `weight`, fading over `fade` seconds.
+## "neutral" returns to the character's own resting face.
+func set_expression(expression: StringName, weight: float = 1.0, fade: float = EXPRESSION_FADE) -> void:
+	if not FaceExpressions.EXPRESSIONS.has(expression):
+		expression = &"neutral"
+	_expression = expression
+	for shape in FaceExpressions.EXPRESSION_NAMES:
+		if shape != &"neutral":
+			_targets[shape] = weight if shape == expression else 0.0
+	if fade <= 0.0:
+		for shape in _targets:
+			_weights[shape] = _targets[shape]
+		_apply_face()
+	else:
+		_fade_speed = 1.0 / fade
+
+
+func get_expression() -> StringName:
+	return _expression
+
+
+## Moves the mouth as if speaking (layered over the current expression).
+func set_talking(talking: bool) -> void:
+	_talking = talking
+
+
+## World position of the middle of the face, for cameras and portraits.
+func get_face_position() -> Vector3:
+	if skeleton == null:
+		return global_position + Vector3(0, 1.65, 0)
+	var head_pose := skeleton.get_bone_global_pose(HumanoidRig.Bone.HEAD)
+	return skeleton.global_transform * (head_pose.origin + Vector3(0, 0.11, 0.06))
+
+
+func _process(delta: float) -> void:
+	if head == null:
+		return
+	for shape in _targets:
+		_weights[shape] = move_toward(float(_weights.get(shape, 0.0)), float(_targets[shape]), delta * _fade_speed)
+	# Natural blinking every few seconds.
+	_blink_timer -= delta
+	if _blink_timer <= 0.0:
+		_blink_timer = _rng.randf_range(2.2, 5.5)
+		_blink_time = 0.0
+	var blink := 0.0
+	if _blink_time >= 0.0:
+		_blink_time += delta
+		blink = 1.0 - absf(_blink_time / (BLINK_TIME * 0.5) - 1.0)
+		if _blink_time >= BLINK_TIME:
+			_blink_time = -1.0
+			blink = 0.0
+	_weights[&"blink"] = clampf(blink, 0.0, 1.0)
+	# Mouth movement while speaking.
+	var speaking := _talking or _state == &"talk"
+	if speaking:
+		_talk_phase += delta * 11.0
+		_talk_weight = clampf(0.35 + 0.35 * sin(_talk_phase) + 0.2 * sin(_talk_phase * 1.7 + 0.4), 0.0, 0.9)
+	else:
+		_talk_weight = move_toward(_talk_weight, 0.0, delta * 6.0)
+	_weights[&"talk"] = _talk_weight
+	_apply_face()
+
+
+func _apply_face() -> void:
+	for shape in _weights:
+		if _shape_index.has(shape):
+			head.set_blend_shape_value(_shape_index[shape], float(_weights[shape]))
 
 
 ## Small hand-held props, positioned in the hand bone's space

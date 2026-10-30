@@ -42,6 +42,7 @@ var _perform_timer: float = 0.0
 var _decision_timer: float = 0.0
 var _blocked_time: float = 0.0
 var _alive_time: float = 0.0
+var _mood_timer: float = 0.0
 var _rng := RandomNumberGenerator.new()
 var _collision: CollisionShape3D
 var _selection_ring: MeshInstance3D
@@ -250,8 +251,15 @@ func _process_performing(delta: float) -> void:
 		_face_towards(_look_target, delta)
 	var animation := current_activity.get_animation()
 	if current_activity.kind == &"socialize":
-		# Take turns talking and listening.
+		# Take turns talking and listening, reacting to the conversation.
 		animation = &"talk" if int(_alive_time / 4.0 + hash(String(data.id))) % 2 == 0 else &"idle"
+		_mood_timer -= delta
+		if _mood_timer <= 0.0:
+			_mood_timer = _rng.randf_range(3.0, 7.0)
+			var moods: Array[StringName] = [&"happy", &"laughing", &"neutral", &"happy", &"surprised"]
+			model.set_expression(moods[_rng.randi_range(0, moods.size() - 1)], _rng.randf_range(0.6, 1.0))
+	elif model.get_expression() != &"neutral":
+		model.set_expression(&"neutral")
 	model.set_animation(animation)
 	_perform_timer -= delta
 	if _perform_timer > 0.0:
@@ -316,7 +324,8 @@ func _update_label_visibility() -> void:
 	var near := camera.global_position.distance_to(global_position) < NAME_LABEL_DISTANCE
 	# The dialogue box already shows the name while talking.
 	name_label.visible = (managing or near or GameManager.selected_villager == self) and state != State.INTERACTING
-	name_label.pixel_size = 0.009 if managing else 0.004
+	var distance := camera.global_position.distance_to(global_position)
+	name_label.pixel_size = clampf(distance * 0.00035, 0.0035, 0.009) if managing else 0.004
 
 
 func _on_villager_selected(villager) -> void:

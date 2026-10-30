@@ -29,6 +29,34 @@ extends Resource
 ## Forward lean of the upper body (0 = upright). Used for elderly characters.
 @export_range(0.0, 0.4) var stoop: float = 0.0
 
+@export_group("Face")
+@export_range(0.85, 1.15) var face_width: float = 1.0
+@export_range(0.8, 1.25) var jaw_width: float = 1.0
+## Chin length and prominence.
+@export_range(0.7, 1.4) var chin: float = 1.0
+@export_range(0.0, 1.0) var cheekbones: float = 0.5
+@export_range(0.0, 1.0) var brow_ridge: float = 0.4
+@export_range(0.5, 1.8) var brow_thickness: float = 1.0
+## How high the brows arch in the middle.
+@export_range(0.0, 1.0) var brow_arch: float = 0.4
+@export var brow_color: Color = Color(0, 0, 0, 0)
+@export_range(0.8, 1.3) var eye_size: float = 1.0
+@export_range(0.9, 1.1) var eye_spacing: float = 1.0
+## Positive values lift the outer corners (almond eyes).
+@export_range(-0.3, 0.3) var eye_tilt: float = 0.0
+## Thickness of the dark lash line.
+@export_range(0.0, 1.0) var lash_weight: float = 0.4
+@export_range(0.8, 1.25) var nose_length: float = 1.0
+@export_range(0.8, 1.3) var nose_width: float = 1.0
+@export_range(0.0, 1.0) var nose_upturn: float = 0.0
+@export_range(0.7, 1.4) var lip_fullness: float = 1.0
+@export_range(0.85, 1.2) var mouth_width: float = 1.0
+## Age lines: forehead, crow's feet, smile lines.
+@export_range(0.0, 1.0) var wrinkles: float = 0.0
+@export_range(0.0, 1.0) var freckles: float = 0.0
+## Facial controls held when no expression is playing (see FaceExpressions).
+@export var resting_face: Dictionary = {}
+
 @export_group("Hair and clothing")
 ## short, long, bun, ponytail, curly, locs, balding
 @export var hair_style: String = "short"

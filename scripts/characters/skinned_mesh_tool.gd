@@ -14,6 +14,25 @@ var color_jitter: float = 0.006
 ## shading instead of hard facets. Boxes always stay flat.
 var smooth: bool = true
 
+## Optional position deformer (Callable(Vector3) -> Vector3) applied while
+## `deform` is true. Used for facial expressions.
+var deformer: Callable
+var deform: bool = false
+
+## Winding decisions are recorded on the first build and replayed on later
+## builds, so meshes built with different expression controls keep an
+## identical vertex layout (a requirement for blend shapes).
+var flip_log := PackedByteArray()
+var _replay := PackedByteArray()
+var _triangle_index: int = 0
+
+## Static sections (geometry that never changes between blend shapes) are
+## built once on the base tool and copied by the variant builds.
+var static_source: SkinnedMeshTool
+var _static_ranges: Array = [] # [vertex_start, vertex_end, triangle_start, triangle_end]
+var _static_index: int = 0
+var _static_open: Array = []
+
 var _positions := PackedVector3Array()
 var _normals := PackedVector3Array()
 var _colors := PackedColorArray()
@@ -25,6 +44,36 @@ func _init(seed_value: int = 0) -> void:
 	rng.seed = seed_value
 
 
+## Starts a static section. Returns true if the caller should build it;
+## false means it was copied from `static_source` and must be skipped.
+func begin_static() -> bool:
+	if static_source == null:
+		_static_open = [_positions.size(), _triangle_index]
+		return true
+	var range: Array = static_source._static_ranges[_static_index]
+	_static_index += 1
+	var v0: int = range[0]
+	var v1: int = range[1]
+	_positions.append_array(static_source._positions.slice(v0, v1))
+	_normals.append_array(static_source._normals.slice(v0, v1))
+	_colors.append_array(static_source._colors.slice(v0, v1))
+	_bones.append_array(static_source._bones.slice(v0 * 4, v1 * 4))
+	_weights.append_array(static_source._weights.slice(v0 * 4, v1 * 4))
+	flip_log.append_array(static_source.flip_log.slice(int(range[2]), int(range[3])))
+	_triangle_index += int(range[3]) - int(range[2])
+	return false
+
+
+func end_static() -> void:
+	if static_source == null and not _static_open.is_empty():
+		_static_ranges.append([_static_open[0], _positions.size(), _static_open[1], _triangle_index])
+		_static_open = []
+
+
+func replay_flips(log: PackedByteArray) -> void:
+	_replay = log
+
+
 static func bind(bone: int) -> Vector3:
 	return Vector3(bone, bone, 0.0)
 
@@ -33,8 +82,16 @@ static func blend(bone_a: int, bone_b: int, weight_b: float) -> Vector3:
 	return Vector3(bone_a, bone_b, clampf(weight_b, 0.0, 1.0))
 
 
+func vertex_count() -> int:
+	return _positions.size()
+
+
 ## Averages normals of coincident vertices from `start` to the end of the
 ## arrays, so one primitive shades smoothly without blending into others.
+func smooth_from(start: int) -> void:
+	_smooth_from(start)
+
+
 func _smooth_from(start: int) -> void:
 	if not smooth:
 		return
@@ -53,7 +110,97 @@ func get_triangle_count() -> int:
 	return _positions.size() / 3
 
 
-func build(material: Material) -> ArrayMesh:
+## Builds a mesh whose blend shapes are the other tools' geometry. Every
+## tool must have been built with the same calls (see replay_flips()).
+func build_with_shapes(material: Material, shape_names: Array, shapes: Array) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	var shape_arrays: Array = []
+	for i in shapes.size():
+		var shape: SkinnedMeshTool = shapes[i]
+		if shape._positions.size() != _positions.size():
+			push_error("Blend shape '%s' has %d vertices, base has %d; shapes skipped." % [shape_names[i], shape._positions.size(), _positions.size()])
+			return build(material)
+		# RELATIVE blend shapes store position offsets from the base mesh;
+		# normals are stored as the shape's own (unit) normals.
+		var offsets := PackedVector3Array()
+		var normal_offsets := PackedVector3Array()
+		offsets.resize(_positions.size())
+		normal_offsets.resize(_positions.size())
+		for v in _positions.size():
+			offsets[v] = shape._positions[v] - _positions[v]
+			normal_offsets[v] = shape._normals[v]
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = offsets
+		arrays[Mesh.ARRAY_NORMAL] = normal_offsets
+		shape_arrays.append(arrays)
+	# Merge vertices that are identical in the base and in every shape, so the
+	# smooth-shaded grids share vertices (indexed mesh, a fraction of the memory).
+	var remap: Dictionary = {}
+	var keep := PackedInt32Array()
+	var indices := PackedInt32Array()
+	indices.resize(_positions.size())
+	for v in _positions.size():
+		var key := [_positions[v].snapped(Vector3.ONE * 1e-5), _normals[v].snapped(Vector3.ONE * 1e-4), _colors[v],
+			_bones[v * 4], _bones[v * 4 + 1], _weights[v * 4 + 1]]
+		for shape_array in shape_arrays:
+			key.append((shape_array[Mesh.ARRAY_VERTEX] as PackedVector3Array)[v].snapped(Vector3.ONE * 1e-5))
+		var existing: Variant = remap.get(key)
+		if existing == null:
+			remap[key] = keep.size()
+			indices[v] = keep.size()
+			keep.append(v)
+		else:
+			indices[v] = int(existing)
+	var base := _compact(_arrays(), keep)
+	base[Mesh.ARRAY_INDEX] = indices
+	var compact_shapes: Array = []
+	for shape_array in shape_arrays:
+		compact_shapes.append(_compact(shape_array, keep))
+	for shape_name in shape_names:
+		mesh.add_blend_shape(StringName(shape_name))
+	mesh.blend_shape_mode = Mesh.BLEND_SHAPE_MODE_RELATIVE
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, base, compact_shapes)
+	mesh.surface_set_material(0, material)
+	return mesh
+
+
+## Copies the kept vertices of a surface array (vertex, normal, colour, skin).
+static func _compact(arrays: Array, keep: PackedInt32Array) -> Array:
+	var out := []
+	out.resize(Mesh.ARRAY_MAX)
+	for slot in [Mesh.ARRAY_VERTEX, Mesh.ARRAY_NORMAL]:
+		if arrays[slot] != null:
+			var source: PackedVector3Array = arrays[slot]
+			var result := PackedVector3Array()
+			result.resize(keep.size())
+			for i in keep.size():
+				result[i] = source[keep[i]]
+			out[slot] = result
+	if arrays[Mesh.ARRAY_COLOR] != null:
+		var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		var compact_colors := PackedColorArray()
+		compact_colors.resize(keep.size())
+		for i in keep.size():
+			compact_colors[i] = colors[keep[i]]
+		out[Mesh.ARRAY_COLOR] = compact_colors
+	if arrays[Mesh.ARRAY_BONES] != null:
+		var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+		var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+		var compact_bones := PackedInt32Array()
+		var compact_weights := PackedFloat32Array()
+		compact_bones.resize(keep.size() * 4)
+		compact_weights.resize(keep.size() * 4)
+		for i in keep.size():
+			for j in 4:
+				compact_bones[i * 4 + j] = bones[keep[i] * 4 + j]
+				compact_weights[i * 4 + j] = weights[keep[i] * 4 + j]
+		out[Mesh.ARRAY_BONES] = compact_bones
+		out[Mesh.ARRAY_WEIGHTS] = compact_weights
+	return out
+
+
+func _arrays() -> Array:
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = _positions
@@ -61,8 +208,12 @@ func build(material: Material) -> ArrayMesh:
 	arrays[Mesh.ARRAY_COLOR] = _colors
 	arrays[Mesh.ARRAY_BONES] = _bones
 	arrays[Mesh.ARRAY_WEIGHTS] = _weights
+	return arrays
+
+
+func build(material: Material) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, _arrays())
 	mesh.surface_set_material(0, material)
 	return mesh
 
@@ -73,10 +224,32 @@ func build(material: Material) -> ArrayMesh:
 ## vertices are emitted a, c, b relative to the counter-clockwise normal.
 func triangle(a: Vector3, b: Vector3, c: Vector3, color: Color, center: Vector3,
 		bind_a: Vector3, bind_b: Vector3, bind_c: Vector3) -> void:
+	var face_color := _jitter(color)
+	triangle_colors(a, b, c, face_color, face_color, face_color, center, bind_a, bind_b, bind_c)
+
+
+## Triangle with a colour per vertex (smooth colour gradients, e.g. skin).
+func triangle_colors(a: Vector3, b: Vector3, c: Vector3, color_a: Color, color_b: Color, color_c: Color,
+		center: Vector3, bind_a: Vector3, bind_b: Vector3, bind_c: Vector3) -> void:
+	if deform and deformer.is_valid():
+		a = deformer.call(a)
+		b = deformer.call(b)
+		c = deformer.call(c)
+		center = deformer.call(center)
 	var normal := (b - a).cross(c - a)
-	if normal.length_squared() < 1e-14:
+	var decision := 0
+	if _triangle_index < _replay.size():
+		decision = _replay[_triangle_index]
+	else:
+		if normal.length_squared() < 1e-14:
+			decision = 2
+		elif normal.dot((a + b + c) / 3.0 - center) < 0.0:
+			decision = 1
+	_triangle_index += 1
+	flip_log.append(decision)
+	if decision == 2:
 		return
-	if normal.dot((a + b + c) / 3.0 - center) < 0.0:
+	if decision == 1:
 		normal = -normal
 		var swap_p := b
 		b = c
@@ -84,11 +257,13 @@ func triangle(a: Vector3, b: Vector3, c: Vector3, color: Color, center: Vector3,
 		var swap_b := bind_b
 		bind_b = bind_c
 		bind_c = swap_b
-	normal = normal.normalized()
-	var face_color := _jitter(color)
-	_vertex(a, normal, face_color, bind_a)
-	_vertex(c, normal, face_color, bind_c)
-	_vertex(b, normal, face_color, bind_b)
+		var swap_c := color_b
+		color_b = color_c
+		color_c = swap_c
+	normal = normal.normalized() if normal.length_squared() > 1e-20 else Vector3.UP
+	_vertex(a, normal, color_a, bind_a)
+	_vertex(c, normal, color_c, bind_c)
+	_vertex(b, normal, color_b, bind_b)
 
 
 func _vertex(p: Vector3, n: Vector3, c: Color, binding: Vector3) -> void:

@@ -222,6 +222,36 @@ Every person is a real 3D model built at load time from their `CharacterAppearan
   walk and run playback speed to movement speed. Each character's posture (Tomas's stoop) is baked in.
 - **Budget.** Each villager is about 3,500–4,200 triangles in one draw call, plus a small tool mesh.
 
+### Faces
+
+Each head is a separate skinned mesh on the same skeleton, so the body, rig and animations are
+unchanged. The head is sculpted from a 30×32 grid of cross-sections with a brow ridge, eye sockets,
+cheekbones, nose bridge, muzzle and chin. It also has:
+
+- **Eyes:** eyeballs with a layered iris, pupil and catchlight; upper and lower eyelids with a lash line.
+- **Features:** curved brows, a nose with nostrils, separate upper and lower lips over a mouth with
+  teeth, and sculpted ears.
+- **Skin:** per-vertex colour (warm cheeks, nose and chin, soft shadow around the eyes) on a dedicated
+  skin material with wrapped diffuse lighting, a faint rim light and no self-shadowing.
+- **Character traits:** each one comes from `CharacterAppearance` face parameters: jaw, chin,
+  cheekbones, brow shape, eye size and tilt, nose, lips, wrinkles, freckles and a resting expression.
+- **Expressions:** `CharacterModel.set_expression(name)` with neutral, happy, laughing, sad, angry,
+  surprised and worried. These are blend shapes defined once in `FaceExpressions` and generated for
+  every character, plus automatic blinking and mouth movement while speaking.
+- **Dialogue tags:** a line can start with a tag such as `[laughing]` to set the face for that line.
+- **Cost and caching:** about 6,000–7,000 triangles and about 3,500 vertices per head. Meshes are cached
+  in `user://character_cache`, so after the first launch all five villagers load in under 20 ms.
+
+![Expressions](docs/screenshots/faces/expressions.png)
+
+| Conversation | Village View portrait |
+| --- | --- |
+| ![Talking to Elias](docs/screenshots/faces/talk_elias.png) | ![Selected villager](docs/screenshots/faces/village_view_selected.png) |
+
+More are in `docs/screenshots/faces/`: per-character before/after comparisons, close-ups, every
+conversation, and evening light. Render your own with
+`godot --path . res://tools/face_gallery.tscn -- --out=/tmp/faces`.
+
 To review character art without playing, render every character from five angles and in every
 animation:
 
@@ -256,7 +286,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **66/66 checks**, including the skeleton, skinning, triangle budget and animation set of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **74/74 checks**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

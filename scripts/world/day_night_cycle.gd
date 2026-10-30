@@ -40,8 +40,8 @@ func _ready() -> void:
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_blend_splits = false
-	sun.shadow_bias = 0.04
-	sun.shadow_normal_bias = 1.2
+	sun.shadow_bias = 0.06
+	sun.shadow_normal_bias = 2.2
 	sun.light_angular_distance = 0.5
 	add_child(sun)
 

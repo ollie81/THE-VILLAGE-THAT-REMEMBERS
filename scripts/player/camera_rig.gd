@@ -9,7 +9,9 @@ extends Node3D
 
 const EXPLORE_FOV := 68.0
 const MANAGE_FOV := 40.0
-const CONVERSATION_FOV := 45.0
+const CONVERSATION_FOV := 34.0
+## Village View zooms to this distance when a villager is selected.
+const FOCUS_DISTANCE := 10.0
 const TRANSITION_TIME := 0.9
 const TAP_MAX_DISTANCE := 14.0
 const VILLAGER_LAYER := 4
@@ -24,7 +26,11 @@ var distance: float = 5.5
 var manage_focus: Vector3 = Vector3.ZERO
 var manage_yaw: float = deg_to_rad(45.0)
 var manage_pitch: float = deg_to_rad(-52.0)
-var manage_distance: float = 30.0
+var manage_distance: float = 22.0
+## Soft light that keeps faces readable during conversations, day or night.
+var face_light: OmniLight3D
+
+var _follow_selected: bool = false
 
 var _transition: float = 1.0
 var _current_distance: float = 5.5
@@ -44,6 +50,16 @@ func _ready() -> void:
 	GameManager.camera_mode_changed.connect(_on_camera_mode_changed)
 	GameManager.conversation_started.connect(func(_v, _l): _transition = 0.0)
 	GameManager.conversation_ended.connect(func(_v): _transition = 0.0)
+	GameManager.villager_selected.connect(func(v): _follow_selected = v != null)
+	face_light = OmniLight3D.new()
+	face_light.name = "FaceLight"
+	face_light.light_color = Color(1.0, 0.93, 0.84)
+	face_light.light_energy = 0.0
+	face_light.omni_range = 3.0
+	face_light.omni_attenuation = 1.4
+	face_light.shadow_enabled = false
+	face_light.visible = false
+	add_child(face_light)
 	if target:
 		target.camera_rig = self
 		yaw = target.model.rotation.y + PI
@@ -80,9 +96,19 @@ func _process(delta: float) -> void:
 	var desired := _exploration_transform(delta) if mode == GameManager.CameraMode.EXPLORATION else _management_transform()
 	var desired_fov := EXPLORE_FOV if mode == GameManager.CameraMode.EXPLORATION else MANAGE_FOV
 	var partner = GameManager.conversation_partner
-	if partner != null and is_instance_valid(partner) and mode == GameManager.CameraMode.EXPLORATION:
+	var talking: bool = partner != null and is_instance_valid(partner) and mode == GameManager.CameraMode.EXPLORATION
+	if talking:
 		desired = _conversation_transform(partner)
 		desired_fov = CONVERSATION_FOV
+		# Key light from the camera side, slightly above, lighting the speaker.
+		var face: Vector3 = partner.model.get_face_position()
+		face_light.global_position = face + (desired.origin - face).normalized() * 0.9 + Vector3(0, 0.35, 0)
+	# Gentle fill by day (the sun already lights faces), stronger at night.
+	var sun_height := DayNightCycle.sun_direction_for(WorldClock.time_of_day).y
+	var night := 1.0 - smoothstep(-0.1, 0.25, sun_height)
+	var wanted := lerpf(0.3, 1.0, night) if talking else 0.0
+	face_light.visible = talking or face_light.light_energy > 0.01
+	face_light.light_energy = move_toward(face_light.light_energy, wanted, delta * 2.5)
 	if _transition < 1.0:
 		_transition = minf(_transition + delta / TRANSITION_TIME, 1.0)
 		var t := smoothstep(0.0, 1.0, _transition)
@@ -99,15 +125,23 @@ func _update_management(delta: float, look: Vector2, pan: Vector2, zoom: float) 
 	if Input.is_action_pressed("rotate_camera_right"):
 		manage_yaw -= delta * 1.6
 	manage_yaw -= look.x * 0.004 * GameSettings.camera_sensitivity
-	manage_distance = clampf(manage_distance - zoom * 2.2, 12.0, 62.0)
+	manage_distance = clampf(manage_distance - zoom * 2.2, 7.0, 62.0)
 
 	var forward := Vector3(-sin(manage_yaw), 0.0, -cos(manage_yaw))
 	var right := Vector3(cos(manage_yaw), 0.0, -sin(manage_yaw))
 	var move := InputRouter.get_move_vector()
+	if move.length() > 0.05 or pan.length() > 0.5 or zoom != 0.0:
+		_follow_selected = false
 	manage_focus += (right * move.x - forward * move.y) * manage_distance * 0.9 * delta
 	var height := maxf(get_viewport().get_visible_rect().size.y, 1.0)
 	var pixels_to_world := manage_distance * 1.3 / height
 	manage_focus += (-right * pan.x - forward * pan.y) * pixels_to_world
+	# Glide to and follow the selected villager so their face is readable.
+	var selected = GameManager.selected_villager
+	if _follow_selected and selected != null and is_instance_valid(selected):
+		var where: Vector3 = selected.global_position
+		manage_focus = manage_focus.lerp(Vector3(where.x, 0.0, where.z), clampf(delta * 4.0, 0.0, 1.0))
+		manage_distance = lerpf(manage_distance, minf(manage_distance, FOCUS_DISTANCE), clampf(delta * 3.0, 0.0, 1.0))
 	var limit := VillageLayout.PLAYABLE_HALF_SIZE
 	manage_focus.x = clampf(manage_focus.x, -limit, limit)
 	manage_focus.z = clampf(manage_focus.z, -limit, limit)
@@ -135,16 +169,17 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	return Transform3D(Basis.looking_at(pivot - position, Vector3.UP), position)
 
 
-## Over-the-shoulder framing of the villager's face while talking.
-func _conversation_transform(partner: Node3D) -> Transform3D:
-	var head_height := 1.62
-	var own := target.global_position + Vector3(0, head_height, 0)
-	var other := partner.global_position + Vector3(0, head_height * float(partner.data.appearance.height_scale), 0)
-	var flat := Vector3(other.x - own.x, 0.0, other.z - own.z)
+## Close over-the-shoulder shot: the speaker's head and shoulders fill the
+## upper middle of the screen, the player's shoulder frames the left edge.
+func _conversation_transform(partner) -> Transform3D:
+	var face: Vector3 = partner.model.get_face_position()
+	var own: Vector3 = target.model.get_face_position()
+	var flat := Vector3(face.x - own.x, 0.0, face.z - own.z)
 	var direction := flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
 	var right := direction.cross(Vector3.UP).normalized()
-	var position := own - direction * 1.25 + right * 0.55 + Vector3(0, 0.12, 0)
-	var look_point := other - Vector3(0, 0.12, 0) + right * 0.1
+	var distance := minf(1.45, flat.length() + 0.55)
+	var position := face - direction * distance + right * 0.42 + Vector3(0, 0.02, 0)
+	var look_point := face + right * 0.12 - Vector3(0, 0.1, 0)
 	return Transform3D(Basis.looking_at(look_point - position, Vector3.UP), position)
 
 

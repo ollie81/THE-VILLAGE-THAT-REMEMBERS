@@ -55,6 +55,9 @@ static func create_default_appearance() -> CharacterAppearance:
 	look.pants_color = Color(0.28, 0.3, 0.36)
 	look.accent_color = Color(0.22, 0.34, 0.55)
 	look.hair_style = "curly"
+	look.eye_color = Color(0.25, 0.3, 0.42)
+	look.brow_thickness = 1.1
+	look.resting_face = {"smile": 0.12}
 	look.accessories = PackedStringArray(["cloak", "backpack"])
 	return look
 

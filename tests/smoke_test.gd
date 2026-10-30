@@ -52,6 +52,9 @@ func _run() -> void:
 			"%s has a skinned body on a 19-bone skeleton" % villager.data.display_name)
 		_check(triangles > 1500 and triangles < 9000, "%s body is %d triangles (budget 9000)" % [villager.data.display_name, triangles])
 		_check(model.animation_player.get_animation_list().size() >= 8, "%s has skeletal animations" % villager.data.display_name)
+		var head_mesh: Mesh = model.head.mesh if model.head else null
+		_check(head_mesh != null and head_mesh.get_blend_shape_count() == FaceExpressions.SHAPES.size(),
+			"%s face has %d expression blend shapes" % [villager.data.display_name, head_mesh.get_blend_shape_count() if head_mesh else 0])
 	var distinct := {}
 	for villager in GameManager.villagers:
 		distinct["%d_%d" % [roundi(villager.global_position.x), roundi(villager.global_position.z)]] = true
@@ -159,6 +162,16 @@ func _run() -> void:
 	_check(mara.mind.get_familiarity(GameManager.PLAYER_ID) == met_before + 1, "villager remembers the conversation")
 	var second := DialogueService.build_greeting(mara, GameManager.PLAYER_ID)
 	_check(not second[0].contains("don't think we've met"), "second greeting is different")
+
+	# 7b. Facial expressions drive the blend shapes.
+	var face_model: CharacterModel = mara.model
+	face_model.set_expression(&"laughing", 1.0, 0.0)
+	var laugh_index := face_model.head.find_blend_shape_by_name(&"laughing")
+	_check(laugh_index >= 0 and is_equal_approx(face_model.head.get_blend_shape_value(laugh_index), 1.0), "expressions set blend shape weights")
+	face_model.set_expression(&"neutral", 1.0, 0.0)
+	_check(is_zero_approx(face_model.head.get_blend_shape_value(laugh_index)), "neutral clears the expression")
+	var parsed := DialoguePanel.split_expression("[angry]Stay back!")
+	_check(parsed[0] == &"angry" and parsed[1] == "Stay back!", "dialogue lines carry expression tags")
 
 	# 8. Save data round trip (in memory only)
 	var saved: Dictionary = mara.get_save_data()

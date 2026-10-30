@@ -1,7 +1,10 @@
 extends Node
-## Developer tool: captures in-game screenshots (exploration, village view,
-## night, conversation) for reviewing art changes.
+## Developer tool: captures in-game screenshots for reviewing art changes:
+## a conversation with every villager, the normal third-person view next to
+## a villager, Village View with a selected villager's portrait, and evening.
 ## Run: godot --path . res://tools/game_screenshots.tscn -- --out=/some/dir
+
+const VILLAGERS: Array[StringName] = [&"mara", &"elias", &"nia", &"tomas", &"sera"]
 
 var _out_dir: String = "user://screenshots"
 var _main
@@ -28,59 +31,64 @@ func _wait(frames: int) -> void:
 		await get_tree().process_frame
 
 
+## Puts the player 1.6 m in front of a villager, facing them.
+func _stand_before(villager) -> void:
+	var player = GameManager.player
+	var facing := Vector3(sin(villager.rotation.y), 0, cos(villager.rotation.y))
+	player.global_position = villager.global_position + facing * 1.6 + Vector3(0, 0.3, 0)
+	player.velocity = Vector3.ZERO
+	player.face_towards(villager.global_position)
+
+
 func _run() -> void:
-	WorldClock.set_time(9.5)
+	WorldClock.set_time(10.5)
 	WorldClock.set_time_scale(0.0)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child(_main)
 	await _wait(240)
-	var player = GameManager.player
 	var rig: CameraRig = _main.camera_rig
 
-	# Stand beside Nia in the garden, camera looking at her face.
+	# Conversation close-ups with each villager, each line's expression.
+	for id in VILLAGERS:
+		var villager = GameManager.get_villager(id)
+		if not villager.visible:
+			continue
+		_stand_before(villager)
+		await _wait(20)
+		GameManager.start_conversation(villager)
+		await _wait(80)
+		await _shot("talk_" + String(id))
+		GameManager.end_conversation()
+		await _wait(30)
+
+	# Normal third-person gameplay view beside a villager.
 	var nia = GameManager.get_villager(&"nia")
-	var nia_facing := Vector3(sin(nia.rotation.y), 0, cos(nia.rotation.y))
-	player.global_position = nia.global_position + nia_facing.rotated(Vector3.UP, 1.2) * 2.0 + Vector3(0, 0.4, 0)
-	player.face_towards(nia.global_position)
-	rig.yaw = player.model.rotation.y + PI + 0.9
-	rig.distance = 3.4
-	rig.pitch = -0.12
-	await _wait(60)
-	await _shot("villager_closeup")
-
+	_stand_before(nia)
+	var player = GameManager.player
+	rig.yaw = player.model.rotation.y + PI + 0.7
+	rig.pitch = -0.25
 	rig.distance = 5.5
-	rig.pitch = -0.3
-	player.global_position = VillageLayout.ground_point(9.0, 2.0) + Vector3(0, 0.3, 0)
-	player.model.rotation.y = -PI * 0.6
-	rig.yaw = player.model.rotation.y + PI
-	await _wait(60)
-	await _shot("explore_morning")
+	await _wait(80)
+	await _shot("third_person")
 
+	# Village View, selecting a villager zooms in and shows their portrait.
 	GameManager.toggle_camera_mode()
-	await _wait(2)
-	rig.manage_focus = Vector3(-4.0, 0, -6.0)
-	rig.manage_yaw = deg_to_rad(20.0)
-	rig.manage_distance = 20.0
-	await _wait(90)
-	await _shot("village_view")
-
-	GameManager.toggle_camera_mode()
-	WorldClock.set_time(19.0)
 	await _wait(60)
-	player.global_position = VillageLayout.ground_point(0.0, 9.0) + Vector3(0, 0.3, 0)
-	player.model.rotation.y = PI
-	rig.yaw = 0.0
-	await _wait(120)
-	await _shot("evening_circle")
+	await _shot("village_view_default")
+	GameManager.select_villager(GameManager.get_villager(&"elias"))
+	await _wait(150)
+	await _shot("village_view_selected")
+	GameManager.select_villager(null)
+	GameManager.toggle_camera_mode()
 
-	WorldClock.set_time(10.5)
-	await _wait(200)
-	var mara = GameManager.get_villager(&"mara")
-	var mara_facing := Vector3(sin(mara.rotation.y), 0, cos(mara.rotation.y))
-	player.global_position = mara.global_position + mara_facing * 1.6 + Vector3(0, 0.3, 0)
-	player.face_towards(mara.global_position)
-	await _wait(20)
-	GameManager.start_conversation(mara)
-	await _wait(90)
-	await _shot("conversation")
+	# Evening at the meeting circle: faces under firelight.
+	WorldClock.set_time(19.6)
+	await _wait(400)
+	var sera = GameManager.get_villager(&"sera")
+	if sera.visible:
+		_stand_before(sera)
+		await _wait(20)
+		GameManager.start_conversation(sera)
+		await _wait(80)
+		await _shot("talk_evening")
 	get_tree().quit()

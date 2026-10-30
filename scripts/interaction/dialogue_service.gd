@@ -13,18 +13,18 @@ static func build_greeting(villager, actor_id: String) -> Array[String]:
 	var times_met := mind.memory.count("conversation", actor_id)
 
 	if times_met == 0:
-		lines.append("%s! I don't think we've met. I'm %s." % [time_greeting(WorldClock.time_of_day), data.display_name])
+		lines.append("[happy]%s! I don't think we've met. I'm %s." % [time_greeting(WorldClock.time_of_day), data.display_name])
 		for line in data.first_meeting_lines:
 			lines.append(line)
 	else:
 		var last := mind.memory.last("conversation", actor_id)
 		var days_since := WorldClock.day - int(last.get("day", WorldClock.day))
 		if days_since <= 0:
-			lines.append("Back again already? Not that I mind.")
+			lines.append("[surprised]Back again already? Not that I mind.")
 		elif days_since == 1:
-			lines.append("%s. Good to see you again, we spoke just yesterday." % time_greeting(WorldClock.time_of_day))
+			lines.append("[happy]%s. Good to see you again, we spoke just yesterday." % time_greeting(WorldClock.time_of_day))
 		else:
-			lines.append("%s. It's been %d days since we last talked." % [time_greeting(WorldClock.time_of_day), days_since])
+			lines.append("[happy]%s. It's been %d days since we last talked." % [time_greeting(WorldClock.time_of_day), days_since])
 		if not data.returning_lines.is_empty():
 			lines.append(data.returning_lines[(times_met - 1) % data.returning_lines.size()])
 

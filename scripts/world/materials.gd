@@ -20,6 +20,27 @@ static func vertex_color() -> StandardMaterial3D:
 	return _cache["vertex_color"]
 
 
+## Faces and hair: softer than the world material. Wrapped diffuse lighting
+## keeps the shadow side of faces from going muddy, a faint rim light
+## separates heads from the background, and low specular avoids plastic skin.
+static func skin() -> StandardMaterial3D:
+	if not _cache.has("skin"):
+		var material := StandardMaterial3D.new()
+		material.vertex_color_use_as_albedo = true
+		material.vertex_color_is_srgb = true
+		material.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT_WRAP
+		material.roughness = 0.72
+		material.metallic_specular = 0.28
+		material.rim_enabled = true
+		material.rim = 0.22
+		material.rim_tint = 0.65
+		# Faces never fall into (self-)shadow: no shadow acne on curved skin
+		# and expressions stay readable under hat brims and roofs.
+		material.disable_receive_shadows = true
+		_cache["skin"] = material
+	return _cache["skin"]
+
+
 ## Warm glowing windows and lanterns. DayNightCycle drives emission at night.
 static func window_glow() -> StandardMaterial3D:
 	if not _cache.has("window_glow"):

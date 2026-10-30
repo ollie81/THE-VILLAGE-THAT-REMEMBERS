@@ -10,6 +10,7 @@ var _subtitle_label: Label
 var _text_label: Label
 var _continue_button: Button
 var _lines: Array[String] = []
+var _partner = null
 var _index: int = 0
 var _typing: bool = false
 
@@ -52,6 +53,7 @@ func _ready() -> void:
 
 func _on_conversation_started(villager, lines: Array[String]) -> void:
 	var data: VillagerData = villager.data
+	_partner = villager
 	_name_label.text = data.display_name
 	_subtitle_label.text = "%d · %s" % [data.age, data.role]
 	_lines = lines
@@ -60,10 +62,23 @@ func _on_conversation_started(villager, lines: Array[String]) -> void:
 	_show_line()
 
 
+## Lines may start with an expression tag such as "[laughing]".
+static func split_expression(line: String) -> Array:
+	if line.begins_with("[") and line.find("]") > 1:
+		var close := line.find("]")
+		return [StringName(line.substr(1, close - 1)), line.substr(close + 1).strip_edges()]
+	return [&"", line]
+
+
 func _show_line() -> void:
-	_text_label.text = _lines[_index]
+	var parts := split_expression(_lines[_index])
+	_text_label.text = parts[1]
 	_text_label.visible_ratio = 0.0
 	_typing = true
+	if _partner and is_instance_valid(_partner):
+		if parts[0] != &"":
+			_partner.model.set_expression(parts[0])
+		_partner.model.set_talking(true)
 	_continue_button.text = "Goodbye" if _index == _lines.size() - 1 else "Continue"
 
 
@@ -74,6 +89,8 @@ func _process(delta: float) -> void:
 	_text_label.visible_ratio = minf(_text_label.visible_ratio + delta * CHARACTERS_PER_SECOND / length, 1.0)
 	if _text_label.visible_ratio >= 1.0:
 		_typing = false
+		if _partner and is_instance_valid(_partner):
+			_partner.model.set_talking(false)
 
 
 func advance() -> void:

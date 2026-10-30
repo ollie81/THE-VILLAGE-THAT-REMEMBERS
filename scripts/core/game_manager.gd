@@ -98,6 +98,7 @@ func start_conversation(villager) -> bool:
 		return false
 	conversation_partner = villager
 	villager.begin_interaction(player)
+	player.model.set_expression(&"happy", 0.6)
 	var lines: Array[String] = DialogueService.build_greeting(villager, PLAYER_ID)
 	villager.mind.record_interaction(PLAYER_ID, "conversation", WorldClock.day, WorldClock.time_of_day)
 	conversation_started.emit(villager, lines)
@@ -111,4 +112,8 @@ func end_conversation() -> void:
 	conversation_partner = null
 	_conversation_ended_msec = Time.get_ticks_msec()
 	villager.end_interaction()
+	villager.model.set_talking(false)
+	villager.model.set_expression(&"neutral")
+	if player:
+		player.model.set_expression(&"neutral")
 	conversation_ended.emit(villager)
