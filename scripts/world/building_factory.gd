@@ -91,7 +91,7 @@ static func create(building: Dictionary) -> Node3D:
 	var kit := Kit.new(hash(id))
 	match String(building["type"]):
 		"house":
-			_build_house(kit, root, building["owner"])
+			_build_house(kit, building["owner"])
 		"storage":
 			_build_storage(kit)
 		"workshop":
@@ -122,7 +122,7 @@ static func _base_height(position: Vector3, footprint: Vector2, yaw: float) -> f
 
 # --- Homes ----------------------------------------------------------------------
 
-static func _build_house(kit: Kit, root: Node3D, owner: String) -> void:
+static func _build_house(kit: Kit, owner: String) -> void:
 	var style: Dictionary = HOUSE_STYLES.get(owner, HOUSE_STYLES["mara"])
 	var wall: Color = style["wall"]
 	var roof: Color = style["roof"]
@@ -310,13 +310,13 @@ static func _build_garden(kit: Kit) -> void:
 	# Low woven fence with a gap at the front gate.
 	for i in 19:
 		var x := -half.x + i * 0.5
-		m.add_box_at(Vector3(x, 0.35, half.y), Vector3(0.08, 0.7, 0.08), WOOD) # back
+		m.add_box_at(Vector3(x, 0.2, half.y), Vector3(0.08, 1.0, 0.08), WOOD) # back
 		if absf(x) > 0.9:
-			m.add_box_at(Vector3(x, 0.35, -half.y), Vector3(0.08, 0.7, 0.08), WOOD)
+			m.add_box_at(Vector3(x, 0.2, -half.y), Vector3(0.08, 1.0, 0.08), WOOD)
 	for i in 15:
 		var z := -half.y + i * 0.5
-		m.add_box_at(Vector3(-half.x, 0.35, z), Vector3(0.08, 0.7, 0.08), WOOD)
-		m.add_box_at(Vector3(half.x, 0.35, z), Vector3(0.08, 0.7, 0.08), WOOD)
+		m.add_box_at(Vector3(-half.x, 0.2, z), Vector3(0.08, 1.0, 0.08), WOOD)
+		m.add_box_at(Vector3(half.x, 0.2, z), Vector3(0.08, 1.0, 0.08), WOOD)
 	for h in [0.3, 0.58]:
 		m.add_box_at(Vector3(0, h, half.y), Vector3(half.x * 2.0, 0.06, 0.05), WOOD_LIGHT)
 		m.add_box_at(Vector3(-half.x, h, 0), Vector3(0.05, 0.06, half.y * 2.0), WOOD_LIGHT)
@@ -348,7 +348,7 @@ static func _build_garden(kit: Kit) -> void:
 	var beds: Array[Vector3] = [Vector3(-2.4, 0, -1.4), Vector3(2.4, 0, -1.4), Vector3(-2.4, 0, 1.6), Vector3(2.4, 0, 1.6)]
 	for b in beds.size():
 		var center := beds[b]
-		m.add_box_at(center + Vector3(0, 0.18, 0), Vector3(3.0, 0.36, 1.3), WOOD)
+		m.add_box_at(center + Vector3(0, 0.08, 0), Vector3(3.0, 0.56, 1.3), WOOD)
 		m.add_box_at(center + Vector3(0, 0.37, 0), Vector3(2.8, 0.04, 1.1), SOIL)
 		for i in 10:
 			var px := center.x - 1.2 + (i % 5) * 0.6
@@ -470,13 +470,13 @@ static func _fence_rail(m: MeshBuilder, world_origin: Vector3, from: Vector3, to
 static func _build_plaza(kit: Kit, root: Node3D) -> void:
 	var m := kit.mesh
 	var r := VillageLayout.PLAZA_RADIUS
-	m.add_cylinder_at(Vector3(0, -0.5, 0), r, r, 0.62, 24, Color(0.6, 0.58, 0.53))
-	m.add_cylinder_at(Vector3(0, -0.5, 0), r * 0.62, r * 0.62, 0.64, 18, Color(0.66, 0.62, 0.55))
+	m.add_cylinder_at(Vector3(0, -0.58, 0), r, r, 0.62, 24, Color(0.6, 0.58, 0.53))
+	m.add_cylinder_at(Vector3(0, -0.58, 0), r * 0.62, r * 0.62, 0.645, 18, Color(0.66, 0.62, 0.55))
 	# Paving stones dotted over the surface.
 	for i in 36:
 		var angle := m.rng.randf() * TAU
 		var dist := m.rng.randf_range(2.0, r - 0.4)
-		m.add_box_at(Vector3(cos(angle) * dist, 0.13, sin(angle) * dist), Vector3(0.6, 0.04, 0.45), STONE.lightened(m.rng.randf_range(-0.05, 0.12)), m.rng.randf() * PI)
+		m.add_box_at(Vector3(cos(angle) * dist, 0.05, sin(angle) * dist), Vector3(0.6, 0.04, 0.45), STONE.lightened(m.rng.randf_range(-0.05, 0.12)), m.rng.randf() * PI)
 	# Fire pit: ring of stones, logs and ash.
 	for i in 12:
 		var a := TAU * i / 12.0

@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.9, 0.72, 0.58, 1)
+hair_color = Color(0.62, 0.26, 0.12, 1)
+shirt_color = Color(0.15, 0.5, 0.55, 1)
+pants_color = Color(0.36, 0.26, 0.4, 1)
+accent_color = Color(0.95, 0.68, 0.2, 1)
+hair_style = "ponytail"
+accessories = PackedStringArray("scarf", "satchel")
+height_scale = 0.98
+build_width = 0.95
+stoop = 0.0
+
+[resource]
+script = ExtResource("1_data")
+id = &"sera"
+display_name = "Sera"
+age = 27
+role = "Trader & Storyteller"
+traits = PackedStringArray("Funny", "Social", "Adventurous")
+biography = "Sera has walked further than anyone in the village, and her stories get a little taller every time she tells them. She keeps the storehouse ledger and dreams of trade routes beyond the hills."
+appearance = SubResource("Resource_look")
+home_location = "home_sera"
+walk_speed = 1.8
+schedule = [{"hour": 7.5, "activity": "trade", "location": "storage", "label": "Counting stock at the storehouse"}, {"hour": 10.0, "activity": "wander", "location": "", "label": "Visiting everyone around the village"}, {"hour": 13.0, "activity": "explore", "location": "forest_edge", "label": "Exploring past the bridge"}, {"hour": 15.5, "activity": "trade", "location": "storage", "label": "Bartering at the storehouse"}, {"hour": 18.5, "activity": "socialize", "location": "plaza", "label": "Telling stories at the meeting circle"}, {"hour": 23.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("farm", "garden", "workshop", "bridge", "plaza", "build_site")
+first_meeting_lines = PackedStringArray("A traveller! Finally, someone who hasn't heard my stories yet.", "Did I ever tell you about the time I outran a bear? Well, it was more of a badger. A big one.")
+returning_lines = PackedStringArray("Three jars of honey for a good knife. Tomas says that's robbery. I say it's business.", "One day I'll follow the river all the way to the sea. You can come, if you carry the bags.", "Every story's true, if you tell it right.")
+activity_comments = {"trade": "Everything has a price. Mostly honey.", "explore": "Something's out there past those trees, I can feel it.", "socialize": "Pull up a seat, I'm just getting to the good part!", "wander": "Making my rounds. Somebody has to keep up with the gossip."}
+personality = {"openness": 0.9, "conscientiousness": 0.45, "extraversion": 0.95, "agreeableness": 0.7, "neuroticism": 0.3, "adventure": 0.9}

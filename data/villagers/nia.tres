@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.42, 0.28, 0.2, 1)
+hair_color = Color(0.08, 0.06, 0.05, 1)
+shirt_color = Color(0.3, 0.55, 0.35, 1)
+pants_color = Color(0.45, 0.35, 0.25, 1)
+accent_color = Color(0.88, 0.45, 0.66, 1)
+hair_style = "bun"
+accessories = PackedStringArray("flower", "satchel")
+height_scale = 0.95
+build_width = 0.92
+stoop = 0.0
+
+[resource]
+script = ExtResource("1_data")
+id = &"nia"
+display_name = "Nia"
+age = 24
+role = "Gardener & Herbalist"
+traits = PackedStringArray("Intelligent", "Curious", "Creative")
+biography = "Nia keeps the herb garden and a notebook full of sketches of every plant within a day's walk. She's sure the forest across the river hides remedies no one has named yet."
+appearance = SubResource("Resource_look")
+home_location = "home_nia"
+walk_speed = 1.7
+schedule = [{"hour": 6.5, "activity": "gather", "location": "garden", "label": "Watering the herb beds"}, {"hour": 10.0, "activity": "gather", "location": "forest_edge", "label": "Searching the forest edge for herbs"}, {"hour": 12.5, "activity": "gather", "location": "riverbank", "label": "Collecting reeds by the river"}, {"hour": 14.0, "activity": "gather", "location": "garden", "label": "Tending the herb garden"}, {"hour": 17.5, "activity": "wander", "location": ""}, {"hour": 19.5, "activity": "socialize", "location": "plaza"}, {"hour": 22.5, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("garden", "bridge", "riverbank", "forest_edge")
+first_meeting_lines = PackedStringArray("Oh! Careful, you nearly stepped on the chamomile. It's fine. Hello!", "Did you know willow bark eases fever? The trees across the river are full of it.")
+returning_lines = PackedStringArray("I found a mushroom yesterday that glows faintly at night. I'm calling it 'Nia's lantern'. Too vain?", "Lavender for sleep, sage for memory. Fitting, for this village.", "Every plant has a story. Most of them involve someone getting a stomach ache.")
+activity_comments = {"gather": "Hold on, I need to remember where this one grows.", "socialize": "Sera's telling the story about the river spirit again. I love that one.", "wander": "I'm just looking. You never know what's sprouted overnight."}
+personality = {"openness": 0.95, "conscientiousness": 0.6, "extraversion": 0.55, "agreeableness": 0.7, "neuroticism": 0.4, "curiosity": 0.95}

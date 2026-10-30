@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.6, 0.42, 0.3, 1)
+hair_color = Color(0.12, 0.09, 0.06, 1)
+shirt_color = Color(0.85, 0.78, 0.55, 1)
+pants_color = Color(0.25, 0.32, 0.45, 1)
+accent_color = Color(0.55, 0.25, 0.18, 1)
+hair_style = "curly"
+accessories = PackedStringArray("straw_hat", "beard")
+height_scale = 1.05
+build_width = 1.15
+stoop = 0.0
+
+[resource]
+script = ExtResource("1_data")
+id = &"elias"
+display_name = "Elias"
+age = 35
+role = "Farmer"
+traits = PackedStringArray("Generous", "Hardworking", "Patient")
+biography = "Elias was first in the fields every morning and the last to leave. Whatever the harvest, he makes sure nobody in the village goes hungry."
+appearance = SubResource("Resource_look")
+home_location = "home_elias"
+walk_speed = 1.5
+schedule = [{"hour": 5.0, "activity": "work", "location": "farm", "label": "Tending the crops at dawn", "anim": "work"}, {"hour": 12.0, "activity": "socialize", "location": "plaza", "label": "Sharing lunch at the meeting circle"}, {"hour": 13.0, "activity": "work", "location": "farm", "label": "Working the fields", "anim": "work"}, {"hour": 16.5, "activity": "work", "location": "storage", "label": "Storing the day's harvest"}, {"hour": 18.0, "activity": "socialize", "location": "plaza"}, {"hour": 21.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("farm", "plaza", "garden")
+first_meeting_lines = PackedStringArray("Welcome! You look like you could use a meal. There's always bread to spare at my table.", "The soil here is good. Treat it kindly and it remembers.")
+returning_lines = PackedStringArray("The wheat's turning gold. Another few weeks.", "Nothing grows faster for being shouted at. I've tried.", "Take a cabbage if you need one. Really, take two.")
+activity_comments = {"work": "Each row in its own time. You can't rush a field.", "socialize": "Good food tastes better when it's shared.", "rest": "Even the land rests. So should we."}
+personality = {"openness": 0.4, "conscientiousness": 0.8, "extraversion": 0.45, "agreeableness": 0.95, "neuroticism": 0.2, "patience": 0.95}

@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.78, 0.56, 0.42, 1)
+hair_color = Color(0.22, 0.13, 0.08, 1)
+shirt_color = Color(0.72, 0.3, 0.2, 1)
+pants_color = Color(0.3, 0.28, 0.25, 1)
+accent_color = Color(0.45, 0.3, 0.15, 1)
+hair_style = "short"
+accessories = PackedStringArray("tool_belt", "headband")
+height_scale = 1.0
+build_width = 1.1
+stoop = 0.0
+
+[resource]
+script = ExtResource("1_data")
+id = &"mara"
+display_name = "Mara"
+age = 29
+role = "Builder"
+traits = PackedStringArray("Practical", "Courageous", "Protective")
+biography = "Mara raised half the roofs in the village with her own hands. She is building a sixth house on the western edge, for whoever the village needs next."
+appearance = SubResource("Resource_look")
+home_location = "home_mara"
+walk_speed = 1.75
+schedule = [{"hour": 5.5, "activity": "socialize", "location": "plaza", "label": "Warming up by the morning fire"}, {"hour": 7.0, "activity": "work", "location": "build_site", "label": "Raising the frame of the new house", "anim": "work"}, {"hour": 12.0, "activity": "socialize", "location": "plaza", "label": "Eating lunch at the meeting circle"}, {"hour": 13.0, "activity": "work", "location": "storage", "label": "Hauling timber from the storehouse"}, {"hour": 15.0, "activity": "work", "location": "build_site", "label": "Fitting planks on the new house"}, {"hour": 18.0, "activity": "wander", "location": ""}, {"hour": 19.5, "activity": "socialize", "location": "plaza"}, {"hour": 22.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("bridge", "riverbank", "workshop", "plaza")
+first_meeting_lines = PackedStringArray("Mind the frame by the west path, it isn't braced yet.", "If anything ever threatens this village, you come find me first. Understood?")
+returning_lines = PackedStringArray("The new house is coming along. Slowly, but it'll stand for a hundred years.", "Tomas says I hammer like I'm angry at the nails. I'm not. Mostly.", "Walls keep out the weather. People keep out everything else.")
+activity_comments = {"work": "I can't stop long, these beams won't lift themselves.", "socialize": "A fire, some company... that's what we build for, isn't it?", "wander": "Just walking the village, checking every roof I've made."}
+personality = {"openness": 0.45, "conscientiousness": 0.85, "extraversion": 0.5, "agreeableness": 0.55, "neuroticism": 0.3, "courage": 0.9}

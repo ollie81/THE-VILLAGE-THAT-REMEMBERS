@@ -22,6 +22,17 @@ var villagers: Array = []
 var selected_villager = null
 var conversation_partner = null
 
+var _conversation_ended_msec: int = -100000
+
+
+## Clears per-scene references before the world is rebuilt (e.g. after a reset).
+func reset() -> void:
+	player = null
+	villagers.clear()
+	selected_villager = null
+	conversation_partner = null
+	camera_mode = CameraMode.EXPLORATION
+
 
 func register_player(node) -> void:
 	player = node
@@ -47,6 +58,12 @@ func get_villager(id: StringName):
 
 func is_in_conversation() -> bool:
 	return conversation_partner != null
+
+
+## Prevents the key press that closes a conversation from immediately opening
+## a new one.
+func can_start_interaction() -> bool:
+	return not is_in_conversation() and Time.get_ticks_msec() - _conversation_ended_msec > 400
 
 
 # --- Camera -------------------------------------------------------------------
@@ -92,5 +109,6 @@ func end_conversation() -> void:
 		return
 	var villager = conversation_partner
 	conversation_partner = null
+	_conversation_ended_msec = Time.get_ticks_msec()
 	villager.end_interaction()
 	conversation_ended.emit(villager)

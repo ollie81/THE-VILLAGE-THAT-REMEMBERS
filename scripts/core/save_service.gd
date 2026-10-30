@@ -37,13 +37,20 @@ func has_save() -> bool:
 	return not _data.is_empty()
 
 
-## Restores loaded state onto the freshly built world. Called once by Main.
-func apply_loaded_state() -> void:
+## Restores the saved time of day. Called before villagers are placed so they
+## appear where their schedule puts them at that time.
+func apply_saved_clock() -> void:
 	if not enabled or _data.is_empty():
 		return
 	var clock: Dictionary = _data.get("clock", {})
 	if not clock.is_empty():
 		WorldClock.from_dict(clock)
+
+
+## Restores loaded state onto the freshly built world. Called once by Main.
+func apply_loaded_state() -> void:
+	if not enabled or _data.is_empty():
+		return
 	var player_state: Dictionary = _data.get("player", {})
 	if GameManager.player and not player_state.is_empty():
 		GameManager.player.apply_save_data(player_state)
