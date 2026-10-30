@@ -5,15 +5,25 @@
 
 [sub_resource type="Resource" id="Resource_look"]
 script = ExtResource("2_look")
-skin_color = Color(0.9, 0.72, 0.58, 1)
-hair_color = Color(0.62, 0.26, 0.12, 1)
-shirt_color = Color(0.15, 0.5, 0.55, 1)
-pants_color = Color(0.36, 0.26, 0.4, 1)
-accent_color = Color(0.95, 0.68, 0.2, 1)
-hair_style = "ponytail"
-accessories = PackedStringArray("scarf", "satchel")
+skin_color = Color(0.86, 0.66, 0.53, 1)
+hair_color = Color(0.86, 0.7, 0.42, 1)
+eye_color = Color(0.22, 0.38, 0.28, 1)
+shirt_color = Color(0.46, 0.25, 0.52, 1)
+pants_color = Color(0.32, 0.22, 0.36, 1)
+accent_color = Color(0.66, 0.24, 0.46, 1)
+shoe_color = Color(0.4, 0.26, 0.15, 1)
+skirt_color = Color(0.52, 0.29, 0.57, 1)
+hat_color = Color(0.52, 0.34, 0.2, 1)
+hair_style = "long"
+accessories = PackedStringArray("wide_hat", "scarf", "satchel", "earrings")
+work_tool = ""
 height_scale = 0.98
-build_width = 0.95
+build_width = 0.96
+shoulder_width = 0.92
+hip_width = 1.05
+chest_shape = 0.6
+sleeve_length = 0.45
+tunic_length = 0.85
 stoop = 0.0
 
 [resource]

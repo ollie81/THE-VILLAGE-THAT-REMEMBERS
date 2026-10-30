@@ -43,6 +43,15 @@ func _run() -> void:
 		_check(villager != null, "villager %s present" % id)
 		if villager:
 			_check(villager.data.age == expected[id], "%s is %d" % [id, expected[id]])
+	# Characters are real skinned 3D meshes on a humanoid skeleton, within a mobile budget.
+	for villager in GameManager.villagers:
+		var model: CharacterModel = villager.model
+		var body := model.skeleton.get_node_or_null("Body") as MeshInstance3D
+		var triangles: int = body.mesh.surface_get_array_len(0) / 3 if body else 0
+		_check(model.skeleton.get_bone_count() == 19 and body != null and body.skin != null,
+			"%s has a skinned body on a 19-bone skeleton" % villager.data.display_name)
+		_check(triangles > 1500 and triangles < 9000, "%s body is %d triangles (budget 9000)" % [villager.data.display_name, triangles])
+		_check(model.animation_player.get_animation_list().size() >= 8, "%s has skeletal animations" % villager.data.display_name)
 	var distinct := {}
 	for villager in GameManager.villagers:
 		distinct["%d_%d" % [roundi(villager.global_position.x), roundi(villager.global_position.z)]] = true

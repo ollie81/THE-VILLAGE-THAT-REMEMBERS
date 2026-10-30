@@ -9,6 +9,7 @@ extends Node3D
 
 const EXPLORE_FOV := 68.0
 const MANAGE_FOV := 40.0
+const CONVERSATION_FOV := 45.0
 const TRANSITION_TIME := 0.9
 const TAP_MAX_DISTANCE := 14.0
 const VILLAGER_LAYER := 4
@@ -41,6 +42,8 @@ func _ready() -> void:
 	add_child(camera)
 	camera.make_current()
 	GameManager.camera_mode_changed.connect(_on_camera_mode_changed)
+	GameManager.conversation_started.connect(func(_v, _l): _transition = 0.0)
+	GameManager.conversation_ended.connect(func(_v): _transition = 0.0)
 	if target:
 		target.camera_rig = self
 		yaw = target.model.rotation.y + PI
@@ -76,6 +79,10 @@ func _process(delta: float) -> void:
 
 	var desired := _exploration_transform(delta) if mode == GameManager.CameraMode.EXPLORATION else _management_transform()
 	var desired_fov := EXPLORE_FOV if mode == GameManager.CameraMode.EXPLORATION else MANAGE_FOV
+	var partner = GameManager.conversation_partner
+	if partner != null and is_instance_valid(partner) and mode == GameManager.CameraMode.EXPLORATION:
+		desired = _conversation_transform(partner)
+		desired_fov = CONVERSATION_FOV
 	if _transition < 1.0:
 		_transition = minf(_transition + delta / TRANSITION_TIME, 1.0)
 		var t := smoothstep(0.0, 1.0, _transition)
@@ -126,6 +133,19 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 		_current_distance = lerpf(_current_distance, wanted, clampf(delta * 4.0, 0.0, 1.0))
 	var position := pivot + offset * _current_distance
 	return Transform3D(Basis.looking_at(pivot - position, Vector3.UP), position)
+
+
+## Over-the-shoulder framing of the villager's face while talking.
+func _conversation_transform(partner: Node3D) -> Transform3D:
+	var head_height := 1.62
+	var own := target.global_position + Vector3(0, head_height, 0)
+	var other := partner.global_position + Vector3(0, head_height * float(partner.data.appearance.height_scale), 0)
+	var flat := Vector3(other.x - own.x, 0.0, other.z - own.z)
+	var direction := flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
+	var right := direction.cross(Vector3.UP).normalized()
+	var position := own - direction * 1.25 + right * 0.55 + Vector3(0, 0.12, 0)
+	var look_point := other - Vector3(0, 0.12, 0) + right * 0.1
+	return Transform3D(Basis.looking_at(look_point - position, Vector3.UP), position)
 
 
 func _management_transform() -> Transform3D:

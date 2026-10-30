@@ -15,6 +15,18 @@ verified.
 | **Night** | **Meeting a villager** |
 | ![The village at night](docs/screenshots/night.png) | ![Dialogue with Mara](docs/screenshots/dialogue.png) |
 
+### The villagers
+
+| Front | Back |
+| --- | --- |
+| ![Characters from the front](docs/screenshots/characters_front.png) | ![Characters from behind](docs/screenshots/characters_back.png) |
+| **Running (skeletal animation)** | **Gathering (crouch, held tools)** |
+| ![Running](docs/screenshots/characters_run.png) | ![Gathering](docs/screenshots/characters_gather.png) |
+
+Left to right: Mara, Elias, Nia, Tomas, Sera, and the player. The target art direction is
+[`docs/concept/characters_concept.png`](docs/concept/characters_concept.png); see
+[Characters](#characters) for how close the current models get and how to reach it.
+
 *Screenshots are from Godot 4.3's OpenGL (Compatibility) fallback renderer on a CPU rasteriser. On
 phones the Mobile renderer is used, and lighting will look slightly different.*
 
@@ -26,8 +38,9 @@ phones the Mobile renderer is used, and lighting will look slightly different.*
 | --- | --- |
 | World | Procedural low-poly terrain (flat village, hills at the edges), river valley with flowing water shader, arched wooden bridge, forest across the river, meadows, rocks, reeds, mushrooms, wind-swept grass and flowers |
 | Buildings | Five homes (each with its owner's colours and personal props), meeting circle with fire pit, log benches and story stone, fenced farm with wheat/cabbage/carrot rows and a scarecrow, herb garden with raised beds and trellis, open workshop with workbench and anvil, storehouse with crates and barrels, Mara's half-built sixth house, the old "memory oak", lantern posts |
-| Player | Walk, run, jump, smooth turning, gravity, collision with buildings, trees, villagers, river banks and world edge. Procedural walk/run/jump/idle/talk animation |
-| Cameras | Third-person orbit camera with wall avoidance, and a high "Village View" management camera (pan, zoom, rotate, tap a villager for their info card). Smooth blend between them |
+| Characters | Fully modelled 3D people: skinned meshes on a 19-bone humanoid skeleton with anatomical torso, limbs, hands with fingers, shoes, sculpted faces (eyes, brows, nose, lips, ears), layered clothing, hair and accessories. Keyframed skeletal animations (idle, walk, run, jump, work, gather, talk, wave) with cross-fading and held tools |
+| Player | Walk, run, jump, smooth turning, gravity, collision with buildings, trees, villagers, river banks and world edge |
+| Cameras | Third-person orbit camera with wall avoidance, a high "Village View" management camera (pan, zoom, rotate, tap a villager for their info card), and an over-the-shoulder conversation camera. Smooth blends between them |
 | Villagers | Mara, Elias, Nia, Tomas and Sera, each with a distinct look, age, role, traits, biography, walking speed and daily schedule. They walk the village paths, work, gather, trade, chat at the fire, go home at night and come out in the morning |
 | Day / night | Moving sun and moon, keyframed sky colours, custom sky shader with stars and moon, ambient and fog colour changes, glowing windows, lanterns and fire light at night. Speed up time with **T** or the *Time ×* button |
 | Interaction | Walk up to a villager and press **E** (or tap *Talk*). They stop, face you and introduce themselves. On later visits they remember you ("It's been 3 days since we last talked") |
@@ -137,8 +150,12 @@ scripts/
     player_controller.gd     CharacterBody3D movement
     camera_rig.gd            Exploration and management cameras
   characters/
-    character_appearance.gd  Resource describing how someone looks
-    character_model.gd       Procedural humanoid and state-based procedural animation
+    character_appearance.gd  Resource describing how someone looks (colours, body, clothes, hair)
+    character_model.gd       Skeleton + skinned body + AnimationPlayer + held tool; set_animation()
+    humanoid_rig.gd          19-bone skeleton (Godot humanoid bone names), rest pose
+    humanoid_mesh_builder.gd Generates the skinned body, face, clothing, hair and accessories
+    humanoid_animations.gd   Bakes the skeletal animation library (per posture)
+    skinned_mesh_tool.gd     Low-level skinned geometry: lofts, ellipsoids, smooth normals
   villagers/
     villager_data.gd         Static identity resource
     villager.gd              Runtime villager: walk, perform, sleep, talk
@@ -153,6 +170,8 @@ scripts/
     dialogue_service.gd      Builds what a villager says
   ui/                      HUD, dialogue, villager card, settings, touch controls, theme
 tests/                     Headless smoke test
+tools/                     Character gallery and in-game screenshot tools (see Characters)
+docs/                      Screenshots and the character concept art
 ```
 
 ### Architecture notes
@@ -189,6 +208,44 @@ tests/                     Headless smoke test
 
 ---
 
+## Characters
+
+Every person is a real 3D model built at load time from their `CharacterAppearance`:
+
+- **Skeleton.** `HumanoidRig` has 19 bones named after Godot's `SkeletonProfileHumanoid` (`Hips`,
+  `Spine`, `Chest`, `Neck`, `Head`, `LeftUpperArm`, `LeftLowerArm`, `LeftHand`, `LeftUpperLeg`, and so on).
+- **Body.** `HumanoidMeshBuilder` lofts smooth cross-sections into one skinned mesh. Vertices at the
+  elbows, knees, shoulders and waist are weighted between two bones so they bend instead of breaking.
+  Long skirts are weighted toward the thigh on each side so they swing with the legs.
+- **Animation.** `HumanoidAnimations` bakes real keyframed rotation tracks (plus a hips position track)
+  into an `AnimationLibrary`. `CharacterModel.set_animation()` cross-fades between clips and matches
+  walk and run playback speed to movement speed. Each character's posture (Tomas's stoop) is baked in.
+- **Budget.** Each villager is about 3,500–4,200 triangles in one draw call, plus a small tool mesh.
+
+To review character art without playing, render every character from five angles and in every
+animation:
+
+```bash
+godot --path . res://tools/character_gallery.tscn -- --out=/tmp/gallery
+godot --path . res://tools/game_screenshots.tscn -- --out=/tmp/shots   # in-game views
+```
+
+### Reaching the concept art
+
+The concept art is painted, semi-realistic work: sculpted faces, cloth folds, textured leather,
+individual braids. Code-generated geometry can't reach that fidelity; it needs artist-authored models.
+The project is set up so they can drop in:
+
+1. Model and texture each character in Blender (or a character creator), rigged to a humanoid skeleton.
+2. Export as glTF (`.glb`) and import into Godot. In the import dialog, set the skeleton's
+   *Bone Map* to `SkeletonProfileHumanoid` so the bones get the same names used here.
+3. In `CharacterModel._build()`, instance the imported scene instead of calling `HumanoidMeshBuilder`.
+   Keep the `Skeleton3D` named `Skeleton3D`.
+
+The existing `HumanoidAnimations` clips then drive the imported model, or imported clips (such as
+Mixamo animations retargeted through the same bone map) can replace them. The player, villager,
+camera and test code don't change.
+
 ## Status
 
 ### Implemented
@@ -199,7 +256,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **51/51 checks** (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **66/66 checks**, including the skeleton, skinning, triangle budget and animation set of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
@@ -214,8 +271,11 @@ Tested with **Godot 4.3-stable** (official Linux build):
 
 ### Known limitations
 
-- Animations are procedural placeholders (limb swings), not authored clips. `CharacterModel.set_animation()`
-  is the seam where an `AnimationTree` with imported models can be added later.
+- Characters are stylised and code-generated, so they're simpler than the painted concept art. There are
+  no textures, cloth folds or facial expressions yet. See [Reaching the concept art](#reaching-the-concept-art).
+- Skeletal animations are hand-keyed in code (no motion capture), and feet aren't IK-planted on slopes.
+- Tomas is 61 in the design brief but looks about 30 in the concept art. The game follows the brief
+  (grey hair and beard).
 - Changing the grass density preset applies on the next launch. Everything else applies immediately.
 - Villagers do not avoid each other. They wait briefly if the player blocks their way, then carry on.
 - Villagers sleep indoors (hidden). Houses have no interiors yet.

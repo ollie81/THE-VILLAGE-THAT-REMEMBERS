@@ -314,7 +314,8 @@ func _update_label_visibility() -> void:
 		return
 	var managing := GameManager.camera_mode == GameManager.CameraMode.MANAGEMENT
 	var near := camera.global_position.distance_to(global_position) < NAME_LABEL_DISTANCE
-	name_label.visible = managing or near or GameManager.selected_villager == self
+	# The dialogue box already shows the name while talking.
+	name_label.visible = (managing or near or GameManager.selected_villager == self) and state != State.INTERACTING
 	name_label.pixel_size = 0.009 if managing else 0.004
 
 

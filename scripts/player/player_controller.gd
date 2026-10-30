@@ -37,7 +37,7 @@ func _ready() -> void:
 	shape.position = Vector3(0, 0.85, 0)
 	add_child(shape)
 
-	model = CharacterModel.new(_create_appearance())
+	model = CharacterModel.new(create_default_appearance())
 	model.name = "Model"
 	add_child(model)
 
@@ -46,14 +46,15 @@ func _ready() -> void:
 	GameManager.register_player(self)
 
 
-func _create_appearance() -> CharacterAppearance:
+## The traveller's look. Static so tools (character gallery) can reuse it.
+static func create_default_appearance() -> CharacterAppearance:
 	var look := CharacterAppearance.new()
-	look.skin_color = Color(0.8, 0.6, 0.46)
+	look.skin_color = Color(0.76, 0.55, 0.41)
 	look.hair_color = Color(0.32, 0.2, 0.12)
 	look.shirt_color = Color(0.86, 0.82, 0.7)
 	look.pants_color = Color(0.28, 0.3, 0.36)
 	look.accent_color = Color(0.22, 0.34, 0.55)
-	look.hair_style = "short"
+	look.hair_style = "curly"
 	look.accessories = PackedStringArray(["cloak", "backpack"])
 	return look
 
