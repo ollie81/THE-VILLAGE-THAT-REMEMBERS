@@ -6,3 +6,4 @@
 *.apk
 *.aab
 export_credentials.cfg
+/build/

@@ -1,0 +1,77 @@
+# Runs the smoke test and builds an installable Android APK on every push.
+# Download the APK from the run's "Artifacts" section on GitHub.
+name: Test and build Android APK
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.3"
+
+jobs:
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-22.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import project
+        run: godot --headless --path . --import || true
+      - name: Run smoke test
+        run: timeout 900 godot --headless --path . res://tests/smoke_test.tscn
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-22.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up export templates and Android SDK
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates ~/.config
+          if [ -d /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ] && [ ! -d ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable ]; then
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/
+          fi
+          if [ -d /root/.config/godot ] && [ ! -d ~/.config/godot ]; then
+            cp -r /root/.config/godot ~/.config/godot
+          fi
+          mkdir -p ~/.config/godot
+          for f in ~/.config/godot/editor_settings-4.tres ~/.config/godot/editor_settings-${GODOT_VERSION}.tres; do
+            if [ ! -f "$f" ]; then
+              printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\n' > "$f"
+            fi
+            echo 'export/android/android_sdk_path = "/usr/lib/android-sdk"' >> "$f"
+            echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> "$f"
+          done
+          ls ~/.local/share/godot/export_templates/
+
+      - name: Create debug signing key
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$GITHUB_WORKSPACE/debug.keystore" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
+
+      - name: Import project
+        run: godot --headless --path . --import || true
+
+      - name: Export APK
+        run: |
+          mkdir -p build/android
+          godot --headless --path . --export-debug "Android" build/android/TheVillageThatRemembers.apk
+          ls -la build/android
+          test -s build/android/TheVillageThatRemembers.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheVillageThatRemembers-apk
+          path: build/android/TheVillageThatRemembers.apk
+          if-no-files-found: error
