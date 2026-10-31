@@ -9,7 +9,9 @@ extends Node3D
 ##   │  ├─ Head (MeshInstance3D) skinned head, face and hair with facial
 ##   │  │                         expression blend shapes
 ##   │  └─ ToolAttachment         BoneAttachment3D on the right hand
-##   └─ AnimationPlayer          baked HumanoidAnimations clips
+##   ├─ AnimationPlayer          baked HumanoidAnimations clips (library)
+##   └─ AnimationTree            blends them: idle <-> walk/run by speed,
+##                               cross-fades to actions (jump, work, talk...)
 ##
 ## Controllers only call set_animation(state, speed), so the procedural body
 ## can later be swapped for an imported, artist-made glTF model that uses the
@@ -19,10 +21,17 @@ extends Node3D
 
 const BLEND_TIME := 0.22
 const WORK_ANIMATIONS: Array[StringName] = [&"work", &"gather"]
+## States that play through the speed-driven locomotion blend.
+const LOCOMOTION: Array[StringName] = [&"idle", &"walk", &"run"]
+## Full-body actions, cross-faded over locomotion.
+const ACTIONS: Array[StringName] = [&"jump", &"work", &"gather", &"talk", &"wave"]
+## How fast the movement blend follows changes in speed (per second).
+const SPEED_SMOOTHING := 8.0
 
 var appearance: CharacterAppearance
 var skeleton: Skeleton3D
 var animation_player: AnimationPlayer
+var animation_tree: AnimationTree
 var head: MeshInstance3D
 
 const EXPRESSION_FADE := 0.3
@@ -42,6 +51,9 @@ var _rng := RandomNumberGenerator.new()
 
 var _state: StringName = &""
 var _tool: Node3D
+var _target_speed: float = 0.0
+var _speed: float = 0.0
+var _move_amount: float = 0.0
 
 
 func _init(look: CharacterAppearance = null) -> void:
@@ -103,29 +115,95 @@ func _build() -> void:
 	animation_player.name = "AnimationPlayer"
 	add_child(animation_player)
 	animation_player.add_animation_library(&"", HumanoidAnimations.get_library(appearance.stoop))
+	_build_animation_tree()
+
+
+## idle ──────────────────┐
+##                        ├─ move (Blend2 by movement) ─┐
+## walk ─┬─ loco (1D by    │                            ├─ action (Transition) ─ output
+## run  ─┘  speed) ─ rate ─┘          jump, work, ... ──┘
+func _build_animation_tree() -> void:
+	var root := AnimationNodeBlendTree.new()
+	var loco := AnimationNodeBlendSpace1D.new()
+	loco.min_space = HumanoidAnimations.WALK_SPEED
+	loco.max_space = HumanoidAnimations.RUN_SPEED
+	loco.sync = true
+	loco.add_blend_point(_clip(&"walk"), HumanoidAnimations.WALK_SPEED)
+	loco.add_blend_point(_clip(&"run"), HumanoidAnimations.RUN_SPEED)
+	root.add_node(&"loco", loco, Vector2(0, 100))
+	root.add_node(&"rate", AnimationNodeTimeScale.new(), Vector2(200, 100))
+	root.connect_node(&"rate", 0, &"loco")
+	root.add_node(&"idle", _clip(&"idle"), Vector2(200, 0))
+	var move := AnimationNodeBlend2.new()
+	move.sync = true
+	root.add_node(&"move", move, Vector2(400, 50))
+	root.connect_node(&"move", 0, &"idle")
+	root.connect_node(&"move", 1, &"rate")
+	var action := AnimationNodeTransition.new()
+	action.xfade_time = BLEND_TIME
+	action.input_count = 1 + ACTIONS.size()
+	action.set_input_name(0, "move")
+	root.add_node(&"action", action, Vector2(600, 50))
+	root.connect_node(&"action", 0, &"move")
+	for i in ACTIONS.size():
+		action.set_input_name(i + 1, String(ACTIONS[i]))
+		root.add_node(ACTIONS[i], _clip(ACTIONS[i]), Vector2(400, 200 + i * 80))
+		root.connect_node(&"action", i + 1, ACTIONS[i])
+	root.connect_node(&"output", 0, &"action")
+
+	animation_tree = AnimationTree.new()
+	animation_tree.name = "AnimationTree"
+	add_child(animation_tree)
+	animation_tree.anim_player = animation_tree.get_path_to(animation_player)
+	animation_tree.tree_root = root
+	animation_tree.active = true
+	_apply_locomotion()
+
+
+static func _clip(clip_name: StringName) -> AnimationNodeAnimation:
+	var node := AnimationNodeAnimation.new()
+	node.animation = clip_name
+	return node
 
 
 ## Plays a looping state (idle, walk, run, jump, work, gather, talk, wave).
-## `speed` is the movement speed in m/s for walk/run so feet don't slide.
+## `speed` is the movement speed in m/s for walk/run: the walk-to-run blend
+## and the playback rate follow it, so feet move at the speed of the body.
+## Every change cross-fades; nothing snaps.
 func set_animation(state: StringName, speed: float = 0.0) -> void:
-	if animation_player == null:
-		_state = state
-		return
-	if not animation_player.has_animation(state):
+	if not (state in LOCOMOTION or state in ACTIONS):
 		state = &"idle"
-	match state:
-		&"walk":
-			animation_player.speed_scale = clampf(speed / HumanoidAnimations.WALK_SPEED, 0.6, 1.6) if speed > 0.0 else 1.0
-		&"run":
-			animation_player.speed_scale = clampf(speed / HumanoidAnimations.RUN_SPEED, 0.7, 1.4) if speed > 0.0 else 1.0
-		_:
-			animation_player.speed_scale = 1.0
-	if state == _state and animation_player.is_playing():
+	if state == &"walk" or state == &"run":
+		var fallback := HumanoidAnimations.RUN_SPEED if state == &"run" else HumanoidAnimations.WALK_SPEED
+		_target_speed = speed if speed > 0.0 else fallback
+	else:
+		_target_speed = 0.0
+	if state == _state:
 		return
 	_state = state
-	animation_player.play(state, BLEND_TIME)
+	if animation_tree:
+		var request := "move" if state in LOCOMOTION else String(state)
+		animation_tree.set("parameters/action/transition_request", request)
 	if _tool:
 		_tool.visible = state in WORK_ANIMATIONS
+
+
+## Pushes the smoothed speed into the blend tree.
+func _apply_locomotion() -> void:
+	if animation_tree == null:
+		return
+	var moving := _speed > 0.05
+	var walk := HumanoidAnimations.WALK_SPEED
+	var run := HumanoidAnimations.RUN_SPEED
+	var blend_speed := clampf(_speed, walk, run)
+	var t := (blend_speed - walk) / (run - walk)
+	var stride := lerpf(HumanoidAnimations.WALK_STRIDE, HumanoidAnimations.RUN_STRIDE, t)
+	# Cycles per second so one cycle covers one stride. Below walking speed
+	# keep a natural slow cadence and let the idle blend take over.
+	var rate := maxf(_speed, walk * 0.6) / stride if moving else walk / HumanoidAnimations.WALK_STRIDE
+	animation_tree.set("parameters/loco/blend_position", blend_speed)
+	animation_tree.set("parameters/rate/scale", rate)
+	animation_tree.set("parameters/move/blend_amount", _move_amount)
 
 
 func get_animation() -> StringName:
@@ -170,6 +248,11 @@ func get_face_position() -> Vector3:
 
 
 func _process(delta: float) -> void:
+	var smoothing := clampf(delta * SPEED_SMOOTHING, 0.0, 1.0)
+	_speed = lerpf(_speed, _target_speed, smoothing)
+	var moving_target := clampf(_target_speed / (HumanoidAnimations.WALK_SPEED * 0.5), 0.0, 1.0)
+	_move_amount = move_toward(_move_amount, moving_target, delta / BLEND_TIME)
+	_apply_locomotion()
 	if head == null:
 		return
 	for shape in _targets:

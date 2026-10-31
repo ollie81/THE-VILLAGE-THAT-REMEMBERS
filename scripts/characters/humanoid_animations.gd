@@ -9,16 +9,21 @@ extends RefCounted
 ## library, so the same motion reads differently per character.
 
 const B := HumanoidRig.Bone
-## Movement speeds the walk and run cycles were authored for (m/s).
+## Locomotion. Walk and run share one phase convention and the same clip
+## length, so CharacterModel can blend them at any speed in between without
+## the legs fighting each other. Playback rate comes from the stride.
 const WALK_SPEED := 1.5
 const RUN_SPEED := 5.6
+## Distance covered by one full gait cycle (two steps), in metres.
+const WALK_STRIDE := 1.45
+const RUN_STRIDE := 3.7
 const SAMPLES := 16
 
 ## name -> [length (s), pose method]
 const CLIPS := {
 	&"idle": [4.0, "_idle"],
 	&"walk": [1.0, "_walk"],
-	&"run": [0.68, "_run"],
+	&"run": [1.0, "_run"],
 	&"jump": [1.2, "_jump"],
 	&"work": [1.1, "_work"],
 	&"gather": [2.4, "_gather"],
@@ -162,20 +167,23 @@ func _gait(x: float, thigh_mid: float, thigh_amp: float, knee_base: float, knee_
 		_leg(p, side, thigh, knee, foot)
 		var swing := 0.04 + arm_amp * _c(q)
 		_arm(p, side, swing, 0.08 + absf(lean) * 0.2, elbow - 0.25 * (0.5 - 0.5 * _c(q)) * absf(arm_amp) * 2.0)
-	p[B.HIPS] = Vector3(0, -twist * _c(x), 0.025 * _s(x * 2.0 + 0.25))
-	p[B.SPINE] = Vector3(lean * 0.6, 0, 0)
-	p[B.CHEST] = Vector3(lean * 0.4, twist * 1.3 * _c(x), 0)
-	p[B.HEAD] = Vector3(-lean * 0.6, -twist * 0.3 * _c(x), 0)
-	p["hips"] = Vector3(0, -bob * 0.5 - bob * 0.5 * _c(x * 2.0), 0)
+	# Pelvis turns with the swinging leg and drops toward the unsupported side;
+	# shoulders counter-rotate and the head stays level and forward.
+	p[B.HIPS] = Vector3(0, -twist * _c(x), 0.045 * _s(x) + 0.02 * _s(x * 2.0 + 0.25))
+	p[B.SPINE] = Vector3(lean * 0.6, twist * 0.6 * _c(x), -0.03 * _s(x))
+	p[B.CHEST] = Vector3(lean * 0.4 + 0.02 * _c(x * 2.0), twist * 1.4 * _c(x), -0.02 * _s(x))
+	p[B.NECK] = Vector3(0, -twist * 0.9 * _c(x), 0.025 * _s(x))
+	p[B.HEAD] = Vector3(-lean * 0.6 - 0.02 * _c(x * 2.0), -twist * 0.9 * _c(x), 0.02 * _s(x))
+	p["hips"] = Vector3(0.022 * _s(x), -bob * 0.5 - bob * 0.5 * _c(x * 2.0), 0)
 	return p
 
 
 func _walk(x: float) -> Dictionary:
-	return _gait(x, -0.04, 0.38, 0.06, 0.95, 0.3, -0.22, 0.05, 0.026, 0.08)
+	return _gait(x, -0.04, 0.4, 0.06, 0.95, 0.48, -0.3, 0.06, 0.03, 0.11)
 
 
 func _run(x: float) -> Dictionary:
-	var p := _gait(x, -0.18, 0.72, 0.25, 1.7, 0.65, -1.25, 0.2, 0.05, 0.12)
+	var p := _gait(x, -0.18, 0.72, 0.25, 1.7, 0.7, -1.3, 0.2, 0.055, 0.16)
 	return p
 
 

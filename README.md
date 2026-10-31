@@ -232,8 +232,9 @@ Every person is a real 3D model built at load time from their `CharacterAppearan
   elbows, knees, shoulders and waist are weighted between two bones so they bend instead of breaking.
   Long skirts are weighted toward the thigh on each side so they swing with the legs.
 - **Animation.** `HumanoidAnimations` bakes real keyframed rotation tracks (plus a hips position track)
-  into an `AnimationLibrary`. `CharacterModel.set_animation()` cross-fades between clips and matches
-  walk and run playback speed to movement speed. Each character's posture (Tomas's stoop) is baked in.
+  into an `AnimationLibrary`. An `AnimationTree` blends idle into a walk/run mix driven by actual speed,
+  sets playback rate from stride length so feet don't slide, and cross-fades into actions (jump, work,
+  gather, talk, wave). Each character's posture (Tomas's stoop) is baked in.
 - **Budget.** Each villager is about 3,500–4,200 triangles in one draw call, plus a small tool mesh.
 
 ### Faces

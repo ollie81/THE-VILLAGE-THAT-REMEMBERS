@@ -1278,18 +1278,51 @@ func _build_apron() -> void:
 
 func _build_cloak() -> void:
 	var cloth := look.accent_color
+	# [y, half_width, z, bone]: a sheet hanging down the back. Below the hips
+	# each side follows the thigh behind it, so the cloak swings with the
+	# stride instead of hiding the legs like a board.
 	var rows := [
-		[1.46, 0.13, -0.06, _bind(B.CHEST)],
-		[1.3, 0.19, _torso_back(1.3) - 0.02, _bind(B.CHEST)],
-		[1.1, 0.205, _torso_back(1.1) - 0.03, _blend(B.SPINE, B.CHEST, 0.4)],
-		[0.9, 0.22, -0.15, _bind(B.HIPS)],
-		[0.65, 0.235, -0.17, _bind(B.HIPS)],
-		[0.48, 0.24, -0.18, _bind(B.HIPS)],
+		[1.46, 0.13, -0.06, B.CHEST, 0.0],
+		[1.3, 0.19, _torso_back(1.3) - 0.02, B.CHEST, 0.0],
+		[1.1, 0.205, _torso_back(1.1) - 0.03, B.SPINE, 0.0],
+		[0.9, 0.22, -0.15, B.HIPS, 0.15],
+		[0.72, 0.232, -0.165, B.HIPS, 0.45],
+		[0.58, 0.238, -0.175, B.HIPS, 0.62],
+		[0.48, 0.24, -0.18, B.HIPS, 0.7],
 	]
-	var rings: Array = []
+	var segments := 10
+	var grid: Array = []
+	var binds: Array = []
 	for row in rows:
-		rings.append(SkinnedMeshTool.ring(Vector3(0, row[0], row[2]), row[1], 0.01, 0.01, row[3], cloth))
-	t.loft(rings, 10)
+		var points: Array[Vector3] = []
+		var row_binds: Array[Vector3] = []
+		for k in segments + 1:
+			var a := lerpf(PI + 0.25, TAU - 0.25, float(k) / segments)
+			var x := cos(a) * float(row[1])
+			points.append(Vector3(x, row[0], float(row[2]) + sin(a) * 0.02))
+			var bone: int = row[3]
+			var follow: float = row[4] * clampf(absf(x) / 0.12, 0.0, 1.0)
+			if follow > 0.0:
+				var leg := B.LEFT_UPPER_LEG if x > 0.0 else B.RIGHT_UPPER_LEG
+				row_binds.append(_blend(bone, leg, follow))
+			elif bone == B.SPINE:
+				row_binds.append(_blend(B.SPINE, B.CHEST, 0.4))
+			else:
+				row_binds.append(_bind(bone))
+		grid.append(points)
+		binds.append(row_binds)
+	for i in rows.size() - 1:
+		var lower: Array[Vector3] = grid[i]
+		var upper: Array[Vector3] = grid[i + 1]
+		var lb: Array[Vector3] = binds[i]
+		var ub: Array[Vector3] = binds[i + 1]
+		var center := Vector3(0, (float(rows[i][0]) + float(rows[i + 1][0])) * 0.5, 0.2)
+		for k in segments:
+			# Both faces, so the inside of the cloak is visible when it swings.
+			for side: float in [1.0, -1.0]:
+				var c := center if side > 0.0 else Vector3(center.x, center.y, -1.0)
+				t.triangle(lower[k], lower[k + 1], upper[k + 1], cloth.darkened(0.0 if side > 0.0 else 0.2), c, lb[k], lb[k + 1], ub[k + 1])
+				t.triangle(lower[k], upper[k + 1], upper[k], cloth.darkened(0.0 if side > 0.0 else 0.2), c, lb[k], ub[k + 1], ub[k])
 	# Gathered hood around the neck.
 	t.loft([
 		SkinnedMeshTool.ring(Vector3(0, 1.44, -0.03), 0.12, 0.085, 0.11, _bind(B.CHEST), cloth.darkened(0.1)),
