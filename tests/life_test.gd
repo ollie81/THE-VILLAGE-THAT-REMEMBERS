@@ -152,8 +152,16 @@ func _run() -> void:
 	var greeter = GameManager.get_villager(&"elias")
 	greeter.visible = true
 	greeter.state = Villager.State.IDLE
+	for v in GameManager.villagers:
+		if v._bubble:
+			v._bubble.visible = false
+		v._reaction_time = 0.0
 	player.global_position = greeter.global_position + Vector3(1.5, 0.4, 0)
-	await _frames(40)
+	# Greetings are checked twice a second; give a slow machine time.
+	for i in 600:
+		await _frames(1)
+		if not GameState.get_flag(&"slept_outside"):
+			break
 	_check(greeter._bubble != null and greeter._bubble.visible, "villagers greet you as you pass: \"%s\"" % (greeter._bubble.text if greeter._bubble else ""))
 	_check(not GameState.get_flag(&"slept_outside"), "someone mentions you slept outside")
 
