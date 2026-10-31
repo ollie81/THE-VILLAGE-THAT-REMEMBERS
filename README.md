@@ -222,6 +222,23 @@ docs/                      Screenshots and the character concept art
 
 ---
 
+## Milestone 2: the village remembers
+
+- **Conversations with choices.** Each villager has three personal topics that unfold over your visits
+  (`scripts/dialogue/conversation_library.gd`). You answer with one of three choices: helpful,
+  curious, or careless or rude.
+- **Opinions.** Every villager keeps a *warmth* and a *trust* score for you (`VillagerMind`). Your
+  choices move them, and they shape greetings ("There you are! I was hoping you'd come by." or
+  "Oh. It's you."), expressions, and the info card ("Feels about you: Friendly").
+- **Memories come back.** Memorable choices are stored as deeds. On a later day the villager brings
+  them up once: "I haven't forgotten that you offered to help build the new house."
+- **Gossip.** Villagers chatting together pass on what you did (`GossipSystem`). The listener
+  remembers who told them, forms a weaker opinion of their own, and asks you about it:
+  "Mara told me you called her new house crooked. Is that true?" If you're nearby, you'll see
+  "Sera is telling Tomas about you...".
+- **Consequences.** Push a villager's warmth low enough and they won't chat until you apologise.
+- Everything is saved with the rest of the game, so the village keeps remembering between sessions.
+
 ## Characters
 
 Every person is a real 3D model built at load time from their `CharacterAppearance`:
@@ -301,7 +318,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **74/74 checks**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **95/95 checks**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

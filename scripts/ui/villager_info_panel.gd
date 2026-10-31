@@ -120,8 +120,20 @@ func _refresh() -> void:
 	_traits.text = ", ".join(data.traits)
 	_activity.text = "Now: %s" % _villager.get_activity_description()
 	_bio.text = data.biography
-	var times: int = _villager.mind.get_familiarity(GameManager.PLAYER_ID)
+	var mind: VillagerMind = _villager.mind
+	var subject := GameManager.PLAYER_ID
+	var times := mind.get_familiarity(subject)
 	if times == 0:
 		_memory.text = "You haven't spoken yet."
-	else:
-		_memory.text = "Remembers %d conversation%s with you." % [times, "" if times == 1 else "s"]
+		return
+	var text := "Feels about you: %s (warmth %+d, trust %+d)" % [mind.opinion_label(subject), int(mind.get_affection(subject)), int(mind.get_trust(subject))]
+	var deeds := mind.memory.find("deed", subject)
+	var heard := mind.memory.find("heard", subject)
+	if not deeds.is_empty():
+		text += "\nRemembers you %s." % DialogueService.unpack_deed(String(deeds[deeds.size() - 1]["detail"]))["text"]
+	if not heard.is_empty():
+		var parts := String(heard[heard.size() - 1]["detail"]).split("|")
+		if parts.size() >= 2:
+			var source = GameManager.get_villager(StringName(parts[0]))
+			text += "\nHeard from %s that you %s." % [source.data.display_name if source else parts[0], parts[1]]
+	_memory.text = text

@@ -6,7 +6,12 @@ extends Node
 signal camera_mode_changed(mode: int)
 signal villager_registered(villager: Node)
 signal villager_selected(villager: Node)
-signal conversation_started(villager: Node, lines: Array[String])
+## `conversation` is a Conversation (lines, then choices).
+signal conversation_started(villager: Node, conversation: RefCounted)
+## A choice changed how a villager feels about the player.
+signal opinion_changed(villager: Node, affection: float, trust: float)
+## One villager told another about something the player did.
+signal gossip_shared(speaker: Node, listener: Node, story: String)
 signal conversation_ended(villager: Node)
 signal interaction_focus_changed(target: Node)
 
@@ -99,9 +104,9 @@ func start_conversation(villager) -> bool:
 	conversation_partner = villager
 	villager.begin_interaction(player)
 	player.model.set_expression(&"happy", 0.6)
-	var lines: Array[String] = DialogueService.build_greeting(villager, PLAYER_ID)
+	var conversation := DialogueService.build_conversation(villager, PLAYER_ID)
 	villager.mind.record_interaction(PLAYER_ID, "conversation", WorldClock.day, WorldClock.time_of_day)
-	conversation_started.emit(villager, lines)
+	conversation_started.emit(villager, conversation)
 	return true
 
 

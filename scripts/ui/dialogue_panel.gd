@@ -1,7 +1,8 @@
 class_name DialoguePanel
 extends PanelContainer
-## Shows a conversation line by line with a typewriter effect.
-## Tap, click, E, Space or the Continue button advances.
+## Shows a conversation line by line with a typewriter effect, then the
+## player's possible answers. Tap, click, E, Space or Continue advances;
+## answers are buttons (or keys 1-3).
 
 const CHARACTERS_PER_SECOND := 55.0
 
@@ -9,10 +10,13 @@ var _name_label: Label
 var _subtitle_label: Label
 var _text_label: Label
 var _continue_button: Button
-var _lines: Array[String] = []
+var _conversation: Conversation
 var _partner = null
-var _index: int = 0
 var _typing: bool = false
+var _choice_box: VBoxContainer
+var _choice_buttons: Array[Button] = []
+var _footer: HBoxContainer
+var _show_choices_after_typing := false
 
 
 func _ready() -> void:
@@ -40,26 +44,38 @@ func _ready() -> void:
 	_text_label.custom_minimum_size = Vector2(720, 80)
 	_text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(_text_label)
-	var footer := HBoxContainer.new()
-	footer.alignment = BoxContainer.ALIGNMENT_END
-	box.add_child(footer)
+	_choice_box = VBoxContainer.new()
+	_choice_box.add_theme_constant_override("separation", 8)
+	_choice_box.visible = false
+	box.add_child(_choice_box)
+	for i in 3:
+		var choice := UiTheme.button("", 0)
+		choice.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		choice.custom_minimum_size = Vector2(720, 58)
+		choice.pressed.connect(_choose.bind(i))
+		_choice_box.add_child(choice)
+		_choice_buttons.append(choice)
+	_footer = HBoxContainer.new()
+	_footer.alignment = BoxContainer.ALIGNMENT_END
+	box.add_child(_footer)
 	_continue_button = UiTheme.button("Continue", 180)
 	_continue_button.pressed.connect(advance)
-	footer.add_child(_continue_button)
+	_footer.add_child(_continue_button)
 
 	GameManager.conversation_started.connect(_on_conversation_started)
 	GameManager.conversation_ended.connect(func(_v): visible = false)
 
 
-func _on_conversation_started(villager, lines: Array[String]) -> void:
+func _on_conversation_started(villager, conversation) -> void:
 	var data: VillagerData = villager.data
 	_partner = villager
 	_name_label.text = data.display_name
 	_subtitle_label.text = "%d · %s" % [data.age, data.role]
-	_lines = lines
-	_index = 0
+	_conversation = conversation
 	visible = true
-	_show_line()
+	_choice_box.visible = false
+	_footer.visible = true
+	advance()
 
 
 ## Lines may start with an expression tag such as "[laughing]".
@@ -70,8 +86,8 @@ static func split_expression(line: String) -> Array:
 	return [&"", line]
 
 
-func _show_line() -> void:
-	var parts := split_expression(_lines[_index])
+func _show_line(line: String) -> void:
+	var parts := split_expression(line)
 	_text_label.text = parts[1]
 	_text_label.visible_ratio = 0.0
 	_typing = true
@@ -79,7 +95,8 @@ func _show_line() -> void:
 		if parts[0] != &"":
 			_partner.model.set_expression(parts[0])
 		_partner.model.set_talking(true)
-	_continue_button.text = "Goodbye" if _index == _lines.size() - 1 else "Continue"
+	var last := not _conversation.has_lines() and not _conversation.has_choices()
+	_continue_button.text = "Goodbye" if last else "Continue"
 
 
 func _process(delta: float) -> void:
@@ -91,25 +108,61 @@ func _process(delta: float) -> void:
 		_typing = false
 		if _partner and is_instance_valid(_partner):
 			_partner.model.set_talking(false)
+		if _show_choices_after_typing:
+			_show_choices()
 
 
 func advance() -> void:
 	if _typing:
 		_text_label.visible_ratio = 1.0
 		_typing = false
+		if _partner and is_instance_valid(_partner):
+			_partner.model.set_talking(false)
+		if _show_choices_after_typing:
+			_show_choices()
 		return
-	_index += 1
-	if _index >= _lines.size():
+	if _choice_box.visible:
+		return
+	if _conversation.has_lines():
+		_show_line(_conversation.next_line())
+		if _conversation.has_choices():
+			_show_choices_after_typing = true
+	elif _conversation.has_choices():
+		_show_choices()
+	else:
 		visible = false
 		GameManager.end_conversation()
-	else:
-		_show_line()
+
+
+func _show_choices() -> void:
+	_show_choices_after_typing = false
+	var texts := _conversation.choice_texts()
+	for i in _choice_buttons.size():
+		_choice_buttons[i].visible = i < texts.size()
+		if i < texts.size():
+			_choice_buttons[i].text = "%d.  %s" % [i + 1, texts[i]]
+	_choice_box.visible = true
+	_footer.visible = false
+
+
+func _choose(index: int) -> void:
+	if not _choice_box.visible or index >= _conversation.choices.size():
+		return
+	_conversation.choose(index)
+	_choice_box.visible = false
+	_footer.visible = true
+	advance()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("interact") or event.is_action_pressed("jump"):
+	var key := event as InputEventKey
+	if _choice_box.visible and key and key.pressed and not key.echo \
+			and key.physical_keycode >= KEY_1 and key.physical_keycode <= KEY_3:
+		_choose(key.physical_keycode - KEY_1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("interact") or event.is_action_pressed("jump"):
 		advance()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("menu"):

@@ -14,6 +14,12 @@ var _fps_label: Label
 var _settings: SettingsPanel
 var _touch: TouchControls
 var _hint_time: float = 14.0
+var _notice_panel: PanelContainer
+var _notice_label: Label
+var _notice_time: float = 0.0
+
+## Overheard gossip shows only when the player is close enough to hear.
+const GOSSIP_HEARING_DISTANCE := 16.0
 
 
 func _ready() -> void:
@@ -30,6 +36,7 @@ func _ready() -> void:
 	_build_top_bar()
 	_build_prompt()
 	_build_hint()
+	_build_notice()
 
 	_root.add_child(DialoguePanel.new())
 	_root.add_child(VillagerInfoPanel.new())
@@ -42,6 +49,8 @@ func _ready() -> void:
 	GameManager.interaction_focus_changed.connect(_on_focus_changed)
 	GameManager.conversation_started.connect(func(_v, _l): _prompt_panel.visible = false)
 	WorldClock.time_scale_changed.connect(func(_s): _refresh_buttons())
+	GameManager.opinion_changed.connect(_on_opinion_changed)
+	GameManager.gossip_shared.connect(_on_gossip_shared)
 	_refresh_buttons()
 
 
@@ -109,7 +118,47 @@ func _build_hint() -> void:
 	_root.add_child(_hint_label)
 
 
+func _build_notice() -> void:
+	_notice_panel = PanelContainer.new()
+	_notice_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_notice_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_notice_panel.offset_top = 130
+	_notice_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_notice_panel.visible = false
+	_root.add_child(_notice_panel)
+	_notice_label = UiTheme.label("", 22, UiTheme.ACCENT)
+	_notice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_notice_panel.add_child(_notice_label)
+
+
+## Small message near the top of the screen that fades after a few seconds.
+func show_notice(text: String) -> void:
+	_notice_label.text = text
+	_notice_panel.visible = true
+	_notice_panel.modulate.a = 1.0
+	_notice_time = 4.0
+
+
+func _on_opinion_changed(villager, affection: float, _trust: float) -> void:
+	var villager_name: String = villager.data.display_name
+	if affection >= 8.0:
+		show_notice("%s will remember that kindly." % villager_name)
+	elif affection <= -8.0:
+		show_notice("%s will remember that." % villager_name)
+
+
+func _on_gossip_shared(speaker, listener, _story: String) -> void:
+	var player = GameManager.player
+	if player == null or speaker.global_position.distance_to(player.global_position) > GOSSIP_HEARING_DISTANCE:
+		return
+	show_notice("%s is telling %s about you..." % [speaker.data.display_name, listener.data.display_name])
+
+
 func _process(delta: float) -> void:
+	if _notice_time > 0.0:
+		_notice_time -= delta
+		_notice_panel.modulate.a = clampf(_notice_time, 0.0, 1.0)
+		_notice_panel.visible = _notice_time > 0.0
 	_clock_label.text = "Day %d  %s" % [WorldClock.day, WorldClock.get_time_string()]
 	_period_label.text = WorldClock.get_period_name()
 	_fps_label.visible = GameSettings.show_fps

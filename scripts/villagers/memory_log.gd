@@ -5,7 +5,7 @@ extends RefCounted
 ## gifts, conflicts, births, deaths and village events, and let memories fade
 ## or be shared as gossip.
 
-const MAX_ENTRIES := 200
+const MAX_ENTRIES := 400
 
 ## Each entry: { "type": String, "subject": String, "day": int, "hour": float, "detail": String }
 var entries: Array[Dictionary] = []
@@ -32,6 +32,22 @@ func last(type: String, subject: String) -> Dictionary:
 		if entry["type"] == type and entry["subject"] == subject:
 			return entry
 	return {}
+
+
+## All entries of a type about a subject, oldest first.
+func find(type: String, subject: String) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	for entry in entries:
+		if entry["type"] == type and entry["subject"] == subject:
+			found.append(entry)
+	return found
+
+
+func has_detail(type: String, subject: String, detail: String) -> bool:
+	for entry in entries:
+		if entry["type"] == type and entry["subject"] == subject and entry["detail"] == detail:
+			return true
+	return false
 
 
 func to_array() -> Array:

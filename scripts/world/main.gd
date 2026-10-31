@@ -36,6 +36,8 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_villagers()
 
+	add_child(GossipSystem.new())
+
 	hud = Hud.new()
 	add_child(hud)
 

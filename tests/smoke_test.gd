@@ -202,6 +202,49 @@ func _run() -> void:
 	var second := DialogueService.build_greeting(mara, GameManager.PLAYER_ID)
 	_check(not second[0].contains("don't think we've met"), "second greeting is different")
 
+	# 7a. Milestone 2: choices, opinions, memories and gossip.
+	var tomas = GameManager.get_villager(&"tomas")
+	var nia = GameManager.get_villager(&"nia")
+	# Start these three from a clean slate, and restore them afterwards.
+	var saved_minds := {}
+	for v in [mara, tomas, nia]:
+		saved_minds[v] = v.mind.to_dict()
+		v.mind.from_dict({})
+	var first := DialogueService.build_conversation(mara, GameManager.PLAYER_ID)
+	_check(first.topic_id == "mara_new_house" and first.choices.size() == 3, "first conversation offers a topic with choices")
+	while first.has_lines():
+		first.next_line()
+	first.choose(0)
+	_check(mara.mind.get_affection(GameManager.PLAYER_ID) > 0.0 and first.has_lines(), "a kind choice raises affection and gets a reply")
+	_check(mara.mind.memory.find("deed", GameManager.PLAYER_ID).size() == 1, "the choice is remembered as a deed")
+	var second_talk := DialogueService.build_conversation(mara, GameManager.PLAYER_ID)
+	_check(second_talk.topic_id == "mara_wolves", "the next visit moves on to the next topic")
+	var story := GossipSystem.share(mara, tomas)
+	_check(story == "offered to help build the new house", "Mara tells Tomas what the player did")
+	_check(tomas.mind.get_affection(GameManager.PLAYER_ID) > 0.0, "gossip shapes the listener's opinion")
+	_check(GossipSystem.share(mara, tomas) == "", "the same story isn't told twice")
+	var tomas_talk := DialogueService.build_conversation(tomas, GameManager.PLAYER_ID)
+	_check(" ".join(tomas_talk.lines).contains("Mara told me you offered to help build the new house"), "Tomas brings up what Mara told him")
+	WorldClock.day += 1
+	var next_day := DialogueService.build_conversation(mara, GameManager.PLAYER_ID)
+	_check(" ".join(next_day.lines).contains("I haven't forgotten that you offered to help build the new house"), "a day later Mara recalls the deed")
+	var again := DialogueService.build_conversation(mara, GameManager.PLAYER_ID)
+	_check(not " ".join(again.lines).contains("haven't forgotten"), "a memory is brought up only once")
+	WorldClock.day -= 1
+	nia.mind.adjust_opinion(GameManager.PLAYER_ID, -50.0, -20.0)
+	var cold := DialogueService.build_conversation(nia, GameManager.PLAYER_ID)
+	_check(cold.topic_id == "apology", "a villager who dislikes the player wants an apology")
+	while cold.has_lines():
+		cold.next_line()
+	cold.choose(0)
+	_check(not nia.mind.is_hostile(GameManager.PLAYER_ID), "apologising mends the relationship")
+	var restored := VillagerMind.new("tomas")
+	restored.from_dict(JSON.parse_string(JSON.stringify(tomas.mind.to_dict())))
+	_check(is_equal_approx(restored.get_affection(GameManager.PLAYER_ID), tomas.mind.get_affection(GameManager.PLAYER_ID))
+		and restored.memory.find("heard", GameManager.PLAYER_ID).size() == 1, "opinions and gossip survive save/load")
+	for v in saved_minds:
+		v.mind.from_dict(saved_minds[v])
+
 	# 7b. Facial expressions drive the blend shapes.
 	var face_model: CharacterModel = mara.model
 	face_model.set_expression(&"laughing", 1.0, 0.0)
