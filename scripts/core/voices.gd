@@ -38,8 +38,12 @@ func _ready() -> void:
 
 
 static func _tts_supported() -> bool:
-	return bool(ProjectSettings.get_setting("audio/general/text_to_speech", false)) \
-		and DisplayServer.get_name() != "headless"
+	if not bool(ProjectSettings.get_setting("audio/general/text_to_speech", false)) or DisplayServer.get_name() == "headless":
+		return false
+	# Linux needs speech-dispatcher; without it Godot logs an error on every query.
+	if OS.get_name() == "Linux":
+		return FileAccess.file_exists("/usr/bin/speech-dispatcher") or FileAccess.file_exists("/usr/bin/spd-say")
+	return true
 
 
 ## True if the device can speak (it has at least one text-to-speech voice).

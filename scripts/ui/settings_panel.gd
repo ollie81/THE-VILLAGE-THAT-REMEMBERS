@@ -17,11 +17,21 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
-	custom_minimum_size = Vector2(560, 0)
+	custom_minimum_size = Vector2(640, 0)
 
+	# Scrolls on short (landscape phone) screens; the buttons stay at the bottom.
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 10)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(620, 520)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(scroll)
 	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 12)
-	add_child(box)
+	scroll.add_child(box)
+	add_child(outer)
 	box.add_child(UiTheme.label("Settings", 32, UiTheme.ACCENT))
 
 	box.add_child(UiTheme.label("Graphics quality"))
@@ -90,7 +100,7 @@ func _ready() -> void:
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
-	box.add_child(actions)
+	outer.add_child(actions)
 	var save := UiTheme.button("Save now", 160)
 	save.pressed.connect(SaveService.save_game)
 	actions.add_child(save)

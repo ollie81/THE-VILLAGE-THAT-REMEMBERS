@@ -56,7 +56,9 @@ phones the Mobile renderer is used, and lighting will look slightly different.*
 | Jump | Space | *Jump* button | A |
 | Look / orbit | Hold right mouse button and drag | Drag right side of screen | Right stick |
 | Zoom | Mouse wheel | Pinch | none |
-| Talk / use (chop, mine, build, plant...) | E | Action button (its label shows the action) | X |
+| Talk / use (chop, mine, build, plant, sit on a log or bench...) | E | Action button (its label shows the action) | X |
+| Actions: wave, bow, cheer, dance, sit down, lie down / sleep | F | *Actions* button | none |
+| Population | P | *People* button | none |
 | Build menu | B | *Build* button | none |
 | Rotate / place / cancel a building | R / E / Esc | *Rotate*, *Place*, *Cancel* buttons | none |
 | Switch camera | Tab or C | *Village View* button | Y |
@@ -427,6 +429,49 @@ people the village remembers. Tap a villager to see their family tree.
 Tests: `godot --headless --path . res://tests/population_test.tscn` (93 checks). Screenshots:
 `godot --path . --resolution 1612x720 res://tools/population_screenshots.tscn -- --out=/tmp/shots`.
 
+## Living in the village
+
+**Things you can do anywhere** (*Actions* button or **F**): wave, bow, cheer, dance, sit down and lie
+down. At night, lying down sleeps until morning, but villagers will ask whether you slept outside.
+Sit on the logs round the fire or on a bench you built (**E**); moving stands you up.
+
+**Villagers notice you.** They wave back, bow back, cheer, join a dance (the outgoing ones) or grumble
+(the blunt ones). They greet you as you pass, differently by time of day, mood and personality. They
+sit on the logs to chat in the evening. Each person's tone comes from who they are and how they feel
+about you: warm, cheerful, shy, grumpy, cold or childlike (`LineBank`).
+
+**Good and bad deeds** (in conversation, *Be kind...* / *Be unkind...*):
+
+- **Kind:** give a gift (each trade has favourites: builders like wood, cooks like herbs), pay a
+  compliment (less effective if you keep repeating it), tell a joke (lands better with open, outgoing
+  people).
+- **Unkind:** play a prank (playful people laugh, others don't), insult them, or steal from their
+  pocket. A theft is often caught, and if it isn't, they find out the next day.
+- **Consequences:** every deed changes their warmth and trust, is remembered and brought up later,
+  spreads as gossip, and is seen by anyone standing nearby, who remembers it too and says something.
+  Insult someone enough and they won't talk to you until you apologise.
+
+**Conversations that keep changing** (`Chatter`). After the first meeting, villagers talk about:
+
+- **Village news:** births, weddings, newcomers, deaths, coming of age, new buildings.
+- **Each other:** friends, rivals, what a neighbour is doing right now.
+- **Their own life:** their trade, ambition, partner, children, mood, or that the tent is cold.
+- **You:** your reputation, if your deeds are getting talked about.
+- **The moment:** the time of day and what they're doing.
+
+Each villager remembers what they've told you and moves on to something else. *What's new?* asks for
+more until they run out ("You've heard all my news today!"). Greetings vary too.
+
+**Voices** (Settings → Voices). *Spoken* reads villagers' lines aloud with the device's own
+text-to-speech voices (Android, Windows, macOS, Linux with speech-dispatcher), with a pitch and pace
+per person: women higher, children higher still, elders slower, outgoing people faster. *Babble* is a
+murmur generated on the device in each person's pitch range, one blip per syllable, rising for
+questions. *Off* is silent. Nearby villagers' greetings and reactions are voiced too, and speech
+bubbles show what they say.
+
+Tests: `godot --headless --path . res://tests/life_test.tscn` (45 checks). Screenshots:
+`tools/life_screenshots.tscn`; every pose: `tools/pose_gallery.tscn`.
+
 ## Status
 
 ### Implemented
@@ -437,7 +482,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **45/45**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

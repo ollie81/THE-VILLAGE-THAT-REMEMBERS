@@ -297,18 +297,22 @@ func say(line: String) -> void:
 	if _bubble == null:
 		_bubble = Label3D.new()
 		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		_bubble.font_size = 44
-		_bubble.outline_size = 12
-		_bubble.pixel_size = 0.004
-		_bubble.width = 520.0
+		_bubble.font_size = 52
+		_bubble.outline_size = 18
+		_bubble.pixel_size = 0.0045
+		_bubble.width = 560.0
+		_bubble.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		_bubble.render_priority = 2
 		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_bubble.modulate = Color(1.0, 1.0, 0.95)
 		_bubble.outline_modulate = Color(0.12, 0.09, 0.06, 0.95)
 		add_child(_bubble)
-	_bubble.position = Vector3(0, data.appearance.standing_height() + 0.55, 0)
+	# Shown where the name label sits (the name is hidden while they speak).
+	_bubble.position = Vector3(0, data.appearance.standing_height() + 0.3, 0)
 	_bubble.text = text
 	_bubble.visible = true
-	_bubble_time = clampf(1.5 + text.length() * 0.06, 2.5, 6.0)
+	name_label.visible = false
+	_bubble_time = clampf(2.0 + text.length() * 0.07, 3.5, 7.0)
 	last_spoke_msec = Time.get_ticks_msec()
 	model.set_talking(true)
 	Voices.speak(self, text)
@@ -621,8 +625,9 @@ func _update_label_visibility() -> void:
 	# Right beside the camera a world-space label would fill the screen, and
 	# during a conversation the dialogue box already shows who is speaking.
 	var too_close := distance < NAME_LABEL_MIN_DISTANCE and not managing
+	var speaking := _bubble != null and _bubble.visible
 	name_label.visible = (managing or near or GameManager.selected_villager == self) \
-			and state != State.INTERACTING and not too_close and not GameManager.is_in_conversation()
+			and state != State.INTERACTING and not too_close and not GameManager.is_in_conversation() and not speaking
 	# Changing a label's size rebuilds its text mesh: only do it when needed.
 	var size := snappedf(clampf(distance * 0.00035, 0.0035, 0.009), 0.0005) if managing else 0.004
 	if not is_equal_approx(name_label.pixel_size, size):
