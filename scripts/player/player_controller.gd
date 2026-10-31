@@ -21,6 +21,22 @@ var spawn_point: Vector3 = Vector3.ZERO
 
 var _action_time: float = 0.0
 var _action_animation: StringName = &""
+
+signal posed(pose: StringName)
+
+## Hip height of the sit pose above the feet (adult); seats are lined up so
+## the hips rest on the seat surface.
+const SIT_HIP_HEIGHT := 0.48
+## How long you lie down at night before falling asleep (seconds).
+const FALL_ASLEEP_TIME := 2.5
+## Emotes and how long each plays.
+const EMOTES := {&"wave": 2.4, &"bow": 2.0, &"cheer": 2.4, &"dance": 6.4}
+
+## A held pose (sit, sit_ground, sleep): stays until the player moves.
+var pose: StringName = &""
+var _pose_time: float = 0.0
+var _seat: Dictionary = {}
+var _slept: bool = false
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
 
@@ -70,6 +86,84 @@ func can_control() -> bool:
 		and _action_time <= 0.0
 
 
+## Plays an emote (wave, bow, cheer, dance). Nearby villagers react.
+func emote(animation: StringName) -> void:
+	stand_up()
+	perform_action(animation, float(EMOTES.get(animation, 2.0)), global_position + get_facing())
+	posed.emit(animation)
+
+
+## Sits on `seat` ({position, yaw, height}) or, without one, on the ground.
+func sit(seat: Dictionary = {}) -> void:
+	_set_pose(&"sit" if not seat.is_empty() else &"sit_ground")
+	_seat = seat
+	if not seat.is_empty():
+		var at: Vector3 = seat["position"]
+		global_position = Vector3(at.x, VillageLayout.get_walk_height(at.x, at.z), at.z)
+		model.rotation.y = float(seat["yaw"])
+		model.position.y = model.seat_offset(float(seat["height"]))
+
+
+## Lies down. At night they fall asleep and wake in the morning.
+func lie_down() -> void:
+	_set_pose(&"sleep")
+
+
+func _set_pose(new_pose: StringName) -> void:
+	_action_time = 0.0
+	pose = new_pose
+	_pose_time = 0.0
+	_slept = false
+	velocity = Vector3.ZERO
+	model.set_animation(new_pose)
+	posed.emit(new_pose)
+
+
+func is_resting() -> bool:
+	return pose != &""
+
+
+## Gets up from sitting or lying (steps off a seat so they don't stand in it).
+func stand_up() -> void:
+	if pose == &"":
+		return
+	if not _seat.is_empty():
+		var step := get_facing() * 0.65
+		global_position += step
+	pose = &""
+	_seat = {}
+	model.position.y = 0.0
+
+
+func _process_pose(delta: float) -> void:
+	_pose_time += delta
+	model.set_animation(pose)
+	var wants_up := can_control() and (InputRouter.get_move_vector().length() > 0.3 or Input.is_action_just_pressed("jump"))
+	if wants_up:
+		stand_up()
+		return
+	if pose == &"sleep" and not _slept and _pose_time > FALL_ASLEEP_TIME and is_night():
+		_slept = true
+		sleep_until_morning()
+
+
+static func is_night() -> bool:
+	return WorldClock.time_of_day >= 20.0 or WorldClock.time_of_day < 5.0
+
+
+## Skips the night. Sleeping anywhere but a bed leaves you stiff, and the
+## villagers notice where you slept.
+func sleep_until_morning(in_bed: bool = false) -> void:
+	WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0
+	WorldClock.set_time(6.5)
+	SaveService.save_game()
+	if in_bed:
+		GameManager.notify("You slept until morning. Day %d." % WorldClock.day)
+	else:
+		GameManager.notify("You slept under the stars. Day %d. Your back is stiff." % WorldClock.day)
+		GameState.set_flag(&"slept_outside")
+
+
 ## Plays a short action (chopping, building, planting); the player stands
 ## still and faces `target` until it finishes.
 func perform_action(animation: StringName, duration: float, target: Vector3) -> void:
@@ -89,6 +183,9 @@ func get_facing() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	if pose != &"":
+		_process_pose(delta)
+		return
 	if _action_time > 0.0:
 		_action_time -= delta
 	var move := Vector2.ZERO

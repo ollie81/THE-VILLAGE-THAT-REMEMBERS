@@ -79,6 +79,21 @@ func _do_action(choice: Dictionary) -> void:
 			var result := TaskSystem.request(_villager, StringName(String(choice["task"])))
 			for line in result["lines"]:
 				lines.append(String(line))
+		"news":
+			for line in Chatter.lines_for(_villager, 2):
+				lines.append(line)
+			choices = DialogueService.menu_for(_villager)
+		"kind":
+			choices = Deeds.kind_menu(_villager)
+		"unkind":
+			choices = Deeds.unkind_menu(_villager)
+		"back":
+			choices = DialogueService.menu_for(_villager)
+		"deed":
+			for line in Deeds.perform(_villager, String(choice["deed"]), String(choice.get("thing", ""))):
+				lines.append(line)
+			# Keep talking (or say goodbye) unless they're furious.
+			choices = [] if _villager.mind.is_hostile(_actor_id) else DialogueService.menu_for(_villager)
 		"ask_stay":
 			var person: Person = _villager.person
 			var warmth: float = _villager.mind.get_affection(_actor_id)

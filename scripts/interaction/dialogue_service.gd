@@ -27,16 +27,18 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 			conversation.lines.append(recollection)
 	else:
 		topic = next_topic(villager, actor_id)
+	if not topic.is_empty() and mind.memory.count("conversation", actor_id) > 1 and not mind.is_hostile(actor_id):
+		conversation.lines.append_array(Chatter.lines_for(villager, 1))
 	if not topic.is_empty():
 		conversation.topic_id = String(topic["id"])
 		for line in topic["lines"]:
 			conversation.lines.append(String(line))
 		conversation.choices = topic["choices"]
 		if topic != ConversationLibrary.APOLOGY:
-			conversation.followup = closing_menu()
+			conversation.followup = menu_for(villager)
 	else:
 		conversation.lines.append_array(_small_talk(villager))
-		conversation.choices = closing_menu()
+		conversation.choices = menu_for(villager)
 	_family_news(villager, conversation)
 	# Someone who has decided to leave says so, and can be asked to stay.
 	if villager.person and villager.person.leaving and not villager.is_leaving():
@@ -85,9 +87,20 @@ static func visitor_menu(can_ask_more: bool) -> Array:
 
 
 ## The last thing offered in a conversation: ask for help, or leave.
+## The closing menu for this villager ("What's new?" only if they have news).
+static func menu_for(villager) -> Array:
+	var menu := closing_menu()
+	if villager and not Chatter.has_news(villager):
+		menu = menu.filter(func(c): return String(c.get("action", "")) != "news")
+	return menu
+
+
 static func closing_menu() -> Array:
 	return [
+		{"text": "What's new?", "action": "news"},
 		{"text": "Could you help me with something?", "action": "ask"},
+		{"text": "Be kind...", "action": "kind"},
+		{"text": "Be unkind...", "action": "unkind"},
 		{"text": "Goodbye.", "action": "bye"},
 	]
 
@@ -128,17 +141,18 @@ static func build_greeting(villager, actor_id: String) -> Array[String]:
 	var last := mind.memory.last("conversation", actor_id)
 	var days_since := WorldClock.day - int(last.get("day", WorldClock.day))
 	if affection >= 40.0:
-		lines.append("[laughing]There you are! I was hoping you'd come by.")
+		lines.append(LineBank._fresh(villager, ["[laughing]There you are! I was hoping you'd come by.",
+			"[happy]My favourite person! Come, sit.", "[laughing]I was just thinking about you!"]))
 	elif affection <= -15.0:
-		lines.append("[worried]Oh. It's you.")
+		lines.append(LineBank._fresh(villager, ["[worried]Oh. It's you.", "[worried]What is it now?",
+			"[angry]I'm busy.", "[worried]...Yes?"]))
 	elif days_since <= 0:
-		lines.append("[surprised]Back again already? Not that I mind.")
+		lines.append(LineBank._fresh(villager, ["[surprised]Back again already? Not that I mind.",
+			"[happy]Hello again!", "[laughing]You again! Did you miss me?", "[happy]Oh, hello. Something on your mind?"]))
 	elif days_since == 1:
 		lines.append("[happy]%s. Good to see you again, we spoke just yesterday." % time_greeting(WorldClock.time_of_day))
 	else:
 		lines.append("[happy]%s. It's been %d days since we last talked." % [time_greeting(WorldClock.time_of_day), days_since])
-	if affection > -15.0 and not data.returning_lines.is_empty():
-		lines.append(data.returning_lines[(times_met - 1) % data.returning_lines.size()])
 	return lines
 
 
@@ -180,16 +194,7 @@ static func _recollection(villager, actor_id: String) -> String:
 
 
 static func _small_talk(villager) -> Array[String]:
-	var data: VillagerData = villager.data
-	var lines: Array[String] = []
-	var activity: VillagerActivity = villager.current_activity
-	if activity:
-		var comment := String(data.activity_comments.get(String(activity.kind), ""))
-		if comment != "":
-			lines.append(comment)
-	if lines.is_empty():
-		lines.append("[happy]Good to see you.")
-	return lines
+	return Chatter.lines_for(villager, 2)
 
 
 static func pack_deed(text: String, affection: float) -> String:

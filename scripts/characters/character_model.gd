@@ -24,7 +24,8 @@ const WORK_ANIMATIONS: Array[StringName] = [&"work", &"gather"]
 ## States that play through the speed-driven locomotion blend.
 const LOCOMOTION: Array[StringName] = [&"idle", &"walk", &"run"]
 ## Full-body actions, cross-faded over locomotion.
-const ACTIONS: Array[StringName] = [&"jump", &"work", &"gather", &"talk", &"wave"]
+const ACTIONS: Array[StringName] = [&"jump", &"work", &"gather", &"talk", &"wave",
+	&"sit", &"sit_ground", &"sleep", &"cheer", &"dance", &"bow"]
 ## How fast the movement blend follows changes in speed (per second).
 const SPEED_SMOOTHING := 8.0
 
@@ -284,6 +285,14 @@ func get_expression() -> StringName:
 ## Moves the mouth as if speaking (layered over the current expression).
 func set_talking(talking: bool) -> void:
 	_talking = talking
+
+
+## How far to raise the model so the sit pose rests on a seat this high
+## (children's hips are lower; the whole model is scaled by height).
+func seat_offset(seat_height: float) -> float:
+	var hips := (_proportions.map_height(HumanoidRig.HIPS_HEIGHT) if _proportions else HumanoidRig.HIPS_HEIGHT) \
+		- 0.47 * (_proportions.leg if _proportions else 1.0)
+	return seat_height - (hips - 0.04) * appearance.height_scale
 
 
 ## World position of the middle of the face, for cameras and portraits.

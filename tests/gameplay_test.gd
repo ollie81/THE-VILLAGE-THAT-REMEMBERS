@@ -173,7 +173,7 @@ func _run() -> void:
 	# Asking through conversation.
 	var talk := Conversation.new(GameManager.get_villager(&"sera"), GameManager.PLAYER_ID)
 	talk.choices = DialogueService.closing_menu()
-	talk.choose(0)
+	talk.choose(1)  # "Could you help me with something?"
 	_check(talk.choice_texts().size() == 5 and talk.choice_texts()[0].contains("build"), "asking for help lists the jobs")
 	talk.choose(1)
 	_check(talk.has_lines() and GameManager.get_villager(&"sera").has_task(), "Sera answers and goes to gather wood")

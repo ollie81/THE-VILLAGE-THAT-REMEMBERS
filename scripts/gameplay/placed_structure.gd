@@ -246,16 +246,20 @@ func use(actor: Node = null) -> String:
 			return "watered"
 		&"house":
 			if _is_night():
-				var next_day := WorldClock.day + (1 if WorldClock.time_of_day >= 12.0 else 0)
-				WorldClock.day = next_day
-				WorldClock.set_time(6.5)
-				SaveService.save_game()
-				_notify("You slept until morning. Day %d." % WorldClock.day)
+				if actor and actor.has_method("sleep_until_morning"):
+					actor.sleep_until_morning(true)
+				else:
+					WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0
+					WorldClock.set_time(6.5)
+					_notify("You slept until morning. Day %d." % WorldClock.day)
 				return "slept"
 			_notify("Your own home in the village. Come back at night to sleep.")
 			return "home"
 		&"bench":
-			_notify("You sit for a while and watch the village go by.")
+			if actor and actor.has_method("sit"):
+				actor.sit({"position": global_transform * Vector3(0, 0, 0.12), "yaw": rotation.y, "height": 0.53})
+			else:
+				_notify("You sit for a while and watch the village go by.")
 			return "rest"
 		&"cottage":
 			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)

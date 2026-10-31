@@ -46,6 +46,7 @@ func _ready() -> void:
 	director.villagers_root = get_node("Villagers")
 	add_child(director)
 	add_child(SocialLife.new())
+	add_child(PlayerSocial.new())
 
 	add_child(GossipSystem.new())
 	add_child(TaskSystem.new())

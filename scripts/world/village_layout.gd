@@ -38,6 +38,7 @@ const LOCATION_LABELS := {
 	"forest_edge": "the forest edge",
 	"riverbank": "the riverbank",
 	"bridge": "the bridge",
+	"plaza_seats": "the meeting circle",
 	"woodlot": "the woodlot",
 	"quarry": "the quarry",
 	"camp": "the travellers' camp",
@@ -201,6 +202,20 @@ static func unregister_location(id: String) -> void:
 	_dynamic_labels.erase(id)
 
 
+## Places to sit on the meeting-circle logs: { position, yaw (facing the
+## fire), height (seat surface above the ground) }. Two per log.
+static func plaza_seats() -> Array:
+	var seats: Array = []
+	for i in 4:
+		var angle := deg_to_rad(22.5 + i * 90.0)
+		var centre := Vector3(cos(angle) * 4.6, 0, sin(angle) * 4.6)
+		var along := Basis(Vector3.UP, atan2(centre.x, centre.z)) * Vector3.RIGHT
+		for side: float in [-0.6, 0.6]:
+			var at := centre + along * side
+			seats.append({"position": at, "yaw": atan2(-at.x, -at.z), "height": 0.66})
+	return seats
+
+
 static func camp_center() -> Vector3:
 	var span := bridge_x_range()
 	return Vector3(span.y + 9.0, 0.0, -7.0)
@@ -281,6 +296,13 @@ static func _build_tables() -> void:
 		plaza_spots.append(_polar(i * 45.0, 3.0))
 		plaza_looks.append(Vector3.ZERO)
 	_locations["plaza"] = {"spots": plaza_spots, "looks": plaza_looks}
+	# Sitting on the logs around the fire (villagers chatting in the evening).
+	var seat_spots: Array = []
+	var seat_looks: Array = []
+	for seat: Dictionary in plaza_seats():
+		seat_spots.append(seat["position"])
+		seat_looks.append(Vector3.ZERO)
+	_locations["plaza_seats"] = {"spots": seat_spots, "looks": seat_looks, "seat_height": 0.66}
 
 	# The farm and garden are fenced, so they get an interior waypoint.
 	_nav_nodes["farm_inner"] = Vector3(12.0, 0.0, 11.4)

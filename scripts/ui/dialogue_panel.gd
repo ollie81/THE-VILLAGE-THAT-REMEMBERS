@@ -63,7 +63,9 @@ func _ready() -> void:
 	_footer.add_child(_continue_button)
 
 	GameManager.conversation_started.connect(_on_conversation_started)
-	GameManager.conversation_ended.connect(func(_v): visible = false)
+	GameManager.conversation_ended.connect(func(_v):
+		visible = false
+		Voices.stop())
 
 
 func _on_conversation_started(villager, conversation) -> void:
@@ -102,6 +104,8 @@ func _show_line(line: String) -> void:
 		line = line.substr(line.find(" ") + 1)
 	var parts := split_expression(line)
 	_text_label.text = parts[1]
+	if _partner and is_instance_valid(_partner):
+		Voices.speak(_partner, parts[1], true)
 	_text_label.visible_ratio = 0.0
 	_typing = true
 	if _partner and is_instance_valid(_partner):

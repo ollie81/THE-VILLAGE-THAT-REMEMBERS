@@ -29,6 +29,12 @@ const CLIPS := {
 	&"gather": [2.4, "_gather"],
 	&"talk": [3.0, "_talk"],
 	&"wave": [1.0, "_wave"],
+	&"sit": [5.0, "_sit"],
+	&"sit_ground": [5.0, "_sit_ground"],
+	&"sleep": [4.5, "_sleep"],
+	&"cheer": [0.8, "_cheer"],
+	&"dance": [1.6, "_dance"],
+	&"bow": [2.0, "_bow"],
 }
 
 static var _cache: Dictionary = {}
@@ -256,4 +262,97 @@ func _wave(x: float) -> Dictionary:
 	_arm(p, -1.0, -0.25, 2.5, -0.4)
 	p[B.RIGHT_LOWER_ARM] = Vector3(-0.35, 0, -0.45 * _s(x * 2.0))
 	p[B.RIGHT_HAND] = Vector3(0, 0, 0)
+	return p
+
+
+## Sitting on a bench, log or chair about 0.45 m high: thighs level,
+## shins down, hands resting on the knees.
+func _sit(x: float) -> Dictionary:
+	var p := _base()
+	var breath := _s(x * 2.0)
+	for side in [1.0, -1.0]:
+		_leg(p, side, -1.5, 1.45, 0.05)
+		p[HumanoidRig.sided(B.LEFT_UPPER_LEG, side)] = Vector3(-1.5, 0, side * 0.08)
+		_arm(p, side, -0.55, 0.12, -0.75, side * 0.1)
+	p[B.SPINE] = Vector3(0.05, 0, 0)
+	p[B.CHEST] = Vector3(0.03 + 0.015 * breath, 0.03 * _s(x), 0)
+	p[B.HEAD] = Vector3(0.04, 0.18 * _s(x * 0.5), 0.02 * _s(x))
+	p["hips"] = Vector3(0, -0.47 + 0.003 * breath, -0.05)
+	return p
+
+
+## Sitting on the grass: legs out in front, knees up a little, leaning back
+## on the hands.
+func _sit_ground(x: float) -> Dictionary:
+	var p := _base()
+	var breath := _s(x * 2.0)
+	# One knee drawn up, the other leg stretched out, feet on the grass.
+	_leg(p, 1.0, -2.05, 1.25, -0.2)
+	_leg(p, -1.0, -1.62, 0.12, -0.15)
+	for side in [1.0, -1.0]:
+		_arm(p, side, 0.55, 0.28, -0.08, side * 0.2)
+		p[HumanoidRig.sided(B.LEFT_HAND, side)] = Vector3(-0.6, 0, 0)
+	p[B.SPINE] = Vector3(-0.15, 0, 0)
+	p[B.CHEST] = Vector3(-0.05 + 0.015 * breath, 0, 0)
+	p[B.NECK] = Vector3(0.1, 0, 0)
+	p[B.HEAD] = Vector3(0.05, 0.25 * _s(x * 0.5), 0)
+	p["hips"] = Vector3(0, -0.8 + 0.003 * breath, -0.08)
+	return p
+
+
+## Lying on the back asleep, breathing slowly.
+func _sleep(x: float) -> Dictionary:
+	var p := _base()
+	var breath := _s(x)
+	p[B.HIPS] = Vector3(-PI * 0.5, 0, 0)
+	p[B.CHEST] = Vector3(0.02 * breath, 0, 0)
+	p[B.HEAD] = Vector3(-0.15, 0.35, 0)
+	_leg(p, 1.0, -0.05, 0.12, 0.6)
+	_leg(p, -1.0, -0.25, 0.45, 0.5)
+	# One arm at the side, one hand resting on the belly.
+	_arm(p, 1.0, 0.05, 0.18, -0.15)
+	_arm(p, -1.0, -0.35, 0.05, -1.55)
+	p[B.RIGHT_HAND] = Vector3(0, 0, 0.3)
+	p["hips"] = Vector3(0, -0.84, 0)
+	return p
+
+
+func _cheer(x: float) -> Dictionary:
+	var p := _base()
+	var hop := maxf(0.0, _s(x))
+	for side in [1.0, -1.0]:
+		_arm(p, side, -0.3, 2.6 + 0.25 * _s(x * 2.0), -0.25)
+		p[HumanoidRig.sided(B.LEFT_HAND, side)] = Vector3(0, 0, side * 0.3 * _s(x * 2.0))
+		_leg(p, side, -0.15 * hop, 0.3 * hop, 0.2 * hop)
+	p[B.SPINE] = Vector3(-0.08, 0, 0)
+	p[B.HEAD] = Vector3(-0.2, 0, 0)
+	p["hips"] = Vector3(0, 0.08 * hop - 0.03, 0)
+	return p
+
+
+func _dance(x: float) -> Dictionary:
+	var p := _base()
+	var sway := _s(x)
+	var beat := _s(x * 2.0)
+	for side in [1.0, -1.0]:
+		var q: float = x if side > 0.0 else x + 0.5
+		_leg(p, side, -0.35 * maxf(0.0, _s(q)), 0.6 * maxf(0.0, _s(q)), 0.1)
+		_arm(p, side, -0.4 - 0.9 * maxf(0.0, _s(q)), 0.5 + 0.6 * maxf(0.0, _s(q)), -0.9)
+	p[B.HIPS] = Vector3(0, 0.2 * sway, 0.08 * sway)
+	p[B.SPINE] = Vector3(0.05, -0.15 * sway, -0.06 * sway)
+	p[B.CHEST] = Vector3(0.0, -0.1 * sway, -0.05 * sway)
+	p[B.HEAD] = Vector3(0.08 * beat, 0.15 * sway, 0.1 * sway)
+	p["hips"] = Vector3(0.05 * sway, -0.04 + 0.03 * absf(beat), 0)
+	return p
+
+
+func _bow(x: float) -> Dictionary:
+	var p := _idle(0.0)
+	var bend := smoothstep(0.0, 0.3, x) * (1.0 - smoothstep(0.65, 0.95, x))
+	p[B.SPINE] = Vector3(0.55 * bend, 0, 0)
+	p[B.CHEST] = Vector3(0.35 * bend, 0, 0)
+	p[B.HEAD] = Vector3(0.2 * bend, 0, 0)
+	_arm(p, 1.0, 0.1 * bend, 0.1, -0.2)
+	_arm(p, -1.0, -0.6 * bend, 0.1, -1.3 * bend)
+	p["hips"] = Vector3(0, 0, -0.06 * bend)
 	return p

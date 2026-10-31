@@ -23,6 +23,13 @@ func _ready() -> void:
 	_add_object("StorehouseDoor", storage_door, 1.4, func(): return "Check the village stores", func(): return "Open", _use_storage)
 	if workshop.is_empty():
 		push_warning("No workshop in the layout")
+	# The logs around the fire: sit down.
+	var seats := VillageLayout.plaza_seats()
+	for i in range(0, seats.size(), 2):
+		var pair: Array = [seats[i], seats[i + 1]]
+		var middle: Vector3 = (pair[0]["position"] + pair[1]["position"]) * 0.5
+		_add_object("Log%d" % (i / 2), middle, 1.3, func(): return "Sit on the log", func(): return "Sit",
+			func(actor): _sit_on(actor, pair))
 
 
 ## A small object with an interaction area and callables for its behaviour.
@@ -39,6 +46,28 @@ func _add_object(object_name: String, at: Vector3, radius: float, prompt: Callab
 	interactable.handler = holder
 	interactable.interacted.connect(func(actor): use.call(actor))
 	holder.add_child(interactable)
+
+
+## Sits on whichever seat is nearest (and free of villagers).
+func _sit_on(actor, seats: Array) -> void:
+	if actor == null or not actor.has_method("sit"):
+		return
+	var best: Dictionary = {}
+	var best_distance := INF
+	for seat: Dictionary in seats:
+		var at: Vector3 = seat["position"]
+		var taken := false
+		for villager in GameManager.villagers:
+			if villager.visible and Vector2(villager.global_position.x - at.x, villager.global_position.z - at.z).length() < 0.4:
+				taken = true
+		var distance: float = actor.global_position.distance_to(at)
+		if not taken and distance < best_distance:
+			best_distance = distance
+			best = seat
+	if best.is_empty():
+		GameManager.notify("Someone's already sitting there.")
+		return
+	actor.sit(best)
 
 
 # --- Fire: village meeting --------------------------------------------------------

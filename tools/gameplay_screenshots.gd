@@ -173,7 +173,7 @@ func _run() -> void:
 	talk.choices = DialogueService.closing_menu()
 	GameManager.start_scene(mara, talk)
 	await _wait(60)
-	dialogue._choose(0)
+	dialogue._choose(1)
 	await _wait(60)
 	await _shot("11_ask_for_help")
 	dialogue._choose(0)  # help build

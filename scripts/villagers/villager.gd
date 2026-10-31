@@ -70,6 +70,15 @@ var visual_stage: int = -1
 var _leaving: bool = false
 var _detail_timer: float = 0.0
 var _physics_delta: float = 0.0
+## A short reaction (waving back, laughing...) that interrupts what they're
+## doing for a moment.
+var _reaction_time: float = 0.0
+var _reaction_animation: StringName = &""
+var _reaction_look: Vector3 = Vector3.ZERO
+var _bubble: Label3D
+var _bubble_time: float = 0.0
+## When they last said something out loud (so they don't chatter nonstop).
+var last_spoke_msec: int = -100000
 var _physics_frame: int = 0
 
 
@@ -191,7 +200,22 @@ func _physics_process(frame_delta: float) -> void:
 	var delta := minf(_physics_delta, 0.25)
 	_physics_delta = 0.0
 	_alive_time += delta
+	if _reaction_time > 0.0 and state != State.INTERACTING and state != State.INSIDE:
+		_reaction_time -= delta
+		if model.position.y != 0.0:
+			# Seated on a log: stay sitting, just answer from there.
+			model.set_animation(&"sit")
+		else:
+			_face_towards(_reaction_look, delta)
+			model.set_animation(_reaction_animation)
+		if _reaction_time <= 0.0 and state == State.PERFORMING:
+			_perform_timer = maxf(_perform_timer, 3.0)
+		return
 	if state == State.INTERACTING:
+		if model.position.y != 0.0:
+			# Seated: stay on the log and talk from there.
+			model.set_animation(&"sit")
+			return
 		if is_instance_valid(_talk_partner):
 			_face_towards(_talk_partner.global_position, delta)
 		model.set_animation(&"talk")
@@ -210,6 +234,11 @@ func _physics_process(frame_delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_bubble(delta)
+	if has_meta("pending_line") and not GameManager.is_in_conversation():
+		var line: String = get_meta("pending_line")
+		remove_meta("pending_line")
+		say(line)
 	# Labels and detail don't need checking every frame; staggered so 50
 	# villagers don't all do it on the same frame.
 	_detail_timer -= delta
@@ -237,6 +266,62 @@ func _update_detail() -> void:
 			level = CharacterModel.Detail.REDUCED
 	var on_screen := camera.is_position_in_frustum(global_position + Vector3(0, 1.0, 0)) or distance < 3.0
 	model.set_detail(level, on_screen or not detail_enabled)
+
+
+# --- Reacting and speaking -------------------------------------------------------
+
+## Stops for a moment to react: face `look_at`, play `animation`, and
+## optionally say something (speech bubble, and their voice if voices are on).
+func react(animation: StringName, duration: float, look_at: Vector3, line: String = "", expression: StringName = &"") -> void:
+	if state == State.INSIDE or state == State.INTERACTING or _leaving:
+		return
+	_reaction_animation = animation
+	_reaction_time = duration
+	_reaction_look = look_at
+	if expression != &"":
+		model.set_expression(expression, 0.9)
+	if line != "":
+		say(line)
+
+
+func is_reacting() -> bool:
+	return _reaction_time > 0.0
+
+
+## Says a line out loud: a bubble above their head, and their voice.
+func say(line: String) -> void:
+	var parts := DialoguePanel.split_expression(line)
+	var text: String = parts[1]
+	if parts[0] != &"":
+		model.set_expression(parts[0], 0.9)
+	if _bubble == null:
+		_bubble = Label3D.new()
+		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_bubble.font_size = 44
+		_bubble.outline_size = 12
+		_bubble.pixel_size = 0.004
+		_bubble.width = 520.0
+		_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_bubble.modulate = Color(1.0, 1.0, 0.95)
+		_bubble.outline_modulate = Color(0.12, 0.09, 0.06, 0.95)
+		add_child(_bubble)
+	_bubble.position = Vector3(0, data.appearance.standing_height() + 0.55, 0)
+	_bubble.text = text
+	_bubble.visible = true
+	_bubble_time = clampf(1.5 + text.length() * 0.06, 2.5, 6.0)
+	last_spoke_msec = Time.get_ticks_msec()
+	model.set_talking(true)
+	Voices.speak(self, text)
+
+
+func _update_bubble(delta: float) -> void:
+	if _bubble == null or not _bubble.visible:
+		return
+	_bubble_time -= delta
+	if _bubble_time <= 0.0 or GameManager.is_in_conversation():
+		_bubble.visible = false
+		if state != State.INTERACTING:
+			model.set_talking(false)
 
 
 # --- Joining and leaving ---------------------------------------------------------
@@ -374,6 +459,9 @@ func _resolve_location(activity: VillagerActivity) -> String:
 		return String(options[_rng.randi_range(0, options.size() - 1)])
 	if activity.location_id == "home":
 		return data.home_location
+	# Evening chats: some sit on the logs round the fire.
+	if activity.kind == &"socialize" and activity.location_id == "plaza" and _rng.randf() < 0.45:
+		return "plaza_seats"
 	if navigation.has_location(activity.location_id):
 		return activity.location_id
 	push_warning("%s: unknown location '%s'" % [data.display_name, activity.location_id])
@@ -381,6 +469,9 @@ func _resolve_location(activity: VillagerActivity) -> String:
 
 
 func _travel_to(location_id: String, exclude_spot: int = -1) -> void:
+	if model.position.y != 0.0:
+		model.position.y = 0.0
+		model.set_talking(false)
 	navigation.release_spot(_location_id, _spot_index, data.id)
 	_location_id = location_id
 	_spot_index = navigation.claim_spot(location_id, data.id, exclude_spot)
@@ -448,6 +539,17 @@ func _process_performing(delta: float) -> void:
 			model.set_expression(moods[_rng.randi_range(0, moods.size() - 1)], _rng.randf_range(0.6, 1.0))
 	elif model.get_expression() != &"neutral":
 		model.set_expression(&"neutral")
+	var seated := _location_id == "plaza_seats"
+	if seated:
+		if animation == &"talk":
+			model.set_talking(true)
+		elif animation == &"idle":
+			model.set_talking(false)
+		animation = &"sit"
+		model.position.y = model.seat_offset(float(VillageLayout.get_locations()["plaza_seats"]["seat_height"]))
+	elif model.position.y != 0.0:
+		model.position.y = 0.0
+		model.set_talking(false)
 	model.set_animation(animation)
 	_perform_timer -= delta
 	if _perform_timer > 0.0:
