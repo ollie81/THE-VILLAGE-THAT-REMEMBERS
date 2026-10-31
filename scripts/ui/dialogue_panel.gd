@@ -88,6 +88,7 @@ func _set_speaker(villager) -> void:
 		_partner.model.set_talking(false)
 	var data: VillagerData = villager.data
 	_partner = villager
+	GameManager.speaker = villager
 	_name_label.text = data.display_name
 	_subtitle_label.text = "%d · %s" % [data.age, data.role]
 

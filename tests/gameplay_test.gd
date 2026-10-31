@@ -195,6 +195,13 @@ func _run() -> void:
 	_check(fire.get_interaction_prompt() == "Call a village meeting", "the fire offers a meeting in the evening")
 	await _use(fire, Vector3(1.9, 0, 0.6))
 	_check(objects.meeting.running, "calling a meeting gathers everyone")
+	var closest := INF
+	for a in GameManager.villagers.size():
+		for b in range(a + 1, GameManager.villagers.size()):
+			var pa: Vector3 = GameManager.villagers[a].task["point"]
+			var pb: Vector3 = GameManager.villagers[b].task["point"]
+			closest = minf(closest, Vector2(pa.x - pb.x, pa.z - pb.z).length())
+	_check(closest > 1.2, "everyone gets their own place at the fire (closest %.1f m)" % closest)
 	for v in GameManager.villagers:
 		if v.has_task():
 			v.global_position = VillageLayout.ground_point(v.task["point"].x, v.task["point"].z)

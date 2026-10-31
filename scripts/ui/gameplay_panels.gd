@@ -150,6 +150,15 @@ func _toggle_build_menu() -> void:
 		_refresh_build_list()
 
 
+## B opens and closes the Build menu on a keyboard.
+func _unhandled_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo and key.physical_keycode == KEY_B and _build_button.visible \
+			and not (BuildMode.instance and BuildMode.instance.active):
+		_toggle_build_menu()
+		get_viewport().set_input_as_handled()
+
+
 func _choose_structure(type: StringName) -> void:
 	var info := StructureCatalog.info(type)
 	if not GameState.can_afford(info["cost"]):

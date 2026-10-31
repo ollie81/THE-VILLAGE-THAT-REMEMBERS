@@ -96,9 +96,11 @@ func _process(delta: float) -> void:
 	var desired := _exploration_transform(delta) if mode == GameManager.CameraMode.EXPLORATION else _management_transform()
 	var desired_fov := EXPLORE_FOV if mode == GameManager.CameraMode.EXPLORATION else MANAGE_FOV
 	var partner = GameManager.conversation_partner
+	if GameManager.speaker != null and is_instance_valid(GameManager.speaker):
+		partner = GameManager.speaker
 	var talking: bool = partner != null and is_instance_valid(partner) and mode == GameManager.CameraMode.EXPLORATION
 	if talking:
-		desired = _conversation_transform(partner)
+		desired = _group_transform(partner) if GameManager.group_scene else _conversation_transform(partner)
 		desired_fov = CONVERSATION_FOV
 		# Key light from the camera side, slightly above, lighting the speaker.
 		var face: Vector3 = partner.model.get_face_position()
@@ -180,6 +182,18 @@ func _conversation_transform(partner) -> Transform3D:
 	var distance := minf(1.45, flat.length() + 0.55)
 	var position := face - direction * distance + right * 0.42 + Vector3(0, 0.02, 0)
 	var look_point := face + right * 0.12 - Vector3(0, 0.1, 0)
+	return Transform3D(Basis.looking_at(look_point - position, Vector3.UP), position)
+
+
+## Group scenes (the village meeting): a medium shot of whoever is speaking,
+## taken from the way they are facing, so we see their face and the circle.
+func _group_transform(speaker) -> Transform3D:
+	var face: Vector3 = speaker.model.get_face_position()
+	var yaw: float = speaker.model.global_rotation.y
+	var facing := Vector3(sin(yaw), 0.0, cos(yaw))
+	var right := facing.cross(Vector3.UP).normalized()
+	var position := face + facing * 2.6 + right * 0.5 + Vector3(0, 0.35, 0)
+	var look_point := face - Vector3(0, 0.25, 0)
 	return Transform3D(Basis.looking_at(look_point - position, Vector3.UP), position)
 
 

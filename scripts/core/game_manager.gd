@@ -28,6 +28,11 @@ var player = null
 var villagers: Array = []
 var selected_villager = null
 var conversation_partner = null
+## Who is talking right now (differs from the partner in group scenes).
+var speaker = null
+## True for scenes with several speakers (the village meeting): the camera
+## frames whoever is speaking from across the circle instead of a close-up.
+var group_scene: bool = false
 
 var _conversation_ended_msec: int = -100000
 
@@ -108,6 +113,8 @@ func start_conversation(villager) -> bool:
 	if not villager.can_interact(player):
 		return false
 	conversation_partner = villager
+	speaker = villager
+	group_scene = false
 	villager.begin_interaction(player)
 	player.model.set_expression(&"happy", 0.6)
 	var conversation := DialogueService.build_conversation(villager, PLAYER_ID)
@@ -119,10 +126,12 @@ func start_conversation(villager) -> bool:
 
 ## Plays a prepared conversation (e.g. the village meeting) without the
 ## usual greeting and topics. Lines may switch speaker with "@id ".
-func start_scene(villager, conversation) -> bool:
+func start_scene(villager, conversation, group: bool = false) -> bool:
 	if is_in_conversation() or villager == null:
 		return false
 	conversation_partner = villager
+	speaker = villager
+	group_scene = group
 	villager.begin_interaction(player)
 	conversation_started.emit(villager, conversation)
 	return true
@@ -133,6 +142,8 @@ func end_conversation() -> void:
 		return
 	var villager = conversation_partner
 	conversation_partner = null
+	speaker = null
+	group_scene = false
 	_conversation_ended_msec = Time.get_ticks_msec()
 	villager.end_interaction()
 	villager.model.set_talking(false)

@@ -8,6 +8,7 @@ extends Node
 
 const TASK_HOURS := 3.0
 ## Work given to a building site per game hour by one helper.
+const MEETING_RADIUS := 3.6
 const BUILD_RATE := 1.2
 ## Resources delivered per game hour by one helper.
 const GATHER_RATE := 2.0
@@ -114,6 +115,9 @@ static func request(villager, kind: StringName) -> Dictionary:
 ## Where the villager should work, or {} if there's nowhere to do this job.
 static func task_target(villager, kind: StringName) -> Dictionary:
 	var from: Vector3 = villager.global_position
+	# Each villager's own slot, so two helpers never stand on one spot.
+	var count := maxi(GameManager.villagers.size(), 1)
+	var slot := maxi(GameManager.villagers.find(villager), 0)
 	match kind:
 		&"build":
 			var site: PlacedStructure = StructureManager.instance.nearest_unfinished(from) if StructureManager.instance else null
@@ -122,6 +126,7 @@ static func task_target(villager, kind: StringName) -> Dictionary:
 			var side := (from - site.global_position)
 			side.y = 0.0
 			side = side.normalized() if side.length() > 0.1 else Vector3.BACK
+			side = side.rotated(Vector3.UP, (slot - (count - 1) * 0.5) * 0.45)
 			var point := site.global_position + side * (StructureCatalog.radius(site.get_type()) + 0.8)
 			return {"point": point, "look": site.global_position, "site": site}
 		&"wood", &"stone":
@@ -132,17 +137,27 @@ static func task_target(villager, kind: StringName) -> Dictionary:
 					best = node
 			if best == null:
 				return {}
-			var offset := Vector3(1.2, 0, 0.6).rotated(Vector3.UP, hash(String(villager.data.id)) % 6)
+			var offset := Vector3(1.3, 0, 0.0).rotated(Vector3.UP, TAU * slot / count)
 			return {"point": best.global_position + offset, "look": best.global_position}
 		&"farm":
 			var spot: Vector3 = VillageLayout.get_locations()["farm"]["spots"][1]
+			spot += Vector3(0, 0, (slot - (count - 1) * 0.5) * 1.1)
 			return {"point": spot, "look": spot + Vector3(1, 0, 0)}
 		&"meeting":
-			var index := GameManager.villagers.find(villager)
-			var plaza: Array = VillageLayout.get_locations()["plaza"]["spots"]
-			var p: Vector3 = plaza[(index * 2) % plaza.size()]
-			return {"point": p, "look": Vector3.ZERO}
+			return {"point": meeting_spot(villager), "look": Vector3.ZERO}
 	return {}
+
+
+## Each villager's own place in a ring around the fire, so nobody shares a
+## spot (two people on one spot render as one body with two faces). The ring
+## leaves a gap on the +X side, where the player stands to call the meeting.
+static func meeting_spot(villager) -> Vector3:
+	var count := maxi(GameManager.villagers.size(), 1)
+	var index := maxi(GameManager.villagers.find(villager), 0)
+	var angle := lerpf(0.9, TAU - 0.9, (index + 0.5) / count)
+	var x := cos(angle) * MEETING_RADIUS
+	var z := sin(angle) * MEETING_RADIUS
+	return VillageLayout.ground_point(x, z)
 
 
 ## Contributions from villagers who are at work, as game time passes.

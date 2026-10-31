@@ -17,6 +17,7 @@ const DECISION_INTERVAL := 1.0
 const TURN_SPEED := 7.0
 const PERSONAL_SPACE := 1.0
 const MAX_WAIT_FOR_PLAYER := 3.0
+const NAME_LABEL_MIN_DISTANCE := 4.0
 const NAME_LABEL_DISTANCE := 15.0
 const LAYER_VILLAGER := 4
 
@@ -361,10 +362,13 @@ func _update_label_visibility() -> void:
 	if camera == null:
 		return
 	var managing := GameManager.camera_mode == GameManager.CameraMode.MANAGEMENT
-	var near := camera.global_position.distance_to(global_position) < NAME_LABEL_DISTANCE
-	# The dialogue box already shows the name while talking.
-	name_label.visible = (managing or near or GameManager.selected_villager == self) and state != State.INTERACTING
 	var distance := camera.global_position.distance_to(global_position)
+	var near := distance < NAME_LABEL_DISTANCE
+	# Right beside the camera a world-space label would fill the screen, and
+	# during a conversation the dialogue box already shows who is speaking.
+	var too_close := distance < NAME_LABEL_MIN_DISTANCE and not managing
+	name_label.visible = (managing or near or GameManager.selected_villager == self) \
+			and state != State.INTERACTING and not too_close and not GameManager.is_in_conversation()
 	name_label.pixel_size = clampf(distance * 0.00035, 0.0035, 0.009) if managing else 0.004
 
 

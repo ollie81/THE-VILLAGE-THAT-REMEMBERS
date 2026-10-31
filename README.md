@@ -56,7 +56,9 @@ phones the Mobile renderer is used, and lighting will look slightly different.*
 | Jump | Space | *Jump* button | A |
 | Look / orbit | Hold right mouse button and drag | Drag right side of screen | Right stick |
 | Zoom | Mouse wheel | Pinch | none |
-| Talk | E | *Talk* button | X |
+| Talk / use (chop, mine, build, plant...) | E | Action button (its label shows the action) | X |
+| Build menu | B | *Build* button | none |
+| Rotate / place / cancel a building | R / E / Esc | *Rotate*, *Place*, *Cancel* buttons | none |
 | Switch camera | Tab or C | *Village View* button | Y |
 | Pan (Village View) | WASD, or drag with the left mouse button | One-finger drag | Left stick |
 | Rotate (Village View) | Q / R, or drag with the right mouse button | none | Right stick |
@@ -91,6 +93,24 @@ The test loads the real main scene and checks that:
 - talking works: the villager stops, the greeting includes their name, they remember the conversation, the second greeting is different, and memory survives a JSON round trip
 
 It exits with code `0` if every check passes and `1` otherwise. It never touches your save file.
+
+### Gameplay test
+
+```bash
+godot --headless --path . res://tests/gameplay_test.tscn
+```
+
+Plays the whole first week in the real scene: chopping, mining, herb picking, regrowth, crafting tools,
+placement checks (missing resources, river, meeting circle, cancel), building, planting and harvesting,
+asking villagers for help (acceptance, refusals by personality, opinion and time of day, one job at a
+time), helpers adding work and food, sleeping in your house, the village meeting, all seven objectives,
+and a save/load round trip. CI runs both tests on every push.
+
+Screenshots of a scripted play-through at phone resolution:
+
+```bash
+godot --path . --resolution 1612x720 res://tools/gameplay_screenshots.tscn -- --out=/tmp/shots
+```
 
 ---
 
@@ -308,6 +328,34 @@ The existing `HumanoidAnimations` clips then drive the imported model, or import
 Mixamo animations retargeted through the same bone map) can replace them. The player, villager,
 camera and test code don't change.
 
+## Playing the village: your first week
+
+You arrive with nothing. The objective panel (top left) walks you through one goal per day, but nothing
+is locked: you can gather, build and ask for help in any order and keep playing after the week ends.
+
+| Day | Objective | How |
+| --- | --- | --- |
+| 1 | Meet the villagers | Talk to all five |
+| 2 | Gather materials | 10 wood (forest, west) and 6 stone (rocks, north) |
+| 3 | Build a farm plot | *Build* → Farm plot, place it, then work on the site |
+| 4 | Harvest food | Plant seeds, wait about 8 hours, harvest |
+| 5 | Ask a villager for help | Talk → "Could you help me with something?" |
+| 6 | Build your own house | 20 wood, 10 stone; sleep in it to skip the night |
+| 7 | Hold a village meeting | Use the fire pit in the evening |
+
+- **Gathering.** Trees give wood, rocks stone, the herb patches herbs. Each lasts three uses and grows
+  back the next morning. Crafting tools at the workshop bench (4 wood, 3 stone) adds +1 per use.
+- **Building.** The Build menu shows cost and purpose. The preview turns red with the reason when you
+  can't build there (missing resources, the river, paths, other buildings, too steep). Placing spends
+  the resources and leaves a construction site you or a villager finish. Farm plot, house, well (waters
+  crops), bench (sit) and lantern.
+- **Villager help.** Ask for building, wood, stone or farming. Answers depend on who you ask (Mara loves
+  building, Tomas's knees keep him out of the quarry), how they feel about you, the time of day, and
+  whether they're already busy. Helpers walk to the job and their work shows up in your stock.
+- **The meeting.** Everyone walks to the fire. Each villager says a few words shaped by their opinion of
+  you and what you've done. It's remembered and raises everyone's opinion.
+- Inventory, buildings, crops, depleted resources, objectives and tasks are saved.
+
 ## Status
 
 ### Implemented
@@ -318,7 +366,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **95/95 checks**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks** and the gameplay test **45/45**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
@@ -341,10 +389,8 @@ Tested with **Godot 4.3-stable** (official Linux build):
 - Changing the grass density preset applies on the next launch. Everything else applies immediately.
 - Villagers do not avoid each other. They wait briefly if the player blocks their way, then carry on.
 - Villagers sleep indoors (hidden). Houses have no interiors yet.
-- Dialogue is greeting-level only, with memory-aware variation. There are no choices yet.
 
 ### Next milestones (not started)
 
-Needs and emotions, personality-driven decisions, relationships between villagers, conversations with
-choices whose consequences are remembered, families and generations, economy and resources, and
-expanding the settlement.
+Needs and emotions, personality-driven decisions, relationships between villagers, families and
+generations, a fuller economy, and expanding the settlement.

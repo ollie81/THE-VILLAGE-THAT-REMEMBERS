@@ -57,7 +57,7 @@ func hold() -> void:
 	var speakers: Array = _attendees if not _attendees.is_empty() else GameManager.villagers
 	var conversation := Conversation.new(speakers[0], GameManager.PLAYER_ID)
 	conversation.lines = meeting_lines(speakers)
-	GameManager.start_scene(speakers[0], conversation)
+	GameManager.start_scene(speakers[0], conversation, true)
 	GameManager.conversation_ended.connect(_on_meeting_over.bind(speakers), CONNECT_ONE_SHOT)
 
 

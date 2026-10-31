@@ -39,7 +39,9 @@ func _ready() -> void:
 	_build_notice()
 
 	_root.add_child(GameplayPanels.new())
-	_root.add_child(DialoguePanel.new())
+	var dialogue := DialoguePanel.new()
+	dialogue.name = "DialoguePanel"
+	_root.add_child(dialogue)
 	_root.add_child(VillagerInfoPanel.new())
 	_settings = SettingsPanel.new()
 	_root.add_child(_settings)
