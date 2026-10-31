@@ -198,6 +198,7 @@ func _run() -> void:
 	for v in GameManager.villagers:
 		if v.has_task():
 			v.global_position = VillageLayout.ground_point(v.task["point"].x, v.task["point"].z)
+			v.assign_task(v.task)  # re-plan the route from the new position
 	await _frames(130)
 	_check(GameManager.is_in_conversation(), "the meeting begins once everyone has arrived")
 	GameManager.end_conversation()

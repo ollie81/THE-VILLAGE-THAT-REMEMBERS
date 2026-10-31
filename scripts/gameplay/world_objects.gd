@@ -15,7 +15,9 @@ func _ready() -> void:
 	add_child(meeting)
 	_add_object("FirePit", Vector3.ZERO, 2.0, _fire_prompt, _fire_verb, _use_fire)
 	var workshop := VillageLayout.get_building("workshop")
-	var bench: Vector3 = VillageLayout.get_locations()["workshop"]["spots"][0]
+	# The bench itself (where villagers working at the workshop look), not
+	# the spot where they stand.
+	var bench: Vector3 = VillageLayout.get_locations()["workshop"]["looks"][0]
 	_add_object("WorkshopBench", bench, 1.3, _bench_prompt, func(): return "Craft", _use_bench)
 	var storage_door: Vector3 = VillageLayout.get_nav_nodes()["storage_door"]
 	_add_object("StorehouseDoor", storage_door, 1.4, func(): return "Check the village stores", func(): return "Open", _use_storage)
