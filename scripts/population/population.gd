@@ -342,17 +342,34 @@ func form_partnership(a: Person, b: Person) -> bool:
 	b.partnered_day = WorldClock.day
 	counters["partnerships"] += 1
 	log_event("partnership", "%s and %s are now together." % [a.first_name, b.first_name], [a.id, b.id])
-	# Move in together if there's room.
-	var home_a := homes().filter(func(h): return h["id"] == a.home)
-	if not home_a.is_empty() and home_a[0]["kind"] != "camp" and _has_space(home_a[0], b):
-		_move_in(b, a.home)
-	else:
-		var home_b := homes().filter(func(h): return h["id"] == b.home)
-		if not home_b.is_empty() and home_b[0]["kind"] != "camp" and _has_space(home_b[0], a):
-			_move_in(a, b.home)
+	move_in_together(a, b)
 	person_changed.emit(a)
 	person_changed.emit(b)
 	return true
+
+
+## Partners share a home: one moves in with the other if there's room,
+## otherwise both move to a home with two free beds. Returns true if they
+## now live together.
+func move_in_together(a: Person, b: Person) -> bool:
+	if a.home == b.home and a.home != CAMP_ID:
+		return true
+	for pair: Array in [[a, b], [b, a]]:
+		var host: Person = pair[0]
+		var guest: Person = pair[1]
+		for home: Dictionary in homes():
+			if home["id"] == host.home and home["kind"] != "camp" and _has_space(home, guest):
+				_move_in(guest, host.home)
+				return true
+	for home: Dictionary in homes():
+		if home["kind"] == "camp":
+			continue
+		var free := int(home["capacity"]) - _occupants_excluding(home, a) - (0 if (home["residents"] as Array).has(b.id) else 1)
+		if free >= 1 or (home["id"] == a.home or home["id"] == b.home) and free >= 0:
+			_move_in(a, String(home["id"]))
+			_move_in(b, String(home["id"]))
+			return true
+	return false
 
 
 func marry(a: Person, b: Person) -> bool:
