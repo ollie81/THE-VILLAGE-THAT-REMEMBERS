@@ -34,13 +34,20 @@ const CLIPS := {
 static var _cache: Dictionary = {}
 
 var _stoop: float = 0.0
+var _hips_height: float = HumanoidRig.HIPS_HEIGHT
+var _leg_scale: float = 1.0
 
 
-static func get_library(stoop: float) -> AnimationLibrary:
-	var key := snappedf(stoop, 0.01)
+## One library per posture and leg length (children's hips sit lower and
+## their bobbing is smaller); libraries are shared between characters.
+static func get_library(stoop: float, proportions: BodyProportions = null) -> AnimationLibrary:
+	var legs := snappedf(proportions.leg, 0.01) if proportions else 1.0
+	var key := "%.2f/%.2f" % [snappedf(stoop, 0.01), legs]
 	if not _cache.has(key):
 		var builder := HumanoidAnimations.new()
-		builder._stoop = key
+		builder._stoop = snappedf(stoop, 0.01)
+		builder._leg_scale = legs
+		builder._hips_height = proportions.map_height(HumanoidRig.HIPS_HEIGHT) if proportions else HumanoidRig.HIPS_HEIGHT
 		_cache[key] = builder._build_library()
 	return _cache[key]
 
@@ -77,7 +84,7 @@ func _bake(length: float, pose: Callable) -> Animation:
 			var euler: Vector3 = p.get(bone, Vector3.ZERO)
 			animation.rotation_track_insert_key(tracks[bone], time, Quaternion.from_euler(euler))
 		var offset: Vector3 = p.get("hips", Vector3.ZERO)
-		animation.position_track_insert_key(hips_track, time, Vector3(0, HumanoidRig.HIPS_HEIGHT, 0) + offset)
+		animation.position_track_insert_key(hips_track, time, Vector3(0, _hips_height, 0) + offset * _leg_scale)
 	return animation
 
 

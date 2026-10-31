@@ -223,6 +223,17 @@ static func _compact(arrays: Array, keep: PackedInt32Array) -> Array:
 	return out
 
 
+## Reshapes everything built so far to child proportions (see
+## BodyProportions). Called once, after modelling, before building.
+func apply_proportions(map: BodyProportions) -> void:
+	if map == null:
+		return
+	for i in _positions.size():
+		var p := _positions[i]
+		_normals[i] = map.map_normal(_normals[i], p.y)
+		_positions[i] = map.map_point(p)
+
+
 func _arrays() -> Array:
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)

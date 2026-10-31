@@ -52,9 +52,15 @@ const MOUTH_Y := 0.044
 const EYE_Y := 0.116
 
 
+## Child proportions applied to the finished meshes (null for adults).
+var _proportions: BodyProportions
+
+
 func _init(appearance: CharacterAppearance, humanoid_rig: HumanoidRig) -> void:
 	look = appearance
-	rig = humanoid_rig
+	# Everyone is modelled as an adult; children are reshaped afterwards.
+	rig = humanoid_rig.adult()
+	_proportions = appearance.proportions()
 	t = SkinnedMeshTool.new(hash(appearance.skin_color) ^ hash(appearance.hair_style))
 	_skin = look.skin_color
 	_shirt = look.shirt_color
@@ -72,6 +78,7 @@ func build() -> ArrayMesh:
 		_build_shoe(side)
 	_build_clothing_details()
 	_build_all_accessories(false)
+	t.apply_proportions(_proportions)
 	return t.build(Materials.character_body())
 
 
@@ -85,6 +92,9 @@ func build_head() -> ArrayMesh:
 		shapes.append(_build_head_tool(FaceExpressions.controls_for(shape, look), base.flip_log, base))
 	t = body_tool
 	head_triangle_count = base.get_triangle_count()
+	base.apply_proportions(_proportions)
+	for shape: SkinnedMeshTool in shapes:
+		shape.apply_proportions(_proportions)
 	return base.build_with_shapes(Materials.character_face(), FaceExpressions.SHAPES, shapes)
 
 

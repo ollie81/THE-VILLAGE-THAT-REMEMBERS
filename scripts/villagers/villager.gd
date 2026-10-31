@@ -86,7 +86,7 @@ func _ready() -> void:
 
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.3
-	capsule.height = 1.7 * data.appearance.height_scale
+	capsule.height = maxf(data.appearance.standing_height() - 0.1, 0.7)
 	_collision = CollisionShape3D.new()
 	_collision.shape = capsule
 	_collision.position = Vector3(0, capsule.height * 0.5, 0)
@@ -131,7 +131,7 @@ func _build_name_label() -> void:
 	name_label.name = "NameLabel"
 	name_label.text = data.display_name
 	name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	name_label.position = Vector3(0, 2.1 * data.appearance.height_scale, 0)
+	name_label.position = Vector3(0, data.appearance.standing_height() + 0.3, 0)
 	name_label.pixel_size = 0.004
 	name_label.font_size = 56
 	name_label.outline_size = 14

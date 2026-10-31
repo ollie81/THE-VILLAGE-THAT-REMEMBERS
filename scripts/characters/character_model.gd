@@ -44,6 +44,8 @@ var prebuilt_meshes: Dictionary = {}
 enum Detail { FULL, REDUCED, FAR }
 const ANIMATION_STRIDE: Array[int] = [1, 2, 4]
 var detail: int = Detail.FULL
+## Child proportions (null for adults).
+var _proportions: BodyProportions
 const PARAM_BLEND := &"parameters/loco/blend_position"
 const PARAM_RATE := &"parameters/rate/scale"
 const PARAM_MOVE := &"parameters/move/blend_amount"
@@ -105,6 +107,7 @@ static func build_meshes(look: CharacterAppearance, rig: HumanoidRig = null) -> 
 
 func _build() -> void:
 	scale = Vector3.ONE * appearance.height_scale
+	_proportions = appearance.proportions()
 	var rig := HumanoidRig.new(appearance)
 	skeleton = rig.create_skeleton()
 	add_child(skeleton)
@@ -148,7 +151,7 @@ func _build() -> void:
 	animation_player = AnimationPlayer.new()
 	animation_player.name = "AnimationPlayer"
 	add_child(animation_player)
-	animation_player.add_animation_library(&"", HumanoidAnimations.get_library(appearance.stoop))
+	animation_player.add_animation_library(&"", HumanoidAnimations.get_library(appearance.stoop, _proportions))
 	_build_animation_tree()
 
 
@@ -231,7 +234,9 @@ func _apply_locomotion() -> void:
 	var run := HumanoidAnimations.RUN_SPEED
 	var blend_speed := clampf(_speed, walk, run)
 	var t := (blend_speed - walk) / (run - walk)
-	var stride := lerpf(HumanoidAnimations.WALK_STRIDE, HumanoidAnimations.RUN_STRIDE, t)
+	# Shorter legs take shorter steps, so children step faster at a speed.
+	var leg_scale := _proportions.leg if _proportions else 1.0
+	var stride := lerpf(HumanoidAnimations.WALK_STRIDE, HumanoidAnimations.RUN_STRIDE, t) * leg_scale
 	# Cycles per second so one cycle covers one stride. Below walking speed
 	# keep a natural slow cadence and let the idle blend take over.
 	var rate := maxf(_speed, walk * 0.6) / stride if moving else walk / HumanoidAnimations.WALK_STRIDE
@@ -286,7 +291,8 @@ func get_face_position() -> Vector3:
 	if skeleton == null:
 		return global_position + Vector3(0, 1.65, 0)
 	var head_pose := skeleton.get_bone_global_pose(HumanoidRig.Bone.HEAD)
-	return skeleton.global_transform * (head_pose.origin + Vector3(0, 0.11, 0.06))
+	var head_scale := _proportions.head if _proportions else 1.0
+	return skeleton.global_transform * (head_pose.origin + Vector3(0, 0.11, 0.06) * head_scale)
 
 
 func _process(delta: float) -> void:
@@ -395,6 +401,8 @@ func _build_proxy_head() -> Node3D:
 		m.add_blob_at(Vector3(0, 0.19, -0.01), Vector3(0.11, 0.09, 0.115), look.accent_color, 8, 4, 0.0)
 	var mesh := MeshInstance3D.new()
 	mesh.mesh = m.build(Materials.vertex_color())
+	if _proportions:
+		mesh.scale = Vector3.ONE * _proportions.head
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Undo the bone's own scale so the proxy matches the real head's size.
 	attachment.add_child(mesh)

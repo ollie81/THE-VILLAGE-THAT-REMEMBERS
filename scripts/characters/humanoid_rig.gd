@@ -50,9 +50,15 @@ var shoulder_half: float
 var hip_half: float
 
 var _joints: Array[Vector3] = []
+## Child proportions applied to the joints (null for adults).
+var proportions: BodyProportions = null
+var _look: CharacterAppearance
 
 
-func _init(look: CharacterAppearance) -> void:
+## `child_proportions` false gives the adult skeleton the meshes are
+## modelled on; the real skeleton (true) is mapped to the child's size.
+func _init(look: CharacterAppearance, child_proportions: bool = true) -> void:
+	_look = look
 	var bulk := lerpf(1.0, look.build_width, 0.6)
 	shoulder_half = 0.19 * look.shoulder_width * bulk
 	hip_half = 0.092 * look.hip_width * bulk
@@ -71,6 +77,21 @@ func _init(look: CharacterAppearance) -> void:
 		_joints[Bone.LEFT_UPPER_LEG if left else Bone.RIGHT_UPPER_LEG] = Vector3(side * hip_half, HIP_JOINT_HEIGHT, 0.0)
 		_joints[Bone.LEFT_LOWER_LEG if left else Bone.RIGHT_LOWER_LEG] = Vector3(side * hip_half * 0.95, KNEE_HEIGHT, 0.012)
 		_joints[Bone.LEFT_FOOT if left else Bone.RIGHT_FOOT] = Vector3(side * hip_half * 0.92, ANKLE_HEIGHT, -0.01)
+	if child_proportions:
+		proportions = look.proportions()
+		if proportions:
+			for i in _joints.size():
+				_joints[i] = proportions.map_point(_joints[i])
+
+
+## The same person's adult skeleton (meshes are modelled on it).
+func adult() -> HumanoidRig:
+	return self if proportions == null else HumanoidRig.new(_look, false)
+
+
+## Rest height of the hips (animations key the hips at this height).
+func hips_height() -> float:
+	return _joints[Bone.HIPS].y
 
 
 ## Model-space rest position of a joint.

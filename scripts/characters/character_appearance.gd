@@ -19,6 +19,10 @@ extends Resource
 @export var hat_color: Color = Color(0, 0, 0, 0)
 
 @export_group("Body")
+## How child-like the body is: 0 = adult, 1 = about four years old (see
+## BodyProportions). Set from age; the rest of the look is the person they
+## grow into.
+@export_range(0.0, 1.0) var youth: float = 0.0
 @export_range(0.85, 1.15) var height_scale: float = 1.0
 ## General bulk; multiplies shoulder and hip width.
 @export_range(0.8, 1.3) var build_width: float = 1.0
@@ -69,6 +73,16 @@ extends Resource
 @export var accessories: PackedStringArray = PackedStringArray()
 ## Prop held while working: hammer, hoe, basket, ledger (or empty).
 @export var work_tool: String = ""
+
+
+## Standing height in metres (top of the head), children included.
+func standing_height() -> float:
+	var map := proportions()
+	return (map.height_of(1.8) if map else 1.8) * height_scale
+
+
+func proportions() -> BodyProportions:
+	return BodyProportions.for_youth(youth) if youth > 0.0005 else null
 
 
 func has_accessory(accessory: String) -> bool:
