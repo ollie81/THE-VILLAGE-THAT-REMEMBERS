@@ -47,12 +47,19 @@ func _exploring() -> bool:
 	return GameManager.camera_mode == GameManager.CameraMode.EXPLORATION
 
 
+## The visible game area. Used instead of this control's own size so the
+## joystick and buttons are always on screen, whatever the layout does.
+func _screen() -> Vector2:
+	var visible_size := get_viewport_rect().size
+	return visible_size if visible_size.x > 1.0 else size
+
+
 func _jump_center() -> Vector2:
-	return size - Vector2(120, 130)
+	return _screen() - Vector2(120, 130)
 
 
 func _interact_center() -> Vector2:
-	return size - Vector2(270, 110)
+	return _screen() - Vector2(270, 110)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -73,7 +80,7 @@ func _handle_touch(touch: InputEventScreenTouch) -> void:
 			if interact_available and touch.position.distance_to(_interact_center()) < BUTTON_RADIUS * 1.15:
 				_press_button(touch.index, "interact")
 				return
-			if touch.position.x < size.x * 0.42 and _joystick_touch == -1:
+			if touch.position.x < _screen().x * 0.42 and _joystick_touch == -1:
 				_joystick_touch = touch.index
 				_joystick_origin = touch.position
 				_joystick_position = touch.position
@@ -151,7 +158,7 @@ func _draw() -> void:
 	# Dark base with a light rim stays visible on both grass and bright paths.
 	var base_color := Color(0.05, 0.04, 0.03, 0.28)
 	var ring_color := Color(1, 1, 1, 0.6)
-	var joystick_center := _joystick_origin if _joystick_touch != -1 else Vector2(170, size.y - 170)
+	var joystick_center := _joystick_origin if _joystick_touch != -1 else Vector2(170, _screen().y - 170)
 	draw_circle(joystick_center, JOYSTICK_RADIUS, base_color)
 	draw_arc(joystick_center, JOYSTICK_RADIUS, 0, TAU, 40, ring_color, 3.0, true)
 	var knob := joystick_center
