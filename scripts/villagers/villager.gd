@@ -9,6 +9,8 @@ extends CharacterBody3D
 ## body so the player bumps into them and can tap-select them.
 
 signal activity_changed(villager: Villager, description: String)
+## Walked off the edge of the map after leaving the village.
+signal departed(villager: Villager)
 
 enum State { IDLE, TRAVELING, PERFORMING, INSIDE, INTERACTING }
 
@@ -20,8 +22,18 @@ const MAX_WAIT_FOR_PLAYER := 3.0
 const NAME_LABEL_MIN_DISTANCE := 4.0
 const NAME_LABEL_DISTANCE := 15.0
 const LAYER_VILLAGER := 4
+## Camera distances for character level of detail (see CharacterModel.Detail).
+const DETAIL_FULL_DISTANCE := 16.0
+const DETAIL_REDUCED_DISTANCE := 38.0
+const DETAIL_INTERVAL := 0.25
 
 var data: VillagerData
+## Life record (every villager has one once the population is set up).
+var person: Person = null
+## Meshes built ahead of time on a worker thread (optional).
+var prebuilt_meshes: Dictionary = {}
+## Where a newcomer appears (walking in) instead of their schedule spot.
+var spawn_at: Variant = null
 var navigation: VillageNavigation
 var mind: VillagerMind
 var brain: VillagerBrain
@@ -50,6 +62,8 @@ var task: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _collision: CollisionShape3D
 var _selection_ring: MeshInstance3D
+var _leaving: bool = false
+var _detail_timer: float = 0.0
 
 
 func get_villager_id() -> StringName:
@@ -74,6 +88,8 @@ func _ready() -> void:
 
 	model = CharacterModel.new(data.appearance)
 	model.name = "Model"
+	model.prebuilt_meshes = prebuilt_meshes
+	prebuilt_meshes = {}
 	add_child(model)
 
 	_build_name_label()
@@ -90,7 +106,14 @@ func _ready() -> void:
 	brain = ScheduleBrain.new(data)
 	GameManager.register_villager(self)
 	GameManager.villager_selected.connect(_on_villager_selected)
-	_place_for_current_time()
+	if spawn_at != null:
+		var at: Vector3 = spawn_at
+		global_position = VillageLayout.ground_point(at.x, at.z)
+		current_activity = brain.choose_activity(self, WorldClock.time_of_day)
+		_travel_to(_resolve_location(current_activity))
+		activity_changed.emit(self, get_activity_description())
+	else:
+		_place_for_current_time()
 
 
 func _exit_tree() -> void:
@@ -168,11 +191,91 @@ func _physics_process(delta: float) -> void:
 			_process_performing(delta)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_label_visibility()
+	_detail_timer -= delta
+	if _detail_timer <= 0.0:
+		_detail_timer = DETAIL_INTERVAL
+		_update_detail()
+
+
+## Close people get the expressive face and smooth animation; distant or
+## off-screen people get a simple head and fewer animation updates.
+func _update_detail() -> void:
+	if state == State.INSIDE:
+		model.set_detail(CharacterModel.Detail.FAR, false)
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var distance := camera.global_position.distance_to(global_position)
+	var level := CharacterModel.Detail.FULL
+	if state != State.INTERACTING and GameManager.selected_villager != self:
+		if distance > DETAIL_REDUCED_DISTANCE:
+			level = CharacterModel.Detail.FAR
+		elif distance > DETAIL_FULL_DISTANCE:
+			level = CharacterModel.Detail.REDUCED
+	var on_screen := camera.is_position_in_frustum(global_position + Vector3(0, 1.0, 0)) or distance < 3.0
+	model.set_detail(level, on_screen)
+
+
+# --- Joining and leaving ---------------------------------------------------------
+
+func is_visitor() -> bool:
+	return person != null and person.status == Person.STATUS_VISITOR
+
+
+func is_leaving() -> bool:
+	return _leaving
+
+
+## A welcomed traveller starts living by their own timetable.
+func become_resident(new_data: VillagerData) -> void:
+	data = new_data
+	brain = ScheduleBrain.new(data)
+	name_label.text = data.display_name
+	interactable.display_name = data.display_name
+	current_activity = null
+	_decision_timer = 0.0
+
+
+## Their home changed (moved out of the camp, in with a partner...).
+func set_home(home_location: String) -> void:
+	data.home_location = home_location
+	if current_activity and current_activity.location_id == "home":
+		current_activity = null
+		_decision_timer = 0.0
+
+
+## Walks out of the village; `departed` fires at the edge of the map.
+func leave(exit_point: Vector3) -> void:
+	_leaving = true
+	task = {}
+	if state == State.INSIDE:
+		_leave_house()
+	navigation.release_spot(_location_id, _spot_index, data.id)
+	_location_id = ""
+	_spot_index = -1
+	_look_target = null
+	var activity := VillagerActivity.new()
+	activity.kind = &"leave"
+	activity.location_id = "away"
+	activity.label = "Leaving the village"
+	current_activity = activity
+	_route = navigation.find_route(global_position, exit_point)
+	_route_index = 0
+	_blocked_time = 0.0
+	if state != State.INTERACTING:
+		state = State.TRAVELING
+	else:
+		_state_before_interaction = State.TRAVELING
+	interactable.enabled = false
+	activity_changed.emit(self, get_activity_description())
 
 
 func _think() -> void:
+	if _leaving:
+		return
 	if not task.is_empty():
 		if TaskSystem.absolute_hours() < float(task["until"]):
 			return
@@ -273,6 +376,11 @@ func _process_travel(delta: float) -> void:
 
 
 func _arrive() -> void:
+	if _leaving:
+		navigation.release_spot(_location_id, _spot_index, data.id)
+		departed.emit(self)
+		queue_free()
+		return
 	if current_activity.is_sleep():
 		_enter_house()
 	else:
@@ -326,6 +434,7 @@ func _is_player_in_the_way(direction: Vector3) -> bool:
 
 func _enter_house() -> void:
 	state = State.INSIDE
+	model.set_detail(CharacterModel.Detail.FAR, false)
 	visible = false
 	_collision.set_deferred("disabled", true)
 	interactable.enabled = false
@@ -380,6 +489,8 @@ func get_activity_description() -> String:
 	if current_activity == null:
 		return ""
 	if state == State.TRAVELING:
+		if _leaving:
+			return "Leaving the village"
 		if has_task():
 			return "On the way: %s" % current_activity.label.to_lower()
 		return "Heading to %s" % VillageLayout.get_location_label(_location_id)

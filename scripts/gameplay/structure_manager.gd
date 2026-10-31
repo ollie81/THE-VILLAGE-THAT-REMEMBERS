@@ -5,6 +5,8 @@ extends Node3D
 
 static var instance: StructureManager
 
+signal structure_completed(structure: PlacedStructure)
+
 var _last_clock: float = -1.0
 
 
@@ -25,6 +27,7 @@ func _spawn(record: Dictionary) -> PlacedStructure:
 	var structure := PlacedStructure.create(record)
 	structure.add_to_group("placed_structures")
 	structure.completed.connect(func(s): GameManager.notify("%s finished!" % s.get_info()["name"]))
+	structure.completed.connect(func(s): structure_completed.emit(s))
 	add_child(structure)
 	return structure
 

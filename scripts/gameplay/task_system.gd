@@ -9,6 +9,7 @@ extends Node
 const TASK_HOURS := 3.0
 ## Work given to a building site per game hour by one helper.
 const MEETING_RADIUS := 3.6
+const MEETING_RING := 10
 const BUILD_RATE := 1.2
 ## Resources delivered per game hour by one helper.
 const GATHER_RATE := 2.0
@@ -80,7 +81,7 @@ static func absolute_hours() -> float:
 ## Asks `villager` to do `kind`. Returns { "accepted": bool, "lines": [...] }.
 static func request(villager, kind: StringName) -> Dictionary:
 	var id: StringName = villager.data.id
-	var lines_for: Dictionary = LINES.get(id, LINES[&"elias"])
+	var lines_for: Dictionary = LINES[id] if LINES.has(id) else generated_lines(villager.person)
 	var mind: VillagerMind = villager.mind
 	var player := GameManager.PLAYER_ID
 	if mind.is_hostile(player):
@@ -92,7 +93,8 @@ static func request(villager, kind: StringName) -> Dictionary:
 	var target := task_target(villager, kind)
 	if target.is_empty():
 		return {"accepted": false, "lines": ["[surprised]There's nothing to build yet. Place a foundation first."]}
-	var preference := float(PREFERENCES.get(id, {}).get(kind, 0.4))
+	var preference := float(PREFERENCES[id].get(kind, 0.4)) if PREFERENCES.has(id) \
+		else (Professions.task_preference(villager.person, kind) if villager.person else 0.4)
 	var warmth := mind.get_affection(player) / 100.0
 	var score := preference + warmth * 0.6 + mind.get_trust(player) / 100.0 * 0.3
 	if score < 0.35:
@@ -110,6 +112,20 @@ static func request(villager, kind: StringName) -> Dictionary:
 	GameState.increment(&"tasks_accepted")
 	mind.adjust_opinion(player, 1.0, 2.0)
 	return {"accepted": true, "lines": [lines_for[&"love"] if preference >= 0.75 else lines_for[&"ok"]]}
+
+
+## Replies for newcomers, by temperament: cheerful, dutiful or grumpy.
+static func generated_lines(person: Person) -> Dictionary:
+	if person == null:
+		return LINES[&"elias"]
+	if person.trait_weight("extraversion") > 0.6:
+		return {&"love": "[laughing]Ha! Just what I'm good at. Watch this!", &"ok": "[happy]Sure, why not? I'll head over now.",
+			&"no": "[worried]Oh, I'd only get in the way with that. Ask someone else?"}
+	if person.trait_weight("agreeableness") < 0.38:
+		return {&"love": "[happy]Finally, real work. I'll do it properly.", &"ok": "Fine. Don't hover while I work.",
+			&"no": "[angry]That's not my job."}
+	return {&"love": "[happy]That's my trade. I'll be glad to.", &"ok": "[happy]Alright, I can help with that.",
+		&"no": "[sad]I'm sorry, that's not something I can do well."}
 
 
 ## Where the villager should work, or {} if there's nowhere to do this job.
@@ -152,12 +168,14 @@ static func task_target(villager, kind: StringName) -> Dictionary:
 ## spot (two people on one spot render as one body with two faces). The ring
 ## leaves a gap on the +X side, where the player stands to call the meeting.
 static func meeting_spot(villager) -> Vector3:
-	var count := maxi(GameManager.villagers.size(), 1)
+	# Rings of up to MEETING_RING places, further out as the village grows.
 	var index := maxi(GameManager.villagers.find(villager), 0)
-	var angle := lerpf(0.9, TAU - 0.9, (index + 0.5) / count)
-	var x := cos(angle) * MEETING_RADIUS
-	var z := sin(angle) * MEETING_RADIUS
-	return VillageLayout.ground_point(x, z)
+	var ring := index / MEETING_RING
+	var in_ring := mini(GameManager.villagers.size() - ring * MEETING_RING, MEETING_RING)
+	var slot := index % MEETING_RING
+	var angle := lerpf(0.9, TAU - 0.9, (slot + 0.5) / maxf(in_ring, 1.0)) + ring * 0.2
+	var radius := MEETING_RADIUS + ring * 1.4
+	return VillageLayout.ground_point(cos(angle) * radius, sin(angle) * radius)
 
 
 ## Contributions from villagers who are at work, as game time passes.

@@ -79,5 +79,30 @@ func _do_action(choice: Dictionary) -> void:
 			var result := TaskSystem.request(_villager, StringName(String(choice["task"])))
 			for line in result["lines"]:
 				lines.append(String(line))
+		"ask_stay":
+			var person: Person = _villager.person
+			var warmth: float = _villager.mind.get_affection(_actor_id)
+			if warmth >= -10.0:
+				person.leaving = false
+				person.unhappy_days = 0
+				person.happiness = minf(person.happiness + 15.0, 100.0)
+				_villager.mind.adjust_opinion(_actor_id, 8.0, 5.0)
+				Population.log_event("stayed", "%s was talked into staying." % person.first_name, [person.id])
+				var wish := "a proper home instead of a tent" if person.home == Population.CAMP_ID \
+					else "a few more friends" if person.partner == "" else "a little more time"
+				lines.append("[sad]...You really want me here?")
+				lines.append("[happy]Alright. I'll give it another try. I suppose I just need %s." % wish)
+			else:
+				lines.append("[angry]After how you've treated me? No. I'm going.")
+			choices = DialogueService.closing_menu()
+		"visitor_more":
+			lines.append_array(PersonGenerator.visitor_details(_villager.person))
+			choices = DialogueService.visitor_menu(false)
+		"welcome":
+			if PopulationDirector.instance:
+				lines.append_array(PopulationDirector.instance.welcome(_villager))
+		"turn_away":
+			if PopulationDirector.instance:
+				lines.append_array(PopulationDirector.instance.turn_away(_villager))
 		_:
 			pass

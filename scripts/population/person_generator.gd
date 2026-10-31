@@ -223,3 +223,55 @@ static func _returning_lines(p: Person) -> PackedStringArray:
 		lines.append("[worried]Do you think the winter will be hard this year?")
 	lines.append("[happy]This village is starting to feel like home.")
 	return lines
+
+
+# --- Travellers --------------------------------------------------------------------
+
+## A traveller waits at the meeting circle by day to meet the player and
+## sleeps at the camp until they've been welcomed or sent on their way.
+static func make_visitor_data(p: Person) -> VillagerData:
+	var data := make_data(p)
+	data.home_location = Population.CAMP_ID
+	data.schedule = [
+		{"hour": 6.5, "activity": "wait", "location": "plaza", "label": "Waiting to meet you", "anim": "idle"},
+		{"hour": 21.5, "activity": "sleep", "location": "home"},
+	]
+	data.wander_locations = PackedStringArray(["plaza"])
+	return data
+
+
+## What a traveller says when the player first speaks to them.
+static func visitor_intro(p: Person) -> Array[String]:
+	var lines: Array[String] = []
+	var job := Professions.label(p.profession).to_lower()
+	var inviter: Person = Population.get_person(p.invited_by) if p.invited_by != "" else null
+	if p.trait_weight("extraversion") > 0.6:
+		lines.append("[laughing]Hello there! I'm %s %s. What a lovely little village!" % [p.first_name, p.family_name])
+	elif p.trait_weight("neuroticism") > 0.65:
+		lines.append("[worried]Oh! Hello. I'm %s %s. I hope I'm not intruding." % [p.first_name, p.family_name])
+	else:
+		lines.append("[happy]Good day. My name is %s %s." % [p.first_name, p.family_name])
+	if inviter:
+		lines.append("[happy]%s wrote and told me there might be a place for me here. I'm their %s." % [inviter.first_name, String(p.relatives.get(inviter.id, "friend"))])
+	else:
+		lines.append("I've been on the road a long while. I'm a %s, and a good one." % job)
+	lines.append("[happy]I'd like to %s. Would you let me stay?" % String(p.ambition.get("text", "settle down")))
+	return lines
+
+
+## Their answer to "Tell me more about yourself."
+static func visitor_details(p: Person) -> Array[String]:
+	var lines: Array[String] = []
+	var best := ""
+	var best_value := 0.0
+	for skill in p.skills:
+		if float(p.skills[skill]) > best_value:
+			best_value = float(p.skills[skill])
+			best = String(skill)
+	lines.append("I'm %d. Most people would call me %s." % [p.age(), ", ".join(Array(p.traits).map(func(t): return String(t).to_lower()))])
+	lines.append("[happy]I'm best at %s. I could be useful around here." % best)
+	if p.trait_weight("agreeableness") > 0.65:
+		lines.append("[happy]And I'll pitch in wherever I'm needed. I like helping.")
+	elif p.trait_weight("agreeableness") < 0.35:
+		lines.append("I'll do my share. Don't expect me to smile about it.")
+	return lines

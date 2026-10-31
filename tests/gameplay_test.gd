@@ -9,6 +9,7 @@ var _main = null
 
 func _ready() -> void:
 	SaveService.enabled = false
+	PopulationDirector.auto_arrivals = false
 	GameState.reset()
 	_run.call_deferred()
 

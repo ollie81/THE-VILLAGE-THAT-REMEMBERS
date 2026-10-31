@@ -161,6 +161,8 @@ func get_interaction_verb() -> String:
 			return "Water"
 		&"house":
 			return "Sleep"
+		&"cottage":
+			return "Visit"
 		&"bench":
 			return "Sit"
 	return "Use"
@@ -183,7 +185,19 @@ func get_interaction_prompt() -> String:
 			return "Sleep until morning" if _is_night() else "Your house  (sleep here at night)"
 		&"bench":
 			return "Sit and rest"
+		&"cottage":
+			return "Cottage  (%d / %d living here)" % [Population.residents_of(home_id()).size(), Population.COTTAGE_CAPACITY]
 	return String(info["name"])
+
+
+## The home location id of a finished cottage.
+func home_id() -> String:
+	return Population.cottage_home_id(record)
+
+
+## Where residents go in and out (just in front of the door).
+func door_point() -> Vector3:
+	return global_transform * Vector3(0, 0, 3.3)
 
 
 func _on_interacted(actor: Node) -> void:
@@ -243,6 +257,10 @@ func use(actor: Node = null) -> String:
 		&"bench":
 			_notify("You sit for a while and watch the village go by.")
 			return "rest"
+		&"cottage":
+			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
+			_notify("Nobody lives here yet." if names.is_empty() else "Home of %s." % ", ".join(names))
+			return "visited"
 	return ""
 
 

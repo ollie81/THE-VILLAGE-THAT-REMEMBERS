@@ -18,7 +18,7 @@ static func is_meeting_time() -> bool:
 func call_meeting() -> void:
 	_attendees.clear()
 	for villager in GameManager.villagers:
-		if not villager.visible:
+		if not villager.visible or villager.is_visitor() or villager.is_leaving():
 			continue
 		var target := TaskSystem.task_target(villager, &"meeting")
 		var activity := VillagerActivity.new()
@@ -54,11 +54,26 @@ func _process(delta: float) -> void:
 
 ## Runs the meeting conversation (also callable directly by tests).
 func hold() -> void:
-	var speakers: Array = _attendees if not _attendees.is_empty() else GameManager.villagers
+	var everyone: Array = _attendees if not _attendees.is_empty() else GameManager.villagers
+	var speakers := pick_speakers(everyone)
 	var conversation := Conversation.new(speakers[0], GameManager.PLAYER_ID)
 	conversation.lines = meeting_lines(speakers)
 	GameManager.start_scene(speakers[0], conversation, true)
-	GameManager.conversation_ended.connect(_on_meeting_over.bind(speakers), CONNECT_ONE_SHOT)
+	GameManager.conversation_ended.connect(_on_meeting_over.bind(everyone), CONNECT_ONE_SHOT)
+
+
+## Everyone attends, but only a few speak: the founders and up to three
+## newcomers with the strongest feelings about the player.
+static func pick_speakers(attendees: Array) -> Array:
+	var founders: Array = []
+	var others: Array = []
+	for villager in attendees:
+		if villager.person == null or villager.person.founder:
+			founders.append(villager)
+		else:
+			others.append(villager)
+	others.sort_custom(func(a, b): return absf(a.mind.get_affection(GameManager.PLAYER_ID)) > absf(b.mind.get_affection(GameManager.PLAYER_ID)))
+	return founders + others.slice(0, 3)
 
 
 func _on_meeting_over(_villager, speakers: Array) -> void:

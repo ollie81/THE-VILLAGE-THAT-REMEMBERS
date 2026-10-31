@@ -9,6 +9,8 @@ extends RefCounted
 
 
 static func build_conversation(villager, actor_id: String) -> Conversation:
+	if villager.is_visitor():
+		return visitor_conversation(villager, actor_id)
 	var conversation := Conversation.new(villager, actor_id)
 	var mind: VillagerMind = villager.mind
 	conversation.lines = build_greeting(villager, actor_id)
@@ -35,7 +37,29 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 	else:
 		conversation.lines.append_array(_small_talk(villager))
 		conversation.choices = closing_menu()
+	# Someone who has decided to leave says so, and can be asked to stay.
+	if villager.person and villager.person.leaving and not villager.is_leaving():
+		conversation.lines.append("[sad]I've made up my mind. I'm leaving in the morning.")
+		var menu: Array = [{"text": "Please stay. What would make you happier here?", "action": "ask_stay"}]
+		menu.append_array(conversation.choices if conversation.choices.size() > 0 else closing_menu())
+		conversation.choices = menu
 	return conversation
+
+
+## A traveller asking to stay: welcome them, hear more, or turn them away.
+static func visitor_conversation(villager, actor_id: String) -> Conversation:
+	var conversation := Conversation.new(villager, actor_id)
+	conversation.lines = PersonGenerator.visitor_intro(villager.person)
+	conversation.choices = visitor_menu(true)
+	return conversation
+
+
+static func visitor_menu(can_ask_more: bool) -> Array:
+	var menu: Array = [{"text": "Welcome to the village! There's a place for you here.", "action": "welcome"}]
+	if can_ask_more:
+		menu.append({"text": "Tell me more about yourself first.", "action": "visitor_more"})
+	menu.append({"text": "I'm sorry, we can't take anyone else in.", "action": "turn_away"})
+	return menu
 
 
 ## The last thing offered in a conversation: ask for help, or leave.

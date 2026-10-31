@@ -34,12 +34,15 @@ var counters := {"arrivals": 0, "departures": 0, "rejected": 0, "births": 0, "de
 ## home id -> person id who owns it (passed on by inheritance).
 var home_owners: Dictionary = {}
 var next_id: int = 1
+## Relatives and friends residents have sent for: { inviter, relation }.
+var invitations: Array = []
 
 
 func reset() -> void:
 	people.clear()
 	events.clear()
 	home_owners.clear()
+	invitations.clear()
 	for key in counters:
 		counters[key] = 0
 	next_id = 1
@@ -558,7 +561,7 @@ func to_dict() -> Dictionary:
 	for id in people:
 		records[id] = (people[id] as Person).to_dict()
 	return {"people": records, "events": events.duplicate(true), "counters": counters.duplicate(),
-		"home_owners": home_owners.duplicate(), "next_id": next_id}
+		"home_owners": home_owners.duplicate(), "next_id": next_id, "invitations": invitations.duplicate(true)}
 
 
 func from_dict(data: Dictionary) -> void:
@@ -578,3 +581,6 @@ func from_dict(data: Dictionary) -> void:
 	if owners is Dictionary:
 		home_owners = (owners as Dictionary).duplicate()
 	next_id = int(data.get("next_id", 1))
+	var saved_invitations: Variant = data.get("invitations", [])
+	if saved_invitations is Array:
+		invitations = (saved_invitations as Array).duplicate(true)

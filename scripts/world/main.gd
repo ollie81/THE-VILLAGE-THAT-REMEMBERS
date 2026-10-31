@@ -22,6 +22,7 @@ var hud: Hud
 func _ready() -> void:
 	SaveService.apply_saved_clock()
 	SaveService.apply_saved_game_state()
+	SaveService.apply_saved_population()
 	var world := Node3D.new()
 	world.name = "World"
 	add_child(world)
@@ -39,6 +40,12 @@ func _ready() -> void:
 	navigation = VillageNavigation.new()
 	_spawn_player()
 	_spawn_villagers()
+
+	var director := PopulationDirector.new()
+	director.navigation = navigation
+	director.villagers_root = get_node("Villagers")
+	add_child(director)
+	add_child(SocialLife.new())
 
 	add_child(GossipSystem.new())
 	add_child(TaskSystem.new())
@@ -67,10 +74,19 @@ func _spawn_villagers() -> void:
 	var villagers := Node3D.new()
 	villagers.name = "Villagers"
 	add_child(villagers)
+	var founders: Array = []
 	for path in VILLAGER_DATA_PATHS:
 		var data := load(path) as VillagerData
 		if data == null:
 			push_error("Missing villager data: %s" % path)
+			continue
+		founders.append(data)
+	# The founders keep their hand-written identities; their life records are
+	# created once (or come from the save).
+	Population.ensure_founders(founders)
+	for data: VillagerData in founders:
+		var person := Population.get_person(String(data.id))
+		if person and not person.is_present():
 			continue
 		var villager := Villager.new()
 		villager.data = data

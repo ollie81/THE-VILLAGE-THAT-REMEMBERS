@@ -8,6 +8,8 @@ const STRUCTURES := {
 		"description": "Plant seeds and harvest food."},
 	&"house": {"name": "House", "cost": {&"wood": 20, &"stone": 10}, "work": 6, "footprint": Vector2(6.2, 4.8),
 		"description": "A home of your own. Sleep here at night."},
+	&"cottage": {"name": "Cottage", "cost": {&"wood": 18, &"stone": 8}, "work": 6, "footprint": Vector2(6.2, 4.8),
+		"description": "A home for up to four newcomers. Travellers move in from the camp."},
 	&"well": {"name": "Well", "cost": {&"stone": 10, &"wood": 2}, "work": 3, "footprint": Vector2(2.2, 2.2),
 		"description": "Draw water to help crops grow faster."},
 	&"bench": {"name": "Bench", "cost": {&"wood": 4}, "work": 1, "footprint": Vector2(2.0, 0.9),
@@ -15,7 +17,7 @@ const STRUCTURES := {
 	&"lantern": {"name": "Lantern", "cost": {&"wood": 3, &"stone": 2}, "work": 1, "footprint": Vector2(0.9, 0.9),
 		"description": "Lights the way at night."},
 }
-const ORDER: Array[StringName] = [&"farm_plot", &"house", &"well", &"bench", &"lantern"]
+const ORDER: Array[StringName] = [&"farm_plot", &"house", &"cottage", &"well", &"bench", &"lantern"]
 
 
 static func info(type: StringName) -> Dictionary:
@@ -36,6 +38,12 @@ static func create_finished(type: StringName) -> Node3D:
 			root.position = Vector3.ZERO
 			root.rotation = Vector3.ZERO
 			return root
+		&"cottage":
+			var cottage := BuildingFactory.create({"id": "cottage", "type": "house", "position": Vector3.ZERO,
+				"yaw": 0.0, "footprint": Vector2(6.2, 4.8), "owner": "cottage"})
+			cottage.position = Vector3.ZERO
+			cottage.rotation = Vector3.ZERO
+			return cottage
 		&"lantern":
 			var lantern := BuildingFactory.create_lantern(Vector3.ZERO)
 			return lantern

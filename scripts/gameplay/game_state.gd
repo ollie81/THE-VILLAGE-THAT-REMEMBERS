@@ -175,9 +175,12 @@ func objective_progress() -> String:
 	return ""
 
 
+## Founders met (the first objective is about the five who were here first).
 func villagers_met() -> int:
 	var met := 0
 	for villager in GameManager.villagers:
+		if villager.person and not villager.person.founder:
+			continue
 		if villager.mind.get_familiarity(GameManager.PLAYER_ID) > 0:
 			met += 1
 	return met

@@ -22,6 +22,7 @@ const HOUSE_STYLES := {
 	"elias": {"wall": Color(0.93, 0.87, 0.68), "roof": Color(0.76, 0.62, 0.34), "trim": Color(0.4, 0.3, 0.18), "accent": Color(0.35, 0.55, 0.3)},
 	"nia": {"wall": Color(0.84, 0.89, 0.8), "roof": Color(0.36, 0.52, 0.4), "trim": Color(0.38, 0.28, 0.2), "accent": Color(0.6, 0.45, 0.75)},
 	"tomas": {"wall": Color(0.8, 0.73, 0.62), "roof": Color(0.4, 0.37, 0.36), "trim": Color(0.28, 0.2, 0.14), "accent": Color(0.55, 0.4, 0.25)},
+	"cottage": {"wall": Color(0.86, 0.8, 0.66), "roof": Color(0.55, 0.36, 0.22), "trim": Color(0.38, 0.27, 0.17), "accent": Color(0.42, 0.56, 0.36)},
 	"player": {"wall": Color(0.9, 0.84, 0.74), "roof": Color(0.3, 0.52, 0.5), "trim": Color(0.34, 0.24, 0.16), "accent": Color(0.85, 0.55, 0.3)},
 	"sera": {"wall": Color(0.93, 0.79, 0.63), "roof": Color(0.27, 0.46, 0.62), "trim": Color(0.36, 0.25, 0.16), "accent": Color(0.95, 0.72, 0.25)},
 }
