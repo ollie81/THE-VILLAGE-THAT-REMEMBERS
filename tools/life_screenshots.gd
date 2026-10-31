@@ -171,7 +171,14 @@ func _run() -> void:
 	await _wait(12)
 	await _shot("11_morning_greeting")
 
-	# 6. Settings: voices.
+	# 6. Gifts (optional rewarded ads).
+	var gifts: GiftsPanel = _main.find_child("GiftsPanel", true, false)
+	gifts.toggle()
+	await _wait(10)
+	await _shot("13_gifts_panel")
+	gifts.toggle()
+
+	# 7. Settings: voices.
 	var settings = _main.find_child("SettingsPanel", true, false)
 	if settings == null:
 		for node in _main.find_children("*", "Control", true, false):

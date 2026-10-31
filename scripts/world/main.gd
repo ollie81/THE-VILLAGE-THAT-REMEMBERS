@@ -47,6 +47,7 @@ func _ready() -> void:
 	add_child(director)
 	add_child(SocialLife.new())
 	add_child(PlayerSocial.new())
+	add_child(VillageGifts.new())
 
 	add_child(GossipSystem.new())
 	add_child(TaskSystem.new())

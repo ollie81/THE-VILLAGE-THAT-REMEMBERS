@@ -286,5 +286,46 @@ func _run() -> void:
 	_check(bool(ProjectSettings.get_setting("audio/general/text_to_speech", false)), "text-to-speech is enabled for devices that have it")
 	_check(Voices.clean_text("[happy]Hello... there") == "Hello,  there", "expression tags aren't read out")
 
+	await _gifts()
+
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
+
+
+## Rewarded ads: optional gifts for the village (simulated ad in tests).
+func _gifts() -> void:
+	print("-- Gifts (rewarded ads) --")
+	AdRewards.reset_for_tests()
+	var panel: GiftsPanel = _main.find_child("GiftsPanel", true, false)
+	_check(AdRewards.provider == AdRewards.Provider.SIMULATED, "on desktop debug builds a simulated ad stands in for AdMob")
+	_check(panel != null and panel._button.visible, "a Gifts button is on screen")
+	panel.toggle()
+	await _frames(3)
+	_check(panel.is_open() and panel._list.get_child_count() == AdRewards.REWARDS.size(), "the panel lists %d gifts" % AdRewards.REWARDS.size())
+	var wood := GameState.count(&"wood")
+	var granted: Array = []
+	AdRewards.reward_granted.connect(func(r): granted.append(r))
+	AdRewards.show_for(&"caravan")
+	_check(get_tree().paused, "the game pauses while the ad plays")
+	await get_tree().create_timer(AdRewards.SIMULATED_AD_SECONDS + 0.5, true, false, true).timeout
+	await _frames(3)
+	_check(not get_tree().paused and granted == [&"caravan"], "after the ad the game resumes and the gift is given")
+	_check(GameState.count(&"wood") == wood + 8, "the caravan brought 8 wood")
+	_check(not AdRewards.is_available() and AdRewards.cooldown_left() > 0.0, "there's a short wait before the next ad: %s" % AdRewards.unavailable_reason())
+	AdRewards._last_shown_msec = -10000000
+	_check(VillageGifts.blocked_reason(&"harvest") != "", "a blessed harvest needs planted crops first")
+	var happy_before := 0.0
+	for p: Person in Population.residents():
+		p.happiness = 40.0
+	AdRewards.show_for(&"feast")
+	await get_tree().create_timer(AdRewards.SIMULATED_AD_SECONDS + 0.5, true, false, true).timeout
+	await _frames(3)
+	_check(Population.residents().all(func(p): return p.happiness >= 55.0), "a village feast makes everyone happier")
+	AdRewards.watched_today = AdRewards.MAX_PER_DAY
+	AdRewards._last_shown_msec = -10000000
+	_check(AdRewards.remaining_today() == 0 and AdRewards.unavailable_reason().contains("tomorrow"), "at most %d gifts a day" % AdRewards.MAX_PER_DAY)
+	var before := GameState.count(&"wood")
+	AdRewards.show_for(&"caravan")
+	await _frames(5)
+	_check(GameState.count(&"wood") == before and not get_tree().paused, "no ad and no gift once the daily limit is reached")
+	panel.toggle()
