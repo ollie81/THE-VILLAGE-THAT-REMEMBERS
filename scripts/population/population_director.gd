@@ -210,8 +210,9 @@ func bring_traveller() -> Person:
 
 ## Adds a newcomer who already lives here (no walk-in, no welcome), placed
 ## where their timetable says. For tests, tools and future scripted events.
-func settle_newcomer() -> Person:
-	var person := PersonGenerator.create(rng, Population.new_id(), Population.taken_first_names(), Population.appearances())
+func settle_newcomer(sex: String = "", age: int = -1) -> Person:
+	var person := PersonGenerator.create(rng, Population.new_id(), Population.taken_first_names(), Population.appearances(),
+		null, "", sex, age)
 	Population.add(person)
 	Population.make_resident(person)
 	_spawn(person, false)

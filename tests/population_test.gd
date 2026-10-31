@@ -84,6 +84,11 @@ func _run() -> void:
 			closest = minf(closest, AppearanceGenerator.distance(looks[a], looks[b]))
 	_check(closest > 1.2, "no two of 50 people look alike (closest difference %.2f)" % closest)
 	_check(styles.size() >= 6 and skins.size() >= 8, "varied hair (%d styles) and skin tones (%d)" % [styles.size(), skins.size()])
+	var skin_like := 0
+	for look: CharacterAppearance in looks:
+		if AppearanceGenerator._color_distance(look.shirt_color, look.skin_color) < 0.2:
+			skin_like += 1
+	_check(skin_like == 0, "nobody wears a shirt that looks like bare skin (%d)" % skin_like)
 	var first: Person = generated[0]
 	_check(first.age() >= 15 and first.profession != "" and first.traits.size() == 3 and not first.ambition.is_empty() \
 		and first.skills.size() == Professions.SKILLS.size() and first.biography.contains(first.first_name),

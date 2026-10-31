@@ -385,15 +385,26 @@ work that suits them and how you treat them. After a few unhappy days they may d
 you can talk them into staying. Happy villagers send for a sibling, cousin, parent, child or friend, who
 arrives with the family name and a family resemblance. Ambitions progress and come true.
 
-**Families (architecture, ready for generations).** Life records keep partners, marriage, parents,
-children and other relatives. Births (with looks and personality from both parents), adoption, family
-trees, aging (a village year is 30 days, with child, teen, adult and elder stages), death of old age and
-inheritance of homes all work and are tested. Births are switched off (`Population.BIRTHS_ENABLED`)
-until there are child-sized 3D characters, and the founders are protected from old age for now.
+**Children and generations.** Happy couples have babies, with looks and personality from both
+parents. Babies stay at home; at three they get their own child-sized 3D body. Children play at the
+meeting circle and riverbank, help a parent at work and go to bed early, and their body is rebuilt as
+they grow. At 13 they start an apprenticeship (often a parent's trade), and at 18 they come of age and
+later move out. Couples who can't have a baby together may adopt a child who needs a home. People grey,
+wrinkle and stoop as they age, elders die of old age, homes are inherited, and family mourn: the village
+remembers those who died. The founders are protected from old age for now. A village year is 10 days,
+and the *Years pass* setting in the menu changes it to 30 or 4.
 
-**Population panel** (*People* button or **P**): total population, adults, teenagers, children and
-elders, couples, happiness, occupations, beds in homes, free beds and campers, arrivals, departures,
-people turned away, births, deaths, partnerships and marriages, every villager, and recent events.
+How children are built: everyone is modelled as an adult, then `BodyProportions` reshapes the skeleton
+joints, body, head and every expression shape the same way. Legs and torso shrink most, the head least,
+and the body narrows. Each leg length gets its own animation set, so children's hips sit lower and
+their steps are shorter and quicker. `AgeLook` gives children bigger eyes, smaller noses and rounder
+chins, and drops beards and work tools. Tools: `tools/age_gallery.tscn` (one person from 3 to 72) and
+`tools/generations_screenshots.tscn`.
+
+**Population panel** (*People* button or **P**): total population, adults, teenagers, children
+(and babies) and elders, couples, babies on the way, generations, apprentices, happiness, occupations, beds in homes, free beds and campers, arrivals, departures,
+people turned away, births, deaths, partnerships and marriages, every villager, recent events and the
+people the village remembers. Tap a villager to see their family tree.
 
 **Performance on phones.**
 
@@ -413,7 +424,7 @@ people turned away, births, deaths, partnerships and marriages, every villager, 
   no rendering: five founders 1.8 ms; 50 villagers 4.5 to 5.6 ms with distance detail, 7 to 8 ms without.
   This hasn't been measured on a phone yet.
 
-Tests: `godot --headless --path . res://tests/population_test.tscn` (64 checks). Screenshots:
+Tests: `godot --headless --path . res://tests/population_test.tscn` (93 checks). Screenshots:
 `godot --path . --resolution 1612x720 res://tools/population_screenshots.tscn -- --out=/tmp/shots`.
 
 ## Status
@@ -426,7 +437,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **64/64**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

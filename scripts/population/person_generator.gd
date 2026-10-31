@@ -29,12 +29,14 @@ const TRAITS := {
 
 ## A new person. `relative` (optional) makes them family of that person:
 ## shared family name for kin, similar looks.
+## `want_sex` / `want_age` pick those instead of random ones (scripted
+## events, tools).
 static func create(rng: RandomNumberGenerator, id: String, taken_first_names: Dictionary,
-		others: Array, relative: Person = null, relation: String = "") -> Person:
+		others: Array, relative: Person = null, relation: String = "", want_sex: String = "", want_age: int = -1) -> Person:
 	var p := Person.new()
 	p.id = id
-	p.sex = "female" if rng.randf() < 0.5 else "male"
-	var age := _random_age(rng, relation)
+	p.sex = want_sex if want_sex != "" else ("female" if rng.randf() < 0.5 else "male")
+	var age := want_age if want_age >= 0 else _random_age(rng, relation)
 	p.birth_day = WorldClock.day - age * Person.year_days - rng.randi_range(0, Person.year_days - 1)
 	p.first_name = NameGenerator.first_name(rng, p.sex, taken_first_names)
 	var kin := relation in ["sibling", "cousin", "parent", "child"]

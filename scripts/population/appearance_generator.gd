@@ -115,6 +115,15 @@ static func _vary(rng: RandomNumberGenerator, c: Color, amount: float) -> Color:
 		clampf(c.b + rng.randf_range(-amount, amount), 0.0, 1.0))
 
 
+## A dye that won't be mistaken for bare skin from a distance.
+static func _cloth_dye(rng: RandomNumberGenerator, skin: Color) -> Color:
+	for attempt in 12:
+		var dye := _vary(rng, _pick(rng, DYES), 0.03)
+		if _color_distance(dye, skin) > 0.22:
+			return dye
+	return _vary(rng, DYES[1], 0.03)
+
+
 static func _hair_for_skin(rng: RandomNumberGenerator, skin: Color) -> Color:
 	var lightness := skin.get_luminance()
 	var weights := {"black": 3.0, "dark_brown": 3.0, "brown": 1.0}
@@ -204,14 +213,14 @@ static func _candidate(rng: RandomNumberGenerator, sex: String, age: int, profes
 	look.resting_face = resting
 
 	# --- Clothes ---
-	look.shirt_color = _vary(rng, _pick(rng, DYES), 0.03)
-	look.accent_color = _vary(rng, _pick(rng, DYES), 0.03)
+	look.shirt_color = _cloth_dye(rng, look.skin_color)
+	look.accent_color = _cloth_dye(rng, look.skin_color)
 	look.pants_color = _vary(rng, _pick(rng, PANTS), 0.02)
 	look.shoe_color = _pick(rng, SHOES)
 	look.sleeve_length = 1.0 if rng.randf() < 0.45 else rng.randf_range(0.3, 0.7)
 	if female and rng.randf() < 0.65:
 		look.tunic_length = rng.randf_range(0.7, 0.95)
-		look.skirt_color = _vary(rng, _pick(rng, DYES), 0.03)
+		look.skirt_color = _cloth_dye(rng, look.skin_color)
 	elif rng.randf() < 0.35:
 		look.tunic_length = rng.randf_range(0.3, 0.5)
 	else:
