@@ -21,11 +21,14 @@ const PERSONAL_SPACE := 1.0
 const MAX_WAIT_FOR_PLAYER := 3.0
 const NAME_LABEL_MIN_DISTANCE := 4.0
 const NAME_LABEL_DISTANCE := 15.0
+const NAME_LABEL_CROWD_DISTANCE := 10.0
 const LAYER_VILLAGER := 4
 ## Camera distances for character level of detail (see CharacterModel.Detail).
 const DETAIL_FULL_DISTANCE := 16.0
 const DETAIL_REDUCED_DISTANCE := 38.0
 const DETAIL_INTERVAL := 0.25
+## Developer switch (benchmarks): false keeps everyone at full detail.
+static var detail_enabled: bool = true
 
 var data: VillagerData
 ## Life record (every villager has one once the population is set up).
@@ -64,6 +67,8 @@ var _collision: CollisionShape3D
 var _selection_ring: MeshInstance3D
 var _leaving: bool = false
 var _detail_timer: float = 0.0
+var _physics_delta: float = 0.0
+var _physics_frame: int = 0
 
 
 func get_villager_id() -> StringName:
@@ -75,6 +80,7 @@ func _ready() -> void:
 	name = data.display_name
 	_rng.seed = hash(String(data.id))
 	_decision_timer = _rng.randf_range(0.0, DECISION_INTERVAL)
+	_detail_timer = _rng.randf_range(0.0, DETAIL_INTERVAL)
 	collision_layer = LAYER_VILLAGER
 	collision_mask = 0
 
@@ -171,7 +177,17 @@ func _place_for_current_time() -> void:
 	activity_changed.emit(self, get_activity_description())
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(frame_delta: float) -> void:
+	# Far-away people think and move every third frame (with the time
+	# they skipped), which is invisible at that distance.
+	_physics_delta += frame_delta
+	_physics_frame += 1
+	var stride := 3 if model.detail == CharacterModel.Detail.FAR and state != State.INTERACTING else 1
+	if _physics_frame < stride:
+		return
+	_physics_frame = 0
+	var delta := minf(_physics_delta, 0.25)
+	_physics_delta = 0.0
 	_alive_time += delta
 	if state == State.INTERACTING:
 		if is_instance_valid(_talk_partner):
@@ -192,10 +208,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
-	_update_label_visibility()
+	# Labels and detail don't need checking every frame; staggered so 50
+	# villagers don't all do it on the same frame.
 	_detail_timer -= delta
 	if _detail_timer <= 0.0:
 		_detail_timer = DETAIL_INTERVAL
+		_update_label_visibility()
 		_update_detail()
 
 
@@ -210,13 +228,13 @@ func _update_detail() -> void:
 		return
 	var distance := camera.global_position.distance_to(global_position)
 	var level := CharacterModel.Detail.FULL
-	if state != State.INTERACTING and GameManager.selected_villager != self:
+	if detail_enabled and state != State.INTERACTING and GameManager.selected_villager != self:
 		if distance > DETAIL_REDUCED_DISTANCE:
 			level = CharacterModel.Detail.FAR
 		elif distance > DETAIL_FULL_DISTANCE:
 			level = CharacterModel.Detail.REDUCED
 	var on_screen := camera.is_position_in_frustum(global_position + Vector3(0, 1.0, 0)) or distance < 3.0
-	model.set_detail(level, on_screen)
+	model.set_detail(level, on_screen or not detail_enabled)
 
 
 # --- Joining and leaving ---------------------------------------------------------
@@ -472,13 +490,18 @@ func _update_label_visibility() -> void:
 		return
 	var managing := GameManager.camera_mode == GameManager.CameraMode.MANAGEMENT
 	var distance := camera.global_position.distance_to(global_position)
-	var near := distance < NAME_LABEL_DISTANCE
+	# In a big village only nearby names are shown, so crowds stay readable.
+	var label_range := NAME_LABEL_DISTANCE if GameManager.villagers.size() <= 12 else NAME_LABEL_CROWD_DISTANCE
+	var near := distance < label_range
 	# Right beside the camera a world-space label would fill the screen, and
 	# during a conversation the dialogue box already shows who is speaking.
 	var too_close := distance < NAME_LABEL_MIN_DISTANCE and not managing
 	name_label.visible = (managing or near or GameManager.selected_villager == self) \
 			and state != State.INTERACTING and not too_close and not GameManager.is_in_conversation()
-	name_label.pixel_size = clampf(distance * 0.00035, 0.0035, 0.009) if managing else 0.004
+	# Changing a label's size rebuilds its text mesh: only do it when needed.
+	var size := snappedf(clampf(distance * 0.00035, 0.0035, 0.009), 0.0005) if managing else 0.004
+	if not is_equal_approx(name_label.pixel_size, size):
+		name_label.pixel_size = size
 
 
 func _on_villager_selected(villager) -> void:

@@ -406,6 +406,12 @@ people turned away, births, deaths, partnerships and marriages, every villager, 
 - **Shared assets:** every generated character uses the same skeleton, animations and materials.
 - **No shared spots:** busy places hand out extra spots in rings around the usual ones, so two people
   never stand on the same spot.
+- **Less work per villager:** names and detail are re-checked four times a second, staggered across
+  villagers; animation parameters and face blend shapes are only written when they change; and distant
+  people's movement updates every third frame.
+- **Measured CPU cost** per frame on the test machine's desktop CPU, best of six windows, headless so
+  no rendering: five founders 1.8 ms; 50 villagers 4.5 to 5.6 ms with distance detail, 7 to 8 ms without.
+  This hasn't been measured on a phone yet.
 
 Tests: `godot --headless --path . res://tests/population_test.tscn` (64 checks). Screenshots:
 `godot --path . --resolution 1612x720 res://tools/population_screenshots.tscn -- --out=/tmp/shots`.

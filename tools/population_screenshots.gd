@@ -120,6 +120,7 @@ func _run() -> void:
 	var visitor = director.get_villager(traveller)
 	var bridge := VillageLayout.ground_point(VillageLayout.river_center_x(0.0) + 2.0, 0.0)
 	visitor.global_position = bridge
+	visitor.start_activity(visitor.current_activity)  # re-plan from the bridge
 	await _wait(30)
 	_camera.current = false
 	var player = GameManager.player
@@ -175,19 +176,19 @@ func _run() -> void:
 	WorldClock.set_time(16.0)
 	await _wait(10)
 	var camp := VillageLayout.camp_center()
-	_look(VillageLayout.ground_point(camp.x - 4.0, camp.z + 5.5) + Vector3(0, 3.2, 0), camp + Vector3(0, 0.3, -0.5), 58.0)
+	_look(VillageLayout.ground_point(camp.x - 3.0, camp.z + 9.0) + Vector3(0, 9.0, 0), camp + Vector3(0, 0.0, -0.5), 52.0)
 	await _wait(30)
 	await _shot("07_camp")
 	_camera.current = false
 
-	# 7. Midday in the village: the farm and garden at work.
-	WorldClock.set_time(13.5)
+	# 7. Lunch at the meeting circle: the sociable ones eat together.
+	WorldClock.set_time(12.3)
 	for villager in GameManager.villagers:
 		villager._place_for_current_time()
-	await _wait(30)
-	_look(Vector3(4.0, 7.5, 2.0), Vector3(12.0, 0.0, 15.0), 55.0)
 	await _wait(40)
-	await _shot("08_village_at_work")
+	_look(Vector3(6.0, 2.6, 6.5), Vector3(-0.5, 0.9, -0.5), 52.0)
+	await _wait(40)
+	await _shot("08_lunch_together")
 	_camera.current = false
 	await _wait(10)
 

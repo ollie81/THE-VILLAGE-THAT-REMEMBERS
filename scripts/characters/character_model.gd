@@ -44,6 +44,14 @@ var prebuilt_meshes: Dictionary = {}
 enum Detail { FULL, REDUCED, FAR }
 const ANIMATION_STRIDE: Array[int] = [1, 2, 4]
 var detail: int = Detail.FULL
+const PARAM_BLEND := &"parameters/loco/blend_position"
+const PARAM_RATE := &"parameters/rate/scale"
+const PARAM_MOVE := &"parameters/move/blend_amount"
+var _applied_blend: float = -1.0
+var _applied_rate: float = -1.0
+var _applied_move: float = -1.0
+## Blend shape weights last sent to the renderer.
+var _applied_weights: Dictionary = {}
 var _proxy_head: Node3D
 var _animation_frame: int = 0
 var _animation_delta: float = 0.0
@@ -227,9 +235,17 @@ func _apply_locomotion() -> void:
 	# Cycles per second so one cycle covers one stride. Below walking speed
 	# keep a natural slow cadence and let the idle blend take over.
 	var rate := maxf(_speed, walk * 0.6) / stride if moving else walk / HumanoidAnimations.WALK_STRIDE
-	animation_tree.set("parameters/loco/blend_position", blend_speed)
-	animation_tree.set("parameters/rate/scale", rate)
-	animation_tree.set("parameters/move/blend_amount", _move_amount)
+	# Writing tree parameters is costly with many characters; most of the
+	# time (standing at work) nothing has changed.
+	if absf(blend_speed - _applied_blend) > 0.002:
+		_applied_blend = blend_speed
+		animation_tree.set(PARAM_BLEND, blend_speed)
+	if absf(rate - _applied_rate) > 0.002:
+		_applied_rate = rate
+		animation_tree.set(PARAM_RATE, rate)
+	if absf(_move_amount - _applied_move) > 0.001:
+		_applied_move = _move_amount
+		animation_tree.set(PARAM_MOVE, _move_amount)
 
 
 func get_animation() -> StringName:
@@ -387,8 +403,12 @@ func _build_proxy_head() -> Node3D:
 
 func _apply_face() -> void:
 	for shape in _weights:
-		if _shape_index.has(shape):
-			head.set_blend_shape_value(_shape_index[shape], float(_weights[shape]))
+		if not _shape_index.has(shape):
+			continue
+		var weight := float(_weights[shape])
+		if absf(weight - float(_applied_weights.get(shape, -1.0))) > 0.001:
+			_applied_weights[shape] = weight
+			head.set_blend_shape_value(_shape_index[shape], weight)
 
 
 ## Small hand-held props, positioned in the hand bone's space
