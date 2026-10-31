@@ -33,8 +33,21 @@ var _static_ranges: Array = [] # [vertex_start, vertex_end, triangle_start, tria
 var _static_index: int = 0
 var _static_open: Array = []
 
+## Surface types read by the character shader (stored in UV.x per vertex).
+enum Surface { SKIN, CLOTH, LEATHER, METAL, HAIR, DETAIL, STRAW }
+
+## Surface type for the geometry being added. Vertices whose colour matches
+## `skin_color` are always tagged SKIN (e.g. the bare part of a sleeve loft).
+var material_id: int = Surface.CLOTH
+var skin_color: Color = Color(-1, -1, -1)
+
 var _positions := PackedVector3Array()
 var _normals := PackedVector3Array()
+## UV = (surface type, rest-pose z), UV2 = rest-pose (x, y): lets the shader
+## put fabric weave, grain and hair strands in the character's own space,
+## so the patterns stay glued to the body while it animates.
+var _uvs := PackedVector2Array()
+var _uv2s := PackedVector2Array()
 var _colors := PackedColorArray()
 var _bones := PackedInt32Array()
 var _weights := PackedFloat32Array()
@@ -57,6 +70,8 @@ func begin_static() -> bool:
 	_positions.append_array(static_source._positions.slice(v0, v1))
 	_normals.append_array(static_source._normals.slice(v0, v1))
 	_colors.append_array(static_source._colors.slice(v0, v1))
+	_uvs.append_array(static_source._uvs.slice(v0, v1))
+	_uv2s.append_array(static_source._uv2s.slice(v0, v1))
 	_bones.append_array(static_source._bones.slice(v0 * 4, v1 * 4))
 	_weights.append_array(static_source._weights.slice(v0 * 4, v1 * 4))
 	flip_log.append_array(static_source.flip_log.slice(int(range[2]), int(range[3])))
@@ -142,7 +157,7 @@ func build_with_shapes(material: Material, shape_names: Array, shapes: Array) ->
 	indices.resize(_positions.size())
 	for v in _positions.size():
 		var key := [_positions[v].snapped(Vector3.ONE * 1e-5), _normals[v].snapped(Vector3.ONE * 1e-4), _colors[v],
-			_bones[v * 4], _bones[v * 4 + 1], _weights[v * 4 + 1]]
+			_bones[v * 4], _bones[v * 4 + 1], _weights[v * 4 + 1], _uvs[v].x]
 		for shape_array in shape_arrays:
 			key.append((shape_array[Mesh.ARRAY_VERTEX] as PackedVector3Array)[v].snapped(Vector3.ONE * 1e-5))
 		var existing: Variant = remap.get(key)
@@ -177,6 +192,14 @@ static func _compact(arrays: Array, keep: PackedInt32Array) -> Array:
 			for i in keep.size():
 				result[i] = source[keep[i]]
 			out[slot] = result
+	for slot in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_TEX_UV2]:
+		if arrays[slot] != null:
+			var uv_source: PackedVector2Array = arrays[slot]
+			var uv_result := PackedVector2Array()
+			uv_result.resize(keep.size())
+			for i in keep.size():
+				uv_result[i] = uv_source[keep[i]]
+			out[slot] = uv_result
 	if arrays[Mesh.ARRAY_COLOR] != null:
 		var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
 		var compact_colors := PackedColorArray()
@@ -206,6 +229,8 @@ func _arrays() -> Array:
 	arrays[Mesh.ARRAY_VERTEX] = _positions
 	arrays[Mesh.ARRAY_NORMAL] = _normals
 	arrays[Mesh.ARRAY_COLOR] = _colors
+	arrays[Mesh.ARRAY_TEX_UV] = _uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = _uv2s
 	arrays[Mesh.ARRAY_BONES] = _bones
 	arrays[Mesh.ARRAY_WEIGHTS] = _weights
 	return arrays
@@ -270,6 +295,11 @@ func _vertex(p: Vector3, n: Vector3, c: Color, binding: Vector3) -> void:
 	_positions.append(p)
 	_normals.append(n)
 	_colors.append(c)
+	var surface := material_id
+	if surface != Surface.DETAIL and absf(c.r - skin_color.r) + absf(c.g - skin_color.g) + absf(c.b - skin_color.b) < 0.04:
+		surface = Surface.SKIN
+	_uvs.append(Vector2(surface, p.z))
+	_uv2s.append(Vector2(p.x, p.y))
 	_bones.append_array(PackedInt32Array([int(binding.x), int(binding.y), 0, 0]))
 	if int(binding.x) == int(binding.y):
 		_weights.append_array(PackedFloat32Array([1.0, 0.0, 0.0, 0.0]))

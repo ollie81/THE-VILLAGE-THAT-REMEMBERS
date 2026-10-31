@@ -20,6 +20,41 @@ static func vertex_color() -> StandardMaterial3D:
 	return _cache["vertex_color"]
 
 
+## Stylised character shading (see shaders/character_common.gdshaderinc):
+## per-surface cloth weave, leather grain, hair strands and skin, with an
+## outline pass that GameSettings switches off on Low quality.
+static func character_body() -> ShaderMaterial:
+	if not _cache.has("character_body"):
+		var material := ShaderMaterial.new()
+		material.shader = load("res://shaders/character.gdshader")
+		material.next_pass = character_outline()
+		_cache["character_body"] = material
+	return _cache["character_body"]
+
+
+static func character_face() -> ShaderMaterial:
+	if not _cache.has("character_face"):
+		var material := ShaderMaterial.new()
+		material.shader = load("res://shaders/character_face.gdshader")
+		material.next_pass = character_outline()
+		_cache["character_face"] = material
+	return _cache["character_face"]
+
+
+static func character_outline() -> ShaderMaterial:
+	if not _cache.has("character_outline"):
+		var material := ShaderMaterial.new()
+		material.shader = load("res://shaders/character_outline.gdshader")
+		_cache["character_outline"] = material
+	return _cache["character_outline"]
+
+
+static func set_character_outlines(enabled: bool) -> void:
+	var outline: Material = character_outline() if enabled else null
+	character_body().next_pass = outline
+	character_face().next_pass = outline
+
+
 ## Faces and hair: softer than the world material. Wrapped diffuse lighting
 ## keeps the shadow side of faces from going muddy, a faint rim light
 ## separates heads from the background, and low specular avoids plastic skin.

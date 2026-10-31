@@ -103,6 +103,7 @@ func apply() -> void:
 		viewport.scaling_3d_scale = render_scale()
 		viewport.msaa_3d = msaa()
 	RenderingServer.directional_shadow_atlas_set_size(shadow_atlas_size(), true)
+	Materials.set_character_outlines(quality != Quality.LOW)
 	Engine.max_fps = 60
 	settings_changed.emit()
 

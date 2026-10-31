@@ -74,8 +74,8 @@ func _build() -> void:
 	# Meshes come from the offline cache when possible; otherwise they are
 	# generated (and cached for next time).
 	var key := CharacterCache.key_for(appearance)
-	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.vertex_color())
-	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.skin())
+	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.character_body())
+	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.character_face())
 	if body_mesh == null or head_mesh == null:
 		var builder := HumanoidMeshBuilder.new(appearance, rig)
 		body_mesh = builder.build()

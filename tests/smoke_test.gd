@@ -52,6 +52,24 @@ func _run() -> void:
 			"%s has a skinned body on a 19-bone skeleton" % villager.data.display_name)
 		_check(triangles > 1500 and triangles < 9000, "%s body is %d triangles (budget 9000)" % [villager.data.display_name, triangles])
 		_check(model.animation_player.get_animation_list().size() >= 8, "%s has skeletal animations" % villager.data.display_name)
+		# Arms: every vertex bound to a left/right arm bone sits on that side,
+		# and both arms have the same amount of geometry.
+		var arrays := body.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var bone_ids: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+		var bone_weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+		var arm_counts := {"Left": 0, "Right": 0}
+		var misbound := 0
+		for v in verts.size():
+			var main := bone_ids[v * 4] if bone_weights[v * 4] >= bone_weights[v * 4 + 1] else bone_ids[v * 4 + 1]
+			var bone_name := model.skeleton.get_bone_name(main)
+			for side in ["Left", "Right"]:
+				if bone_name.begins_with(side) and (bone_name.contains("Arm") or bone_name.contains("Hand")):
+					arm_counts[side] += 1
+					if verts[v].x * (1.0 if side == "Left" else -1.0) < 0.0:
+						misbound += 1
+		_check(misbound == 0 and arm_counts["Left"] == arm_counts["Right"],
+			"%s arms are symmetric (%d/%d vertices, %d on the wrong side)" % [villager.data.display_name, arm_counts["Left"], arm_counts["Right"], misbound])
 		var head_mesh: Mesh = model.head.mesh if model.head else null
 		_check(head_mesh != null and head_mesh.get_blend_shape_count() == FaceExpressions.SHAPES.size(),
 			"%s face has %d expression blend shapes" % [villager.data.display_name, head_mesh.get_blend_shape_count() if head_mesh else 0])

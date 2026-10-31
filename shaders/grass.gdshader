@@ -14,7 +14,7 @@ void vertex() {
 
 void fragment() {
 	// Vertex colours are authored in sRGB.
-	ALBEDO = pow(COLOR.rgb, vec3(2.2));
+	ALBEDO = OUTPUT_IS_SRGB ? COLOR.rgb : pow(COLOR.rgb, vec3(2.2));
 	ROUGHNESS = 0.95;
 	if (!FRONT_FACING) {
 		NORMAL = -NORMAL;

@@ -115,12 +115,12 @@ static func _bump(x: float, center: float, width: float) -> float:
 ## Relaxed standing arms and legs; poses override what they need.
 func _base() -> Dictionary:
 	return {
-		B.LEFT_UPPER_ARM: Vector3(0.02, 0, 0.1),
-		B.RIGHT_UPPER_ARM: Vector3(0.02, 0, -0.1),
-		B.LEFT_LOWER_ARM: Vector3(-0.18, 0, 0),
-		B.RIGHT_LOWER_ARM: Vector3(-0.18, 0, 0),
-		B.LEFT_HAND: Vector3(0, 0, -0.05),
-		B.RIGHT_HAND: Vector3(0, 0, 0.05),
+		B.LEFT_UPPER_ARM: Vector3(0.04, 0.12, 0.16),
+		B.RIGHT_UPPER_ARM: Vector3(0.04, -0.12, -0.16),
+		B.LEFT_LOWER_ARM: Vector3(-0.32, 0, 0),
+		B.RIGHT_LOWER_ARM: Vector3(-0.32, 0, 0),
+		B.LEFT_HAND: Vector3(0.05, 0.25, -0.1),
+		B.RIGHT_HAND: Vector3(0.05, -0.25, 0.1),
 		B.LEFT_UPPER_LEG: Vector3(0, 0, 0.02),
 		B.RIGHT_UPPER_LEG: Vector3(0, 0, -0.02),
 	}
@@ -146,8 +146,9 @@ func _idle(x: float) -> Dictionary:
 	p[B.CHEST] = Vector3(0.02 * breath, 0.03 * _s(x), 0)
 	p[B.NECK] = Vector3(0, 0.08 * _s(x), 0)
 	p[B.HEAD] = Vector3(0.03 * _s(x * 2.0 + 0.1), 0.12 * _s(x + 0.15), 0.02 * _s(x))
-	_arm(p, 1.0, 0.03 * breath, 0.1, -0.18)
-	_arm(p, -1.0, 0.03 * breath, 0.1, -0.18)
+	# Relaxed arms: slightly away from the body, elbows soft.
+	_arm(p, 1.0, 0.04 + 0.03 * breath, 0.16, -0.32, 0.12)
+	_arm(p, -1.0, 0.04 + 0.03 * breath, 0.16, -0.32, -0.12)
 	p[B.HIPS] = Vector3(0, 0, 0.015 * _s(x))
 	p[B.LEFT_UPPER_LEG] = Vector3(0, 0, 0.02 - 0.015 * _s(x))
 	p[B.RIGHT_UPPER_LEG] = Vector3(0.0, 0, -0.02 - 0.015 * _s(x))
