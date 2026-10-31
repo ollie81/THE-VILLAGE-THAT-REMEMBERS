@@ -20,7 +20,7 @@ func _ready() -> void:
 	name = "Hud"
 	_root = Control.new()
 	_root.name = "Root"
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.theme = UiTheme.create()
 	add_child(_root)

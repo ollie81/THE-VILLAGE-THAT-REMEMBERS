@@ -86,6 +86,27 @@ func _run() -> void:
 	await _physics_frames(90)
 	_check(player.is_on_floor(), "player lands again")
 
+	# 3b. On-screen touch controls (as a phone delivers touches).
+	GameSettings.touch_mode = GameSettings.TouchMode.ALWAYS
+	GameSettings.settings_changed.emit()
+	await _frames(2)
+	var touch: TouchControls = _main.hud.find_child("TouchControls", true, false)
+	var view := get_viewport().get_visible_rect().size
+	_check(touch != null and touch.visible and touch.size.is_equal_approx(view), "touch controls cover the screen (%s)" % (touch.size if touch else Vector2.ZERO))
+	var touch_start := player.global_position
+	var stick := Vector2(170, view.y - 170)
+	_send_touch(0, stick, true)
+	await get_tree().process_frame
+	_send_drag(0, stick + Vector2(0, -60), Vector2(0, -60))
+	await _physics_frames(45)
+	var touch_walked := player.global_position.distance_to(touch_start)
+	_check(touch_walked > 1.0 and player.model.get_animation() == &"walk", "touch joystick walks the player (%.2f m)" % touch_walked)
+	_send_touch(0, stick + Vector2(0, -60), false)
+	await _physics_frames(30)
+	_check(InputRouter.touch_move == Vector2.ZERO and player.model.get_animation() == &"idle", "releasing the joystick stops and idles")
+	GameSettings.touch_mode = GameSettings.TouchMode.AUTO
+	GameSettings.settings_changed.emit()
+
 	# 4. Camera switching
 	var rig: CameraRig = _main.camera_rig
 	var explore_height := rig.camera.global_position.y - player.global_position.y
@@ -181,6 +202,23 @@ func _run() -> void:
 
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
+
+
+## Touch input in window pixels, the way the OS delivers it.
+func _send_touch(index: int, viewport_position: Vector2, pressed: bool) -> void:
+	var event := InputEventScreenTouch.new()
+	event.index = index
+	event.position = get_tree().root.get_final_transform() * viewport_position
+	event.pressed = pressed
+	Input.parse_input_event(event)
+
+
+func _send_drag(index: int, viewport_position: Vector2, relative: Vector2) -> void:
+	var event := InputEventScreenDrag.new()
+	event.index = index
+	event.position = get_tree().root.get_final_transform() * viewport_position
+	event.relative = get_tree().root.get_final_transform().basis_xform(relative)
+	Input.parse_input_event(event)
 
 
 func _wait_until_visible(villager) -> void:

@@ -22,7 +22,7 @@ var _pinch_distance: float = 0.0
 
 func _ready() -> void:
 	name = "TouchControls"
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	GameSettings.settings_changed.connect(_update_visibility)
 	GameManager.camera_mode_changed.connect(func(_m): _release_all())
@@ -148,15 +148,17 @@ func _notification(what: int) -> void:
 func _draw() -> void:
 	if not _exploring() or GameManager.is_in_conversation():
 		return
-	var base_color := Color(1, 1, 1, 0.12)
-	var ring_color := Color(1, 1, 1, 0.35)
+	# Dark base with a light rim stays visible on both grass and bright paths.
+	var base_color := Color(0.05, 0.04, 0.03, 0.28)
+	var ring_color := Color(1, 1, 1, 0.6)
 	var joystick_center := _joystick_origin if _joystick_touch != -1 else Vector2(170, size.y - 170)
 	draw_circle(joystick_center, JOYSTICK_RADIUS, base_color)
 	draw_arc(joystick_center, JOYSTICK_RADIUS, 0, TAU, 40, ring_color, 3.0, true)
 	var knob := joystick_center
 	if _joystick_touch != -1:
 		knob = _joystick_origin + (_joystick_position - _joystick_origin).limit_length(JOYSTICK_RADIUS)
-	draw_circle(knob, 38, Color(1, 0.95, 0.85, 0.45))
+	draw_circle(knob, 40, Color(0.05, 0.04, 0.03, 0.25))
+	draw_circle(knob, 36, Color(1, 0.95, 0.85, 0.7))
 
 	_draw_button(_jump_center(), "Jump", _button_touches.values().has("jump"))
 	if interact_available:
@@ -164,8 +166,9 @@ func _draw() -> void:
 
 
 func _draw_button(center: Vector2, text: String, pressed: bool) -> void:
-	draw_circle(center, BUTTON_RADIUS, Color(0.96, 0.78, 0.42, 0.55 if pressed else 0.3))
-	draw_arc(center, BUTTON_RADIUS, 0, TAU, 40, Color(1, 1, 1, 0.5), 3.0, true)
+	draw_circle(center, BUTTON_RADIUS, Color(0.12, 0.09, 0.06, 0.45 if pressed else 0.3))
+	draw_circle(center, BUTTON_RADIUS - 4, Color(0.96, 0.78, 0.42, 0.6 if pressed else 0.35))
+	draw_arc(center, BUTTON_RADIUS, 0, TAU, 40, Color(1, 1, 1, 0.7), 3.0, true)
 	var font := get_theme_default_font()
 	var font_size := 24
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
