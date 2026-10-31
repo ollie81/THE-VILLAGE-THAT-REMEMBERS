@@ -94,6 +94,20 @@ It exits with code `0` if every check passes and `1` otherwise. It never touches
 
 ---
 
+## Installing on an Android phone (no setup needed)
+
+Every push to GitHub builds an installable APK automatically (`.github/workflows/build.yml`):
+
+1. On GitHub, open **Actions → Test and build Android APK** and pick the latest green run.
+2. Under **Artifacts**, download `TheVillageThatRemembers-apk` (a zip) and unzip it on your phone.
+   You can also download it on a computer and copy it across.
+3. Open `TheVillageThatRemembers.apk`. Android will ask you to allow installing apps from your browser
+   or file manager. Allow it, then tap **Install**.
+
+This is a debug build for an arm64 phone (almost every phone from the last six years). It's signed
+with a throwaway debug key, so installing a newer build may require uninstalling the old one first.
+Uninstalling also removes the save.
+
 ## Building an Android APK
 
 The Android export needs the Godot editor and the Android toolchain. It cannot be done from this
