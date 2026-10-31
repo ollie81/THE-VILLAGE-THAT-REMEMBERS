@@ -11,6 +11,7 @@ const BUTTON_RADIUS := 62.0
 const LOOK_SCALE := 1.0
 
 var interact_available: bool = false
+var _interact_target = null
 
 var _joystick_touch: int = -1
 var _joystick_origin: Vector2 = Vector2.ZERO
@@ -34,6 +35,7 @@ func _ready() -> void:
 
 func _on_focus_changed(target) -> void:
 	interact_available = target != null
+	_interact_target = target
 	queue_redraw()
 
 
@@ -169,7 +171,10 @@ func _draw() -> void:
 
 	_draw_button(_jump_center(), "Jump", _button_touches.values().has("jump"))
 	if interact_available:
-		_draw_button(_interact_center(), "Talk", _button_touches.values().has("interact"))
+		var verb := "Use"
+		if _interact_target and is_instance_valid(_interact_target):
+			verb = _interact_target.get_verb()
+		_draw_button(_interact_center(), verb, _button_touches.values().has("interact"))
 
 
 func _draw_button(center: Vector2, text: String, pressed: bool) -> void:

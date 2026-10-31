@@ -37,6 +37,16 @@ func has_save() -> bool:
 	return not _data.is_empty()
 
 
+## Restores inventory, structures and objectives. Called before the world is
+## built so saved structures and depleted resources appear correctly.
+func apply_saved_game_state() -> void:
+	if not enabled or _data.is_empty():
+		return
+	var state: Dictionary = _data.get("game_state", {})
+	if not state.is_empty():
+		GameState.from_dict(state)
+
+
 ## Restores the saved time of day. Called before villagers are placed so they
 ## appear where their schedule puts them at that time.
 func apply_saved_clock() -> void:
@@ -72,6 +82,7 @@ func save_game() -> void:
 		"clock": WorldClock.to_dict(),
 		"player": GameManager.player.get_save_data(),
 		"villagers": villager_states,
+		"game_state": GameState.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -82,6 +93,7 @@ func save_game() -> void:
 
 func delete_save() -> void:
 	_data = {}
+	GameState.reset()
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 

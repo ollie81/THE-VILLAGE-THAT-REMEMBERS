@@ -7,9 +7,12 @@ extends RefCounted
 
 ## Lines still to show. Lines may start with an expression tag ("[happy]").
 var lines: Array[String] = []
-## Choices offered once `lines` run out: dictionaries from ConversationLibrary.
+## Choices offered once `lines` run out: dictionaries from ConversationLibrary,
+## or action choices ({ text, action }) such as asking for help.
 var choices: Array = []
 var topic_id: String = ""
+## Shown after a topic's reply (e.g. "Could you help me with something?").
+var followup: Array = []
 
 var _villager
 var _actor_id: String
@@ -45,6 +48,9 @@ func choose(index: int) -> void:
 		return
 	var choice: Dictionary = choices[index]
 	choices = []
+	if choice.has("action"):
+		_do_action(choice)
+		return
 	var affection := float(choice.get("affection", 0))
 	var trust := float(choice.get("trust", 0))
 	var remembered := String(choice.get("remember", ""))
@@ -61,3 +67,17 @@ func choose(index: int) -> void:
 		GameManager.opinion_changed.emit(_villager, affection, trust)
 	for reply in choice.get("reply", []):
 		lines.append(String(reply))
+	choices = followup
+	followup = []
+
+
+func _do_action(choice: Dictionary) -> void:
+	match String(choice["action"]):
+		"ask":
+			choices = DialogueService.task_menu(_villager)
+		"task":
+			var result := TaskSystem.request(_villager, StringName(String(choice["task"])))
+			for line in result["lines"]:
+				lines.append(String(line))
+		_:
+			pass

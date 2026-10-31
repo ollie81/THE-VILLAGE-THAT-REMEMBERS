@@ -13,6 +13,8 @@ var display_name: String = ""
 var enabled: bool = true
 ## Untyped on purpose: any object implementing can_interact(actor).
 var handler = null
+## Size of the area the player must reach.
+var radius: float = 0.9
 
 
 func _ready() -> void:
@@ -21,7 +23,7 @@ func _ready() -> void:
 	monitoring = false
 	monitorable = true
 	var sphere := SphereShape3D.new()
-	sphere.radius = 0.9
+	sphere.radius = radius
 	var shape := CollisionShape3D.new()
 	shape.shape = sphere
 	shape.position = Vector3(0, 1.0, 0)
@@ -36,8 +38,19 @@ func is_available() -> bool:
 	return true
 
 
+## Handlers can provide live prompts ("Build house (2/6)") through
+## get_interaction_prompt() and get_interaction_verb().
 func get_prompt() -> String:
+	if handler != null and handler.has_method("get_interaction_prompt"):
+		return String(handler.get_interaction_prompt())
 	return "%s %s" % [prompt_verb, display_name]
+
+
+## Short label for the on-screen action button ("Talk", "Chop", "Build").
+func get_verb() -> String:
+	if handler != null and handler.has_method("get_interaction_verb"):
+		return String(handler.get_interaction_verb())
+	return prompt_verb.get_slice(" ", 0)
 
 
 func interact(actor: Node) -> bool:

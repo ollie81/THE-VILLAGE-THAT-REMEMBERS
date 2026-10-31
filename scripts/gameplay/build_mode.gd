@@ -1,0 +1,184 @@
+class_name BuildMode
+extends Node3D
+## Placing new structures: a see-through preview follows the player (green
+## where it can go, red where it can't), can be rotated, and is placed or
+## cancelled. Placing spends the resources and creates a construction site.
+
+signal started(type: StringName)
+signal ended
+signal validity_changed(reason: String)
+
+const DISTANCE_AHEAD := 4.5
+const GRID := 0.5
+
+static var instance: BuildMode
+
+var active: bool = false
+var type: StringName = &""
+var reason: String = ""
+
+var _ghost: Node3D
+var _turns: int = 0
+var _position := Vector3.ZERO
+var _valid_material: StandardMaterial3D
+var _invalid_material: StandardMaterial3D
+
+
+func _ready() -> void:
+	name = "BuildMode"
+	instance = self
+	_valid_material = _ghost_material(Color(0.35, 0.95, 0.45, 0.45))
+	_invalid_material = _ghost_material(Color(1.0, 0.3, 0.25, 0.45))
+
+
+func _exit_tree() -> void:
+	if instance == self:
+		instance = null
+
+
+static func _ghost_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.no_depth_test = false
+	return material
+
+
+func start(structure_type: StringName) -> void:
+	cancel()
+	if StructureCatalog.info(structure_type).is_empty():
+		return
+	type = structure_type
+	active = true
+	_turns = 0
+	_ghost = StructureCatalog.create_finished(type)
+	_strip_ghost(_ghost)
+	add_child(_ghost)
+	_update(0.0)
+	started.emit(type)
+
+
+func cancel() -> void:
+	if not active:
+		return
+	active = false
+	if _ghost:
+		_ghost.queue_free()
+		_ghost = null
+	ended.emit()
+
+
+func rotate_preview() -> void:
+	_turns = (_turns + 1) % 4
+
+
+func current_yaw() -> float:
+	var player = GameManager.player
+	var facing: float = player.model.rotation.y if player else 0.0
+	# Face back toward the player by default, then in 90 degree steps.
+	return snappedf(facing + PI, PI * 0.5) + _turns * PI * 0.5
+
+
+## Places the structure. Returns "" on success or why it can't be placed.
+func confirm() -> String:
+	if not active:
+		return "Nothing to place"
+	_update(0.0)
+	if reason != "":
+		GameManager.notify(reason)
+		return reason
+	var info := StructureCatalog.info(type)
+	GameState.spend(info["cost"])
+	GameState.add_structure(type, _position, current_yaw())
+	GameManager.notify("%s placed. Work on it to finish building." % info["name"])
+	cancel()
+	return ""
+
+
+func _process(delta: float) -> void:
+	if active:
+		_update(delta)
+
+
+func _update(_delta: float) -> void:
+	var player = GameManager.player
+	if player == null or _ghost == null:
+		return
+	var ahead: Vector3 = player.global_position + player.get_facing() * (DISTANCE_AHEAD + StructureCatalog.radius(type) * 0.6)
+	ahead.x = snappedf(ahead.x, GRID)
+	ahead.z = snappedf(ahead.z, GRID)
+	_position = Vector3(ahead.x, _ground_height(ahead, current_yaw()), ahead.z)
+	_ghost.global_position = _position
+	_ghost.rotation.y = current_yaw()
+	var new_reason := placement_reason(type, _position, current_yaw())
+	if new_reason != reason or _delta == 0.0:
+		reason = new_reason
+		_tint(_ghost, _valid_material if reason == "" else _invalid_material)
+		validity_changed.emit(reason)
+
+
+## Why `structure_type` can't go at `at`, or "" if it can.
+static func placement_reason(structure_type: StringName, at: Vector3, yaw: float) -> String:
+	var info := StructureCatalog.info(structure_type)
+	var missing := GameState.missing_text(info["cost"])
+	if missing != "":
+		return missing
+	var radius := StructureCatalog.radius(structure_type)
+	var blocked := VillageLayout.blocking_reason(at.x, at.z, radius, 0.6)
+	if blocked != "":
+		return blocked
+	if instance and instance.get_tree():
+		for structure in instance.get_tree().get_nodes_in_group("placed_structures"):
+			var other: float = StructureCatalog.radius(structure.get_type())
+			if Vector2(at.x - structure.global_position.x, at.z - structure.global_position.z).length() < radius + other + 0.3:
+				return "Too close to your %s" % String(structure.get_info()["name"]).to_lower()
+	for node in ResourceSpawner.nodes:
+		if is_instance_valid(node) and Vector2(at.x - node.global_position.x, at.z - node.global_position.z).length() < radius + 0.8:
+			return "Something is in the way"
+	var footprint: Vector2 = info["footprint"]
+	var basis := Basis(Vector3.UP, yaw)
+	var lowest := INF
+	var highest := -INF
+	for corner in [Vector3(-0.5, 0, -0.5), Vector3(0.5, 0, -0.5), Vector3(-0.5, 0, 0.5), Vector3(0.5, 0, 0.5)]:
+		var offset: Vector3 = basis * (corner * Vector3(footprint.x, 0, footprint.y))
+		var h := TerrainGenerator.get_height(at.x + offset.x, at.z + offset.z)
+		lowest = minf(lowest, h)
+		highest = maxf(highest, h)
+	if highest - lowest > 0.9:
+		return "The ground is too steep here"
+	return ""
+
+
+static func _ground_height(at: Vector3, yaw: float) -> float:
+	return TerrainGenerator.get_height(at.x, at.z)
+
+
+static func _strip_ghost(node: Node) -> void:
+	for child in node.get_children():
+		if child is CollisionObject3D or child is Light3D:
+			child.queue_free()
+		else:
+			_strip_ghost(child)
+
+
+static func _tint(node: Node, material: Material) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).material_override = material
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for child in node.get_children():
+		_tint(child, material)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not active:
+		return
+	if event.is_action_pressed("menu"):
+		cancel()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("interact"):
+		confirm()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("rotate_camera_right"):
+		rotate_preview()
+		get_viewport().set_input_as_handled()

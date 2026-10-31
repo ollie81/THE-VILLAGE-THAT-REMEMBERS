@@ -30,9 +30,31 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 		for line in topic["lines"]:
 			conversation.lines.append(String(line))
 		conversation.choices = topic["choices"]
+		if topic != ConversationLibrary.APOLOGY:
+			conversation.followup = closing_menu()
 	else:
 		conversation.lines.append_array(_small_talk(villager))
+		conversation.choices = closing_menu()
 	return conversation
+
+
+## The last thing offered in a conversation: ask for help, or leave.
+static func closing_menu() -> Array:
+	return [
+		{"text": "Could you help me with something?", "action": "ask"},
+		{"text": "Goodbye.", "action": "bye"},
+	]
+
+
+## Jobs the player can ask for; building only when something needs building.
+static func task_menu(_villager) -> Array:
+	var menu: Array = []
+	for kind in TaskSystem.KINDS:
+		if kind == &"build" and (StructureManager.instance == null or StructureManager.instance.nearest_unfinished(Vector3.ZERO) == null):
+			continue
+		menu.append({"text": TaskSystem.ASK_TEXT[kind], "action": "task", "task": String(kind)})
+	menu.append({"text": "Never mind.", "action": "bye"})
+	return menu
 
 
 ## The first topic this villager hasn't discussed with the actor yet.

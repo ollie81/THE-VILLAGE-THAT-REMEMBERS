@@ -19,6 +19,8 @@ var model: CharacterModel
 var detector: InteractionDetector
 var spawn_point: Vector3 = Vector3.ZERO
 
+var _action_time: float = 0.0
+var _action_animation: StringName = &""
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
 
@@ -64,7 +66,22 @@ static func create_default_appearance() -> CharacterAppearance:
 
 ## Player input only drives the character in the third-person exploration mode.
 func can_control() -> bool:
-	return GameManager.camera_mode == GameManager.CameraMode.EXPLORATION and not GameManager.is_in_conversation()
+	return GameManager.camera_mode == GameManager.CameraMode.EXPLORATION and not GameManager.is_in_conversation() \
+		and _action_time <= 0.0
+
+
+## Plays a short action (chopping, building, planting); the player stands
+## still and faces `target` until it finishes.
+func perform_action(animation: StringName, duration: float, target: Vector3) -> void:
+	_action_time = duration
+	_action_animation = animation
+	face_towards(target)
+	velocity.x = 0.0
+	velocity.z = 0.0
+
+
+func is_busy() -> bool:
+	return _action_time > 0.0
 
 
 func get_facing() -> Vector3:
@@ -72,6 +89,8 @@ func get_facing() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	if _action_time > 0.0:
+		_action_time -= delta
 	var move := Vector2.ZERO
 	if can_control():
 		move = InputRouter.get_move_vector()
@@ -102,7 +121,8 @@ func _physics_process(delta: float) -> void:
 		var target_yaw := atan2(horizontal.x, horizontal.z)
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clampf(turn_speed * delta, 0.0, 1.0))
 
-	if can_control() and Input.is_action_just_pressed("interact") and GameManager.can_start_interaction():
+	var placing := BuildMode.instance != null and BuildMode.instance.active
+	if can_control() and not placing and Input.is_action_just_pressed("interact") and GameManager.can_start_interaction():
 		detector.try_interact(self)
 
 	_update_animation(horizontal.length())
@@ -114,7 +134,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_animation(speed: float) -> void:
-	if not is_on_floor():
+	if _action_time > 0.0:
+		model.set_animation(_action_animation)
+	elif not is_on_floor():
 		model.set_animation(&"jump")
 	elif speed > walk_speed + 0.6:
 		model.set_animation(&"run", speed)

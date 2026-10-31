@@ -92,6 +92,30 @@ static func ground_point(x: float, z: float) -> Vector3:
 	return Vector3(x, get_walk_height(x, z), z)
 
 
+## Why something of `radius` can't stand at (x, z), or "" if the ground is
+## free: inside the world, away from water, paths, the meeting circle and the
+## village's buildings. `path_margin` is the clearance kept from dirt paths.
+static func blocking_reason(x: float, z: float, radius: float, path_margin: float = 1.5) -> String:
+	if absf(x) > PLAYABLE_HALF_SIZE - radius - 2.0 or absf(z) > PLAYABLE_HALF_SIZE - radius - 2.0:
+		return "Too close to the edge of the world"
+	if absf(x - river_center_x(z)) < RIVER_WALL_OFFSET + radius + 0.5:
+		return "Too close to the river"
+	if Vector2(x, z).length() < PLAZA_RADIUS + radius + 1.0:
+		return "That's the meeting circle"
+	if TerrainGenerator.distance_to_paths(x, z) < radius * 0.7 + path_margin:
+		return "That would block a path"
+	for building in get_buildings():
+		var center: Vector3 = building["position"]
+		var footprint: Vector2 = building["footprint"]
+		if Vector2(x - center.x, z - center.z).length() < footprint.length() * 0.5 + radius + 0.5:
+			return "Too close to %s" % String(LOCATION_LABELS.get(building["type"], "a building")).trim_prefix("the ")
+	for node in get_nav_nodes().values():
+		var p: Vector3 = node
+		if Vector2(x - p.x, z - p.z).length() < radius + 1.0:
+			return "That would block a path"
+	return ""
+
+
 # --- Buildings ----------------------------------------------------------------------
 
 ## Each entry: { id, type, position (Vector3, y = 0), yaw, footprint (Vector2), owner }.

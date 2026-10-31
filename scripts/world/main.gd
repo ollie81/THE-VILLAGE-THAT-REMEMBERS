@@ -21,6 +21,7 @@ var hud: Hud
 
 func _ready() -> void:
 	SaveService.apply_saved_clock()
+	SaveService.apply_saved_game_state()
 	var world := Node3D.new()
 	world.name = "World"
 	add_child(world)
@@ -28,6 +29,9 @@ func _ready() -> void:
 	VillageBuilder.build(world)
 	RiverBuilder.build(world)
 	NatureSpawner.new().spawn(world)
+	ResourceSpawner.spawn(world)
+	world.add_child(StructureManager.new())
+	world.add_child(WorldObjects.new())
 
 	day_night = DayNightCycle.new()
 	add_child(day_night)
@@ -37,6 +41,8 @@ func _ready() -> void:
 	_spawn_villagers()
 
 	add_child(GossipSystem.new())
+	add_child(TaskSystem.new())
+	add_child(BuildMode.new())
 
 	hud = Hud.new()
 	add_child(hud)

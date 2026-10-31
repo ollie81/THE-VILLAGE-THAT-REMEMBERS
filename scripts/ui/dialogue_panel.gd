@@ -48,10 +48,10 @@ func _ready() -> void:
 	_choice_box.add_theme_constant_override("separation", 8)
 	_choice_box.visible = false
 	box.add_child(_choice_box)
-	for i in 3:
+	for i in 5:
 		var choice := UiTheme.button("", 0)
 		choice.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		choice.custom_minimum_size = Vector2(720, 58)
+		choice.custom_minimum_size = Vector2(720, 52)
 		choice.pressed.connect(_choose.bind(i))
 		_choice_box.add_child(choice)
 		_choice_buttons.append(choice)
@@ -67,10 +67,7 @@ func _ready() -> void:
 
 
 func _on_conversation_started(villager, conversation) -> void:
-	var data: VillagerData = villager.data
-	_partner = villager
-	_name_label.text = data.display_name
-	_subtitle_label.text = "%d · %s" % [data.age, data.role]
+	_set_speaker(villager)
 	_conversation = conversation
 	visible = true
 	_choice_box.visible = false
@@ -86,7 +83,22 @@ static func split_expression(line: String) -> Array:
 	return [&"", line]
 
 
+func _set_speaker(villager) -> void:
+	if _partner and is_instance_valid(_partner) and _partner != villager:
+		_partner.model.set_talking(false)
+	var data: VillagerData = villager.data
+	_partner = villager
+	_name_label.text = data.display_name
+	_subtitle_label.text = "%d · %s" % [data.age, data.role]
+
+
 func _show_line(line: String) -> void:
+	# "@id " switches speaker (used by the village meeting).
+	if line.begins_with("@") and line.find(" ") > 1:
+		var speaker = GameManager.get_villager(StringName(line.substr(1, line.find(" ") - 1)))
+		if speaker:
+			_set_speaker(speaker)
+		line = line.substr(line.find(" ") + 1)
 	var parts := split_expression(line)
 	_text_label.text = parts[1]
 	_text_label.visible_ratio = 0.0
@@ -159,7 +171,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key := event as InputEventKey
 	if _choice_box.visible and key and key.pressed and not key.echo \
-			and key.physical_keycode >= KEY_1 and key.physical_keycode <= KEY_3:
+			and key.physical_keycode >= KEY_1 and key.physical_keycode <= KEY_5:
 		_choose(key.physical_keycode - KEY_1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("jump"):

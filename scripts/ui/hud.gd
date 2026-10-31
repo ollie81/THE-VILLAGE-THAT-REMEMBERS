@@ -38,6 +38,7 @@ func _ready() -> void:
 	_build_hint()
 	_build_notice()
 
+	_root.add_child(GameplayPanels.new())
 	_root.add_child(DialoguePanel.new())
 	_root.add_child(VillagerInfoPanel.new())
 	_settings = SettingsPanel.new()
@@ -51,6 +52,7 @@ func _ready() -> void:
 	WorldClock.time_scale_changed.connect(func(_s): _refresh_buttons())
 	GameManager.opinion_changed.connect(_on_opinion_changed)
 	GameManager.gossip_shared.connect(_on_gossip_shared)
+	GameManager.notice.connect(show_notice)
 	_refresh_buttons()
 
 
@@ -68,7 +70,7 @@ func _build_top_bar() -> void:
 	clock_box.add_child(_period_label)
 
 	_fps_label = UiTheme.label("", 18, UiTheme.MUTED)
-	_fps_label.position = Vector2(24, 112)
+	_fps_label.position = Vector2(380, 24)
 	_root.add_child(_fps_label)
 
 	var buttons := HBoxContainer.new()
@@ -136,7 +138,7 @@ func show_notice(text: String) -> void:
 	_notice_label.text = text
 	_notice_panel.visible = true
 	_notice_panel.modulate.a = 1.0
-	_notice_time = 4.0
+	_notice_time = 4.0 + text.length() * 0.03
 
 
 func _on_opinion_changed(villager, affection: float, _trust: float) -> void:
@@ -155,6 +157,12 @@ func _on_gossip_shared(speaker, listener, _story: String) -> void:
 
 
 func _process(delta: float) -> void:
+	# Keep live prompts ("Build house (2/6)") up to date.
+	if _prompt_panel.visible and GameManager.player:
+		var focused = GameManager.player.detector.focused
+		if focused and is_instance_valid(focused):
+			var key_hint := "" if GameSettings.touch_controls_visible() else "  [E]"
+			_prompt_label.text = focused.get_prompt() + key_hint
 	if _notice_time > 0.0:
 		_notice_time -= delta
 		_notice_panel.modulate.a = clampf(_notice_time, 0.0, 1.0)
@@ -201,7 +209,8 @@ func _toggle_settings() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("menu") and not GameManager.is_in_conversation():
+	var building := BuildMode.instance != null and BuildMode.instance.active
+	if event.is_action_pressed("menu") and not GameManager.is_in_conversation() and not building:
 		_toggle_settings()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("time_fast_forward"):

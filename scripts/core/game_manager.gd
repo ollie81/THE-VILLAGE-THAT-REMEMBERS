@@ -14,6 +14,8 @@ signal opinion_changed(villager: Node, affection: float, trust: float)
 signal gossip_shared(speaker: Node, listener: Node, story: String)
 signal conversation_ended(villager: Node)
 signal interaction_focus_changed(target: Node)
+## A short message for the player (shown by the HUD).
+signal notice(message: String)
 
 enum CameraMode { EXPLORATION, MANAGEMENT }
 
@@ -61,6 +63,10 @@ func get_villager(id: StringName):
 	return null
 
 
+func notify(message: String) -> void:
+	notice.emit(message)
+
+
 func is_in_conversation() -> bool:
 	return conversation_partner != null
 
@@ -106,6 +112,18 @@ func start_conversation(villager) -> bool:
 	player.model.set_expression(&"happy", 0.6)
 	var conversation := DialogueService.build_conversation(villager, PLAYER_ID)
 	villager.mind.record_interaction(PLAYER_ID, "conversation", WorldClock.day, WorldClock.time_of_day)
+	GameState.check_objectives()
+	conversation_started.emit(villager, conversation)
+	return true
+
+
+## Plays a prepared conversation (e.g. the village meeting) without the
+## usual greeting and topics. Lines may switch speaker with "@id ".
+func start_scene(villager, conversation) -> bool:
+	if is_in_conversation() or villager == null:
+		return false
+	conversation_partner = villager
+	villager.begin_interaction(player)
 	conversation_started.emit(villager, conversation)
 	return true
 

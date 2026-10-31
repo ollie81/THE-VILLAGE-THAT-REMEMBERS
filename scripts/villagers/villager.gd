@@ -43,6 +43,9 @@ var _decision_timer: float = 0.0
 var _blocked_time: float = 0.0
 var _alive_time: float = 0.0
 var _mood_timer: float = 0.0
+## A job the player asked for (see TaskSystem): { kind, point, look, until,
+## activity }. Takes priority over the daily schedule until it expires.
+var task: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _collision: CollisionShape3D
 var _selection_ring: MeshInstance3D
@@ -169,6 +172,11 @@ func _process(_delta: float) -> void:
 
 
 func _think() -> void:
+	if not task.is_empty():
+		if TaskSystem.absolute_hours() < float(task["until"]):
+			return
+		task = {}
+		current_activity = null
 	var desired := brain.choose_activity(self, WorldClock.time_of_day)
 	if desired and (current_activity == null or desired.key() != current_activity.key()):
 		start_activity(desired)
@@ -180,6 +188,36 @@ func start_activity(activity: VillagerActivity) -> void:
 		_leave_house()
 	_travel_to(_resolve_location(activity))
 	activity_changed.emit(self, get_activity_description())
+
+
+## Starts a job the player asked for: walk to `point`, then work there.
+func assign_task(new_task: Dictionary) -> void:
+	task = new_task
+	current_activity = task["activity"]
+	if state == State.INSIDE:
+		_leave_house()
+	if state == State.INTERACTING:
+		_state_before_interaction = State.TRAVELING
+	navigation.release_spot(_location_id, _spot_index, data.id)
+	_location_id = ""
+	_spot_index = -1
+	_look_target = task.get("look")
+	var point: Vector3 = task["point"]
+	_route = navigation.find_route(global_position, point)
+	_route_index = 0
+	_blocked_time = 0.0
+	if state != State.INTERACTING:
+		state = State.TRAVELING
+	activity_changed.emit(self, get_activity_description())
+
+
+func has_task() -> bool:
+	return not task.is_empty()
+
+
+## True while standing at the task site doing the work.
+func is_working_on_task() -> bool:
+	return has_task() and state == State.PERFORMING
 
 
 func _resolve_location(activity: VillagerActivity) -> String:
@@ -264,7 +302,9 @@ func _process_performing(delta: float) -> void:
 	_perform_timer -= delta
 	if _perform_timer > 0.0:
 		return
-	if current_activity.is_wander():
+	if has_task():
+		_begin_performing()
+	elif current_activity.is_wander():
 		_travel_to(_resolve_location(current_activity))
 	elif navigation.get_spot_count(_location_id) > 1 and _rng.randf() < 0.6:
 		# Move to another spot so the village always looks alive.
@@ -336,6 +376,8 @@ func get_activity_description() -> String:
 	if current_activity == null:
 		return ""
 	if state == State.TRAVELING:
+		if has_task():
+			return "On the way: %s" % current_activity.label.to_lower()
 		return "Heading to %s" % VillageLayout.get_location_label(_location_id)
 	if state == State.INTERACTING:
 		return "Talking with you"

@@ -22,6 +22,8 @@ jobs:
         run: godot --headless --path . --import || true
       - name: Run smoke test
         run: timeout 900 godot --headless --path . res://tests/smoke_test.tscn
+      - name: Run gameplay test
+        run: timeout 900 godot --headless --path . res://tests/gameplay_test.tscn
 
   android:
     name: Android APK
