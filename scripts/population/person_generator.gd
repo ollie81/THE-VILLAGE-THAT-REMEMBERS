@@ -35,7 +35,7 @@ static func create(rng: RandomNumberGenerator, id: String, taken_first_names: Di
 	p.id = id
 	p.sex = "female" if rng.randf() < 0.5 else "male"
 	var age := _random_age(rng, relation)
-	p.birth_day = WorldClock.day - age * Person.YEAR_DAYS - rng.randi_range(0, Person.YEAR_DAYS - 1)
+	p.birth_day = WorldClock.day - age * Person.year_days - rng.randi_range(0, Person.year_days - 1)
 	p.first_name = NameGenerator.first_name(rng, p.sex, taken_first_names)
 	var kin := relation in ["sibling", "cousin", "parent", "child"]
 	p.family_name = relative.family_name if relative and kin and relative.family_name != "" else NameGenerator.family_name(rng)
@@ -51,11 +51,38 @@ static func create(rng: RandomNumberGenerator, id: String, taken_first_names: Di
 	var family_look: CharacterAppearance = AppearanceCodec.from_dict(relative.appearance) if relative and kin and not relative.appearance.is_empty() else null
 	var look := AppearanceGenerator.generate(rng, p.sex, age, p.profession, others, family_look)
 	p.appearance = AppearanceCodec.to_dict(look)
+	# Teenagers' stored look is the adult they'll grow into.
+	p.look_age = maxi(age, 18)
 	p.origin = "invited" if relative else "traveller"
 	if relative:
 		p.invited_by = relative.id
 		p.relatives[relative.id] = relation
 	p.biography = _biography(rng, p, relative, relation)
+	p.status = Person.STATUS_VISITOR
+	p.arrived_day = WorldClock.day
+	return p
+
+
+## A child who needs a family (adopted on arrival): their stored look is the
+## adult they'll grow into.
+static func create_child(rng: RandomNumberGenerator, id: String, taken_first_names: Dictionary, others: Array) -> Person:
+	var p := Person.new()
+	p.id = id
+	p.sex = "female" if rng.randf() < 0.5 else "male"
+	var age := rng.randi_range(4, 10)
+	p.birth_day = WorldClock.day - age * Person.year_days - rng.randi_range(0, Person.year_days - 1)
+	p.first_name = NameGenerator.first_name(rng, p.sex, taken_first_names)
+	p.personality = _personality(rng)
+	p.traits = _traits(p.personality)
+	p.skills = _skills(rng, _talent(rng))
+	for skill in p.skills:
+		p.skills[skill] = snappedf(float(p.skills[skill]) * 0.4, 0.01)
+	p.profession = ""
+	p.ambition = {"id": "friends", "text": "make real friends", "progress": 0.0, "done": false}
+	p.appearance = AppearanceCodec.to_dict(AppearanceGenerator.generate(rng, p.sex, 22, "farmer", others))
+	p.look_age = 18
+	p.origin = "adopted"
+	p.biography = "%s lost their family to a fever in a village down the river." % p.first_name
 	p.status = Person.STATUS_VISITOR
 	p.arrived_day = WorldClock.day
 	return p
@@ -168,17 +195,25 @@ static func make_data(p: Person) -> VillagerData:
 	data.id = StringName(p.id)
 	data.display_name = p.first_name
 	data.age = p.age()
+	var stage := p.life_stage()
 	data.role = Professions.label(p.profession)
+	if stage == Person.STAGE_CHILD:
+		data.role = "Child"
+	elif stage == Person.STAGE_TEEN:
+		data.role = "Apprentice %s" % Professions.label(p.profession).to_lower() if p.profession != "" else "Teenager"
 	data.traits = p.traits
 	data.biography = p.biography
-	data.appearance = AppearanceCodec.from_dict(p.appearance)
+	data.appearance = p.current_look()
 	data.home_location = p.home if p.home != "" else "camp"
 	data.personality = p.personality
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(p.id)
 	var age := p.age()
 	data.walk_speed = clampf(1.75 - maxf(age - 50, 0) * 0.02 + rng.randf_range(-0.1, 0.1), 1.2, 1.9)
-	data.schedule = Professions.schedule_for(p, rng)
+	if stage == Person.STAGE_CHILD:
+		data.walk_speed = lerpf(1.2, 1.6, clampf((age - 3.0) / 9.0, 0.0, 1.0))
+	data.schedule = _child_schedule(p, rng) if stage == Person.STAGE_CHILD \
+		else _teen_schedule(p, rng) if stage == Person.STAGE_TEEN else Professions.schedule_for(p, rng)
 	var wander := PackedStringArray()
 	for place in ["plaza", "farm", "garden", "workshop", "storage", "riverbank", "bridge", "woodlot"]:
 		if rng.randf() < 0.55:
@@ -186,8 +221,8 @@ static func make_data(p: Person) -> VillagerData:
 	if wander.size() < 2:
 		wander = PackedStringArray(["plaza", "storage"])
 	data.wander_locations = wander
-	data.first_meeting_lines = _first_lines(p)
-	data.returning_lines = _returning_lines(p)
+	data.first_meeting_lines = _child_first_lines(p) if stage == Person.STAGE_CHILD else _first_lines(p)
+	data.returning_lines = _child_lines(p) if stage == Person.STAGE_CHILD else _returning_lines(p)
 	data.activity_comments = {
 		"work": "[happy]Honest work. %s" % ("I wouldn't trade it for anything." if p.trait_weight("conscientiousness") > 0.5 else "Mostly honest, anyway."),
 		"gather": "There's always more out here than you'd think.",
@@ -196,6 +231,74 @@ static func make_data(p: Person) -> VillagerData:
 		"trade": "Everything has its price.",
 	}
 	return data
+
+
+## Children play, tag along to a parent's work, and go to bed early.
+static func _child_schedule(p: Person, rng: RandomNumberGenerator) -> Array:
+	var parent := _working_parent(p)
+	var help: Array = ["garden", "Helping in the garden", "gather"]
+	if parent:
+		var place: Array = Professions.info(parent.profession)["places"][0]
+		help = [place[0], "Helping %s at %s" % [parent.first_name, VillageLayout.get_location_label(String(place[0]))], "gather"]
+	var plays: Array = [["plaza", "Playing tag at the meeting circle", "jump"], ["garden", "Playing in the garden", "jump"],
+		["riverbank", "Skipping stones at the river", "gather"], ["bridge", "Watching fish from the bridge", "idle"]]
+	var morning: Array = plays[rng.randi_range(0, plays.size() - 1)]
+	var afternoon: Array = plays[rng.randi_range(0, plays.size() - 1)]
+	return [
+		{"hour": 7.5, "activity": "socialize", "location": morning[0], "label": morning[1], "anim": morning[2]},
+		{"hour": 9.5, "activity": "work", "location": help[0], "label": help[1], "anim": help[2]},
+		{"hour": 12.0, "activity": "rest", "location": "home", "label": "Lunch at home"},
+		{"hour": 13.0, "activity": "socialize", "location": afternoon[0], "label": afternoon[1], "anim": afternoon[2]},
+		{"hour": 16.0, "activity": "wander", "location": "", "label": "Running around the village"},
+		{"hour": 18.0, "activity": "rest", "location": "home", "label": "Supper at home"},
+		{"hour": 20.0 + rng.randf_range(0.0, 0.5), "activity": "sleep", "location": "home"},
+	]
+
+
+## Teenagers learn their trade in the mornings and afternoons.
+static func _teen_schedule(p: Person, rng: RandomNumberGenerator) -> Array:
+	var job := Professions.info(p.profession if p.profession != "" else "farmer")
+	var place: Array = job["places"][0]
+	var learn := "Learning to be a %s" % String(job["name"]).to_lower()
+	return [
+		{"hour": 7.5, "activity": "work", "location": place[0], "label": learn, "anim": place[2]},
+		{"hour": 12.0, "activity": "socialize", "location": "plaza", "label": "Lunch with friends at the meeting circle"},
+		{"hour": 13.0, "activity": "work", "location": place[0], "label": learn, "anim": place[2]},
+		{"hour": 17.0, "activity": "wander", "location": "", "label": "Wandering around the village"},
+		{"hour": 19.0, "activity": "socialize", "location": "plaza", "label": "Hanging around the meeting circle"},
+		{"hour": 21.5 + rng.randf_range(0.0, 0.5), "activity": "sleep", "location": "home"},
+	]
+
+
+static func _working_parent(p: Person) -> Person:
+	for parent_id in p.parents:
+		var parent: Person = Population.get_person(String(parent_id))
+		if parent and parent.is_resident() and parent.profession != "":
+			return parent
+	return null
+
+
+static func _child_first_lines(p: Person) -> PackedStringArray:
+	var lines := PackedStringArray()
+	lines.append("[laughing]I'm %d!" % p.age() if p.trait_weight("extraversion") > 0.4 else "...I'm %d." % p.age())
+	var parent := _working_parent(p)
+	if parent:
+		lines.append("[happy]%s is my %s. %s's the best %s in the whole village." % [parent.first_name,
+			"mum" if parent.sex == "female" else "dad", "She" if parent.sex == "female" else "He", Professions.label(parent.profession).to_lower()])
+	elif p.origin == "adopted":
+		lines.append("[sad]I used to live down the river. But this is home now.")
+	return lines
+
+
+static func _child_lines(p: Person) -> PackedStringArray:
+	var lines := PackedStringArray()
+	lines.append("[laughing]Bet you can't catch me!")
+	if p.trait_weight("openness") > 0.55:
+		lines.append("[surprised]Did you know frogs can sleep with their eyes open? Probably.")
+	if p.trait_weight("neuroticism") > 0.6:
+		lines.append("[worried]Is it true there are wolves in the forest?")
+	lines.append("[happy]When I grow up I'm going to build the biggest house ever.")
+	return lines
 
 
 static func _first_lines(p: Person) -> PackedStringArray:

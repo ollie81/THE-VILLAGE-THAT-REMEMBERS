@@ -65,6 +65,8 @@ var task: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _collision: CollisionShape3D
 var _selection_ring: MeshInstance3D
+## Which looks-bucket the current body was built for (AgeLook.visual_stage).
+var visual_stage: int = -1
 var _leaving: bool = false
 var _detail_timer: float = 0.0
 var _physics_delta: float = 0.0
@@ -255,6 +257,27 @@ func become_resident(new_data: VillagerData) -> void:
 	interactable.display_name = data.display_name
 	current_activity = null
 	_decision_timer = 0.0
+
+
+## Swaps in a new body (they grew up or grew older). Meshes are built
+## beforehand on a worker thread.
+func replace_model(look: CharacterAppearance, meshes: Dictionary) -> void:
+	var old := model
+	var animation := old.get_animation()
+	data.appearance = look
+	model = CharacterModel.new(look)
+	model.name = "Model"
+	model.prebuilt_meshes = meshes
+	remove_child(old)
+	old.queue_free()
+	add_child(model)
+	model.set_animation(animation)
+	(_collision.shape as CapsuleShape3D).height = maxf(look.standing_height() - 0.1, 0.7)
+	_collision.position = Vector3(0, (_collision.shape as CapsuleShape3D).height * 0.5, 0)
+	name_label.position = Vector3(0, look.standing_height() + 0.3, 0)
+	_detail_timer = 0.0
+	if state == State.INSIDE:
+		model.set_detail(CharacterModel.Detail.FAR, false)
 
 
 ## Their home changed (moved out of the camp, in with a partner...).

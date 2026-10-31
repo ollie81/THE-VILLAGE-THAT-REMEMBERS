@@ -11,6 +11,8 @@ var _jobs: VBoxContainer
 var _people: VBoxContainer
 var _history: VBoxContainer
 var _refresh_timer: float = 0.0
+## Whose family tree is shown (person id), or "" for recent events.
+var _selected: String = ""
 
 
 func _ready() -> void:
@@ -131,9 +133,12 @@ func refresh() -> void:
 		_summary.add_child(UiTheme.label("+ %d traveller waiting" % int(stats["visitors"]), 18, UiTheme.MUTED))
 	_summary.add_child(_row("Adults", stats["adults"]))
 	_summary.add_child(_row("Teenagers", stats["teens"]))
-	_summary.add_child(_row("Children", stats["children"]))
+	_summary.add_child(_row("Children", "%d  (%d babies)" % [int(stats["children"]), int(stats["babies"])] if int(stats["babies"]) > 0 else stats["children"]))
 	_summary.add_child(_row("Elders", stats["elders"]))
 	_summary.add_child(_row("Couples", stats["couples"]))
+	if int(stats["expecting"]) > 0:
+		_summary.add_child(_row("Babies on the way", stats["expecting"]))
+	_summary.add_child(_row("Generations", stats["generations"]))
 	_summary.add_child(_row("Happiness", "%d%%" % int(stats["happiness"])))
 	_summary.add_child(UiTheme.label("Housing", 22, UiTheme.ACCENT))
 	_summary.add_child(_row("Beds in homes", "%d / %d" % [int(housing["used"]), int(housing["capacity"])]))
@@ -146,6 +151,8 @@ func refresh() -> void:
 
 	_clear(_jobs)
 	_jobs.add_child(UiTheme.label("Occupations", 22, UiTheme.ACCENT))
+	if int(stats["apprentices"]) > 0:
+		_jobs.add_child(_row("Apprentices", stats["apprentices"]))
 	var jobs: Dictionary = stats["occupations"]
 	var names := jobs.keys()
 	names.sort_custom(func(a, b): return int(jobs[a]) > int(jobs[b]))
@@ -168,6 +175,10 @@ func refresh() -> void:
 		_people.add_child(_person_row(person))
 
 	_clear(_history)
+	var chosen := Population.get_person(_selected)
+	if chosen:
+		_show_family(chosen)
+		return
 	_history.add_child(UiTheme.label("Recent events", 22, UiTheme.ACCENT))
 	var recent: Array = Population.events.slice(maxi(Population.events.size() - 14, 0))
 	recent.reverse()
@@ -178,11 +189,78 @@ func refresh() -> void:
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.custom_minimum_size = Vector2(240, 0)
 		_history.add_child(line)
+	var lost := Population.remembered()
+	if not lost.is_empty():
+		_history.add_child(UiTheme.label("Remembered", 22, UiTheme.ACCENT))
+		for person: Person in lost:
+			var line := UiTheme.label("%s, %d. Died on day %d." % [person.full_name(), person.age(person.departed_day), person.departed_day], 16, UiTheme.MUTED)
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			line.custom_minimum_size = Vector2(240, 0)
+			_history.add_child(line)
 
 
+## A person's family tree: grandparents, parents, partner, siblings,
+## children and grandchildren, the dead included.
+func _show_family(person: Person) -> void:
+	var back := UiTheme.button("Back to events", 240)
+	back.pressed.connect(func():
+		_selected = ""
+		refresh())
+	_history.add_child(back)
+	_history.add_child(UiTheme.label("Family of %s" % person.first_name, 22, UiTheme.ACCENT))
+	var grandparents: Array = []
+	for parent_id in person.parents:
+		var parent := Population.get_person(String(parent_id))
+		if parent:
+			grandparents.append_array(parent.parents)
+	var grandchildren: Array = []
+	for child_id in person.children:
+		var child := Population.get_person(String(child_id))
+		if child:
+			grandchildren.append_array(child.children)
+	_family_group("Grandparents", grandparents)
+	_family_group("Parents", person.parents)
+	_family_group("Partner", [person.partner] if person.partner != "" else [])
+	_family_group("Brothers and sisters", Population.siblings(person))
+	_family_group("Children", person.children)
+	_family_group("Grandchildren", grandchildren)
+	var kin: Array = []
+	for id in person.relatives:
+		if String(person.relatives[id]) in ["cousin", "friend"]:
+			kin.append(id)
+	_family_group("Cousins and old friends", kin)
+	if _history.get_child_count() == 2:
+		_history.add_child(UiTheme.label("No family in the village yet.", 16, UiTheme.MUTED))
+
+
+func _family_group(title: String, ids: Array) -> void:
+	var names := PackedStringArray()
+	for id in ids:
+		var other := Population.get_person(String(id))
+		if other:
+			names.append(Population._name_with_state(other))
+	if names.is_empty():
+		return
+	_history.add_child(UiTheme.label(title, 17, UiTheme.MUTED))
+	var line := UiTheme.label(", ".join(names), 17)
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.custom_minimum_size = Vector2(240, 0)
+	_history.add_child(line)
+
+
+## A villager's entry; tap it to see their family tree.
 func _person_row(person: Person) -> Control:
+	var button := Button.new()
+	button.flat = true
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(360, 0)
+	button.pressed.connect(func():
+		_selected = person.id
+		refresh())
 	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", 0)
+	button.add_child(box)
 	var name := person.full_name() + ("  (founder)" if person.founder else "")
 	if person.status == Person.STATUS_VISITOR:
 		name += "  (traveller)"
@@ -190,7 +268,10 @@ func _person_row(person: Person) -> Control:
 	var home := "the camp" if person.home == Population.CAMP_ID else VillageLayout.get_location_label(person.home)
 	var mood := "happy" if person.happiness >= 70.0 else "unhappy" if person.happiness < 30.0 else "content"
 	var partner := Population.get_person(person.partner)
-	var detail := "%d, %s, %s" % [person.age(), Professions.label(person.profession).to_lower(), mood]
+	var job := "child" if person.life_stage() == Person.STAGE_CHILD else (
+		"apprentice " + Professions.label(person.profession).to_lower() if person.life_stage() == Person.STAGE_TEEN
+		else Professions.label(person.profession).to_lower())
+	var detail := "%s, %s, %s" % ["baby" if person.is_baby() else str(person.age()), job, mood]
 	if partner:
 		detail += ", %s %s" % ["married to" if person.married else "with", partner.first_name]
 	if person.status == Person.STATUS_RESIDENT:
@@ -199,7 +280,9 @@ func _person_row(person: Person) -> Control:
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.custom_minimum_size = Vector2(360, 0)
 	box.add_child(info)
-	return box
+	# Size the button to its contents (buttons don't size to children).
+	button.custom_minimum_size.y = 64 if person.status == Person.STATUS_RESIDENT else 46
+	return button
 
 
 func _row(title: String, value: Variant) -> Control:

@@ -7,8 +7,11 @@ extends RefCounted
 ##
 ## Everything here is plain data so it saves to JSON as-is.
 
-## Days in one village year: people age a year every YEAR_DAYS game days.
-const YEAR_DAYS := 30
+## Game days in one village year (see the "Years pass" setting). Saved with
+## the population; changing it keeps everyone's age (Population.set_year_days).
+static var year_days: int = 10
+## Below this age people have no body yet: babies stay at home.
+const TODDLER_AGE := 3
 
 const STATUS_VISITOR := "visitor"
 const STATUS_RESIDENT := "resident"
@@ -38,6 +41,14 @@ var ambition: Dictionary = {}
 var biography: String = ""
 ## CharacterAppearance as a dictionary (see AppearanceCodec).
 var appearance: Dictionary = {}
+## The age `appearance` shows them at. Younger, they look like a child (see
+## AgeLook); older, they grey and stoop. Children store their adult look.
+var look_age: int = 25
+## 1 for founders and newcomers, then +1 for each generation born here.
+var generation: int = 1
+## Day a baby is due (-1 = not expecting), and the other parent.
+var expecting_day: int = -1
+var expecting_with: String = ""
 
 var status: String = STATUS_VISITOR
 var founder: bool = false
@@ -78,7 +89,7 @@ func full_name() -> String:
 
 func age(today: int = -1) -> int:
 	var day := today if today >= 0 else WorldClock.day
-	return maxi(int(floor(float(day - birth_day) / YEAR_DAYS)), 0)
+	return maxi(int(floor(float(day - birth_day) / year_days)), 0)
 
 
 func life_stage(today: int = -1) -> String:
@@ -93,6 +104,15 @@ static func stage_for_age(years: int) -> String:
 	if years < 60:
 		return STAGE_ADULT
 	return STAGE_ELDER
+
+
+## How they look now.
+func current_look() -> CharacterAppearance:
+	return AgeLook.for_age(AppearanceCodec.from_dict(appearance), age(), look_age, sex)
+
+
+func is_baby() -> bool:
+	return age() < TODDLER_AGE
 
 
 func is_present() -> bool:
@@ -113,6 +133,7 @@ func to_dict() -> Dictionary:
 		"birth_day": birth_day, "profession": profession, "skills": skills.duplicate(),
 		"traits": Array(traits), "personality": personality.duplicate(), "ambition": ambition.duplicate(),
 		"biography": biography, "appearance": appearance.duplicate(true),
+		"look_age": look_age, "generation": generation, "expecting_day": expecting_day, "expecting_with": expecting_with,
 		"status": status, "founder": founder, "data_path": data_path, "origin": origin,
 		"invited_by": invited_by, "home": home, "arrived_day": arrived_day, "departed_day": departed_day,
 		"partner": partner, "partnered_day": partnered_day, "married": married,
@@ -136,6 +157,10 @@ static func from_dict(d: Dictionary) -> Person:
 	p.ambition = _dict(d.get("ambition"))
 	p.biography = String(d.get("biography", ""))
 	p.appearance = _dict(d.get("appearance"))
+	p.look_age = int(d.get("look_age", 25))
+	p.generation = int(d.get("generation", 1))
+	p.expecting_day = int(d.get("expecting_day", -1))
+	p.expecting_with = String(d.get("expecting_with", ""))
 	p.status = String(d.get("status", STATUS_RESIDENT))
 	p.founder = bool(d.get("founder", false))
 	p.data_path = String(d.get("data_path", ""))

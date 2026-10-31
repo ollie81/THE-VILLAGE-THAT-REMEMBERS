@@ -116,10 +116,14 @@ func _refresh() -> void:
 		return
 	var data: VillagerData = _villager.data
 	_title.text = data.display_name
-	_role.text = "%s · age %d" % [data.role, data.age]
+	var person: Person = _villager.person
+	_role.text = "%s · age %d" % [data.role, person.age() if person else data.age]
 	_traits.text = ", ".join(data.traits)
 	_activity.text = "Now: %s" % _villager.get_activity_description()
 	_bio.text = data.biography
+	var family := Population.family_summary(person) if person else ""
+	if family != "":
+		_bio.text += "\n" + family
 	var mind: VillagerMind = _villager.mind
 	var subject := GameManager.PLAYER_ID
 	var times := mind.get_familiarity(subject)

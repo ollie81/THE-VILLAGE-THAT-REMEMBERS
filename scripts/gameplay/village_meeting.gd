@@ -70,7 +70,7 @@ static func pick_speakers(attendees: Array) -> Array:
 	for villager in attendees:
 		if villager.person == null or villager.person.founder:
 			founders.append(villager)
-		else:
+		elif villager.person.age() >= 13:
 			others.append(villager)
 	others.sort_custom(func(a, b): return absf(a.mind.get_affection(GameManager.PLAYER_ID)) > absf(b.mind.get_affection(GameManager.PLAYER_ID)))
 	return founders + others.slice(0, 3)

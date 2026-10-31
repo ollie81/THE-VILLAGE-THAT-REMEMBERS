@@ -86,6 +86,8 @@ static func request(villager, kind: StringName) -> Dictionary:
 	var player := GameManager.PLAYER_ID
 	if mind.is_hostile(player):
 		return {"accepted": false, "lines": ["[angry]Why would I help you?"]}
+	if villager.person and villager.person.life_stage() == Person.STAGE_CHILD:
+		return {"accepted": false, "lines": ["[laughing]I'm too little for that! Ask a grown-up."]}
 	if WorldClock.time_of_day >= 20.0 or WorldClock.time_of_day < 6.0:
 		return {"accepted": false, "lines": ["[worried]It's too dark for that now. Ask me in the morning."]}
 	if villager.has_task() and String(villager.task.get("kind", "")) != "meeting":

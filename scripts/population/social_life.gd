@@ -97,6 +97,9 @@ func daily() -> void:
 		_update_happiness(villager, person)
 		_progress_ambition(villager, person)
 		_maybe_marry(person)
+		_family_plans(person)
+		_learn(person)
+		_maybe_move_out(person)
 		_decide(villager, person)
 
 
@@ -169,9 +172,64 @@ func _maybe_marry(person: Person) -> void:
 		GameManager.notify("Wedding at the meeting circle! %s and %s are married." % [person.first_name, partner.first_name])
 
 
+## Happy couples start a family: a baby, or (when they can't have one
+## together) a child who needs a home.
+func _family_plans(person: Person) -> void:
+	var partner := Population.get_person(person.partner)
+	if partner == null or person.id > partner.id:
+		return
+	var together := (person.happiness + partner.happiness) * 0.5
+	if together < 45.0:
+		return
+	var wish := 0.12 if person.children.is_empty() else 0.06
+	if person.married:
+		wish *= 1.5
+	if Population.can_conceive(person, partner):
+		if rng.randf() < wish:
+			Population.start_expecting(person, partner)
+	elif person.sex == partner.sex or person.age() > 44 or partner.age() > 44:
+		if Population.can_adopt(person, partner) and rng.randf() < wish * 0.5 and PopulationDirector.instance:
+			PopulationDirector.instance.bring_child_for_adoption(person, partner)
+
+
+## Apprentices get better at their trade every day; children pick up a
+## little of what their parents do.
+func _learn(person: Person) -> void:
+	var stage := person.life_stage()
+	if stage == Person.STAGE_TEEN and person.profession != "":
+		var skill := String(Professions.info(person.profession)["skill"])
+		person.skills[skill] = minf(float(person.skills.get(skill, 0.1)) + 0.02, 0.9)
+	elif stage == Person.STAGE_CHILD:
+		for parent_id in person.parents:
+			var parent := Population.get_person(String(parent_id))
+			if parent and parent.profession != "":
+				var skill := String(Professions.info(parent.profession)["skill"])
+				person.skills[skill] = minf(float(person.skills.get(skill, 0.05)) + 0.006, 0.5)
+
+
+## Grown-up children move out of their parents' home when there's room
+## elsewhere (a partner's home, a cottage).
+func _maybe_move_out(person: Person) -> void:
+	if person.age() < Population.ADULT_AGE or person.parents.is_empty() or rng.randf() > 0.2:
+		return
+	var lives_with_parents := false
+	for parent_id in person.parents:
+		var parent := Population.get_person(String(parent_id))
+		if parent and parent.home == person.home:
+			lives_with_parents = true
+	if not lives_with_parents:
+		return
+	var old_home := person.home
+	var room_elsewhere := Population.homes().any(func(h): return h["id"] != old_home and h["kind"] != "camp" \
+		and (h["residents"] as Array).size() < int(h["capacity"]))
+	if room_elsewhere:
+		Population.assign_home(person, old_home)
+		Population.log_event("moved_out", "%s moved out of their parents' home." % person.first_name, [person.id])
+
+
 ## Unhappy people leave after a few bad days; happy ones may send for family.
 func _decide(villager, person: Person) -> void:
-	if person.founder:
+	if person.founder or person.age() < Population.ADULT_AGE:
 		return
 	if person.unhappy_days >= 3 and not person.leaving:
 		var chance := 0.35 + person.trait_weight("adventure") * 0.3 - person.trait_weight("agreeableness") * 0.1

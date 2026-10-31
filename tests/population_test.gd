@@ -55,7 +55,9 @@ func _run() -> void:
 	_check(mara != null and mara.founder and mara.first_name == "Mara" and mara.age() == 29 and mara.home == "home_mara",
 		"Mara keeps her identity (name, age 29, her own house)")
 	var mara_villager = GameManager.get_villager(&"mara")
-	_check(mara_villager.person == mara and mara_villager.data.resource_path.ends_with("mara.tres"),
+	var authored := load("res://data/villagers/mara.tres") as VillagerData
+	_check(mara_villager.person == mara and mara_villager.data.biography == authored.biography
+		and AppearanceGenerator.distance(mara_villager.data.appearance, authored.appearance) < 0.001,
 		"founders still use their hand-written character data")
 
 	# --- Generation -----------------------------------------------------------------
@@ -181,7 +183,8 @@ func _run() -> void:
 	var jobs := 0
 	for job in stats["occupations"]:
 		jobs += int(stats["occupations"][job])
-	_check(jobs == 12 and int(stats["counters"]["arrivals"]) == 7, "occupations and arrivals add up")
+	_check(jobs + int(stats["apprentices"]) + int(stats["children"]) == 12 and int(stats["counters"]["arrivals"]) == 7,
+		"occupations (with apprentices) and arrivals add up")
 	var panel: PopulationPanel = _main.find_child("PopulationPanel", true, false)
 	panel.toggle()
 	await _frames(3)
@@ -191,8 +194,8 @@ func _run() -> void:
 	# --- Friendships and partnerships -------------------------------------------------
 	var a_person: Person = arrivals[0]
 	var b_person: Person = arrivals[1]
-	a_person.birth_day = WorldClock.day - 30 * Person.YEAR_DAYS
-	b_person.birth_day = WorldClock.day - 32 * Person.YEAR_DAYS
+	a_person.birth_day = WorldClock.day - 30 * Person.year_days
+	b_person.birth_day = WorldClock.day - 32 * Person.year_days
 	var a = GameManager.get_villager(StringName(a_person.id))
 	var b = GameManager.get_villager(StringName(b_person.id))
 	var social: SocialLife = SocialLife.instance
@@ -257,21 +260,21 @@ func _run() -> void:
 	_check(baby.family_name == a_person.family_name and baby.home == a_person.home, "the child takes a family name and lives with the parents")
 	_check(Population.ancestors(baby).size() == 2 and Population.descendants(a_person).has(baby.id), "family trees go up and down")
 	var orphan := PersonGenerator.create(rng, Population.new_id(), Population.taken_first_names(), [])
-	orphan.birth_day = WorldClock.day - 6 * Person.YEAR_DAYS
+	orphan.birth_day = WorldClock.day - 6 * Person.year_days
 	Population.add(orphan)
 	orphan.status = Person.STATUS_RESIDENT
 	Population.adopt([a_person, b_person], orphan)
 	_check(Population.siblings(baby).has(orphan.id) and orphan.family_name == a_person.family_name, "adoption makes siblings")
 	var tree := Population.family_tree(a_person)
 	_check((tree["children"] as Array).size() == 2, "the family tree lists both children")
-	_check(not Population.BIRTHS_ENABLED, "births stay off until child-sized 3D models exist")
+	_check(Population.BIRTHS_ENABLED, "births are on (children are real 3D characters)")
 	Population.home_owners[a_person.home] = a_person.id
 	Population.die(a_person, "test")
 	_check(a_person.status == Person.STATUS_DEAD and Population.home_owners.get(b_person.home, "") == b_person.id and b_person.partner == "",
 		"when someone dies, their partner inherits the home")
 	_check(int(Population.counters["deaths"]) == 1 and int(Population.counters["births"]) == 1, "births and deaths are counted")
 	var teen := Person.new()
-	teen.birth_day = WorldClock.day - 17 * Person.YEAR_DAYS - (Person.YEAR_DAYS - 1)
+	teen.birth_day = WorldClock.day - 17 * Person.year_days - (Person.year_days - 1)
 	_check(teen.life_stage() == Person.STAGE_TEEN and teen.life_stage(WorldClock.day + 1) == Person.STAGE_ADULT, "people age and come of age")
 
 	# --- Performance ------------------------------------------------------------------------
@@ -301,5 +304,141 @@ func _run() -> void:
 	_check(Population.get_person(b_person.id).married == false and Population.get_person(baby.id).parents.size() == 2,
 		"families survive save and load")
 
+	await _generations(director, rng)
+
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
+
+
+## Children and generations: a couple has a baby, the baby stays home,
+## grows into a 3D child, learns a trade, comes of age; adoption, old age,
+## mourning and the length of a year.
+func _generations(director: PopulationDirector, rng: RandomNumberGenerator) -> void:
+	print("-- Generations --")
+	# Room for a family: another cottage.
+	var record := GameState.add_structure(&"cottage", VillageLayout.ground_point(-22.0, 28.0), 0.0)
+	await _frames(3)
+	for structure in get_tree().get_nodes_in_group("placed_structures"):
+		if structure.record == record:
+			while not structure.is_complete():
+				structure.add_work(1.0)
+	await _frames(3)
+	var mum := director.settle_newcomer()
+	var dad := director.settle_newcomer()
+	await _wait_for_spawns(director)
+	mum.sex = "female"
+	dad.sex = "male"
+	mum.birth_day = WorldClock.day - 27 * Person.year_days
+	dad.birth_day = WorldClock.day - 29 * Person.year_days
+	mum.partner = ""
+	dad.partner = ""
+	_check(Population.form_partnership(mum, dad) and mum.home == dad.home, "a new couple sets up home together")
+	_check(Population.can_conceive(mum, dad), "a young couple with room can have a baby")
+	Population.start_expecting(mum, dad)
+	_check(mum.expecting_day == WorldClock.day + Population.PREGNANCY_DAYS and Population.stats()["expecting"] == 1, "they're expecting")
+	for day in Population.PREGNANCY_DAYS:
+		WorldClock.day += 1
+		Population.advance_day(rng)
+	var baby := Population.get_person(mum.children[-1]) if not mum.children.is_empty() else null
+	_check(baby != null and baby.parents.has(dad.id) and baby.generation == 2 and baby.is_baby(), "the baby is born: %s" % (baby.full_name() if baby else "none"))
+	director.update_bodies()
+	await _frames(5)
+	_check(GameManager.get_villager(StringName(baby.id)) == null and Population.stats()["babies"] >= 1, "a baby stays at home, without a body")
+	_check(not Population.can_conceive(mum, dad), "no second baby while the first is so small")
+	# Grow up: age three.
+	baby.birth_day = WorldClock.day - 3 * Person.year_days
+	director.update_bodies()
+	await _wait_for_spawns(director)
+	var toddler = GameManager.get_villager(StringName(baby.id))
+	_check(toddler != null, "at three they get their own 3D body")
+	var height: float = toddler.data.appearance.standing_height()
+	var adult_height: float = AppearanceCodec.from_dict(baby.appearance).standing_height()
+	_check(height / adult_height > 0.5 and height / adult_height < 0.6,
+		"a three-year-old is just over half their adult height (%.2f m of %.2f m)" % [height, adult_height])
+	_check(toddler.model.skeleton.get_bone_count() == 19 and toddler.model.animation_player.has_animation(&"walk"), "children use the same skeleton and animations")
+	var foot: Transform3D = toddler.model.skeleton.get_bone_global_pose(HumanoidRig.Bone.LEFT_FOOT)
+	_check(foot.origin.y < 0.12, "a child's feet are on the ground (%.2f m)" % foot.origin.y)
+	_check(toddler.data.role == "Child" and String(toddler.data.schedule[0]["label"]).length() > 0, "children have their own day: %s" % toddler.data.schedule[0]["label"])
+	_check(not TaskSystem.request(toddler, &"wood")["accepted"], "children aren't given jobs")
+	var talk := DialogueService.build_conversation(toddler, GameManager.PLAYER_ID)
+	_check(talk.lines.size() >= 2 and talk.lines[1].contains("3"), "they talk like a child: %s" % talk.lines[1])
+	var parent_talk := DialogueService.build_conversation(GameManager.get_villager(StringName(mum.id)), GameManager.PLAYER_ID)
+	_check(Population.family_summary(mum).contains(baby.first_name), "the family card lists the child: %s" % Population.family_summary(mum))
+	# Birthdays rebuild the body as they grow.
+	var first_model: CharacterModel = toddler.model
+	baby.birth_day -= 4 * Person.year_days
+	director.update_bodies()
+	await _wait_for_spawns(director)
+	_check(toddler.model != first_model and toddler.data.appearance.standing_height() > height + 0.1,
+		"each year they grow (now %d, %.2f m)" % [baby.age(), toddler.data.appearance.standing_height()])
+	# Thirteen: an apprentice.
+	baby.birth_day = WorldClock.day - 13 * Person.year_days
+	Population._birthday(baby, 13, 12, rng)
+	_check(baby.profession != "" and Population.stats()["apprentices"] >= 1, "at thirteen they start learning a trade (%s)" % baby.profession)
+	director.update_bodies()
+	await _wait_for_spawns(director)
+	_check(toddler.data.role.begins_with("Apprentice"), "and spend their days learning it (%s)" % toddler.data.role)
+	# Eighteen: grown up.
+	baby.birth_day = WorldClock.day - 18 * Person.year_days
+	Population._birthday(baby, 18, 17, rng)
+	director.update_bodies()
+	await _wait_for_spawns(director)
+	_check(baby.life_stage() == Person.STAGE_ADULT and not toddler.data.role.begins_with("Apprentice") and toddler.data.schedule.size() >= 5,
+		"at eighteen they're an adult with a job (%s)" % toddler.data.role)
+	_check(absf(toddler.data.appearance.standing_height() - adult_height) < 0.01, "and look like the adult they grew into")
+	# Adoption.
+	var a := director.settle_newcomer()
+	var b := director.settle_newcomer()
+	await _wait_for_spawns(director)
+	a.sex = "male"
+	b.sex = "male"
+	a.birth_day = WorldClock.day - 34 * Person.year_days
+	b.birth_day = WorldClock.day - 36 * Person.year_days
+	Population.form_partnership(a, b)
+	# A cottage of their own, with room for a child.
+	var second := GameState.add_structure(&"cottage", VillageLayout.ground_point(-22.0, 38.0), 0.0)
+	await _frames(3)
+	for structure in get_tree().get_nodes_in_group("placed_structures"):
+		if structure.record == second:
+			while not structure.is_complete():
+				structure.add_work(1.0)
+	await _frames(3)
+	var family_home := Population.cottage_home_id(second)
+	Population._move_in(a, family_home)
+	Population._move_in(b, family_home)
+	_check(not Population.can_conceive(a, b) and Population.can_adopt(a, b), "a couple who can't have a baby together can adopt")
+	var adopted := director.bring_child_for_adoption(a, b)
+	_check(adopted.parents.size() == 2 and adopted.home == a.home and adopted.generation == 2 and adopted.age() >= 4, "%s is adopted" % adopted.first_name)
+	await _wait_for_spawns(director)
+	_check(GameManager.get_villager(StringName(adopted.id)) != null, "and walks in to their new home")
+	# Old age and mourning.
+	var elder := director.settle_newcomer()
+	await _wait_for_spawns(director)
+	var elder_child := director.settle_newcomer()
+	await _wait_for_spawns(director)
+	elder.children.append(elder_child.id)
+	elder_child.parents.append(elder.id)
+	elder.birth_day = WorldClock.day - 80 * Person.year_days
+	Population.die(elder)
+	var grieving := DialogueService.build_conversation(GameManager.get_villager(StringName(elder_child.id)), GameManager.PLAYER_ID)
+	_check(grieving.lines[0].contains(elder.first_name), "family mourn: %s" % grieving.lines[0])
+	_check(Population.remembered().has(elder), "the village remembers those who died")
+	# Growing older changes how founders look.
+	var founder: Person = Population.get_person("mara")
+	var old_look := founder.current_look()
+	founder.birth_day -= 25 * Person.year_days
+	var older := founder.current_look()
+	_check(older.wrinkles > old_look.wrinkles and older.hair_color.get_luminance() > old_look.hair_color.get_luminance(),
+		"people grey and wrinkle as they age (Mara at %d)" % founder.age())
+	founder.birth_day += 25 * Person.year_days
+	# The length of a year.
+	var age_before := mum.age()
+	Population.set_year_days(4)
+	_check(mum.age() == age_before and Person.year_days == 4, "changing how fast years pass keeps everyone's age")
+	Population.set_year_days(Population.DEFAULT_YEAR_DAYS)
+	var stats := Population.stats()
+	_check(int(stats["generations"]) >= 2 and int(stats["counters"]["births"]) >= 2, "statistics count generations and births")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(Population.to_dict()))
+	Population.from_dict(saved)
+	var reloaded := Population.get_person(baby.id)
+	_check(reloaded.generation == 2 and reloaded.look_age == 18 and reloaded.parents.size() == 2, "generations survive save and load")

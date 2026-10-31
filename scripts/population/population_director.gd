@@ -73,7 +73,7 @@ func _link_founders() -> void:
 ## at a time.
 func _spawn_saved_people() -> void:
 	for person: Person in Population.residents(true):
-		if person.founder or GameManager.get_villager(StringName(person.id)) != null:
+		if person.founder or person.is_baby() or GameManager.get_villager(StringName(person.id)) != null:
 			continue
 		_spawn(person, false)
 
@@ -108,10 +108,10 @@ func _on_structure_completed(structure) -> void:
 ## Travellers appear at the edge of the map and walk in; everyone else
 ## appears where their timetable says they should be.
 func _spawn(person: Person, walk_in: bool) -> void:
-	if _spawning.has(person.id):
+	if _spawning.has(person.id) or person.is_baby():
 		return
 	_spawning[person.id] = true
-	var look := AppearanceCodec.from_dict(person.appearance)
+	var look := person.current_look()
 	build_queue.request(look, _on_meshes_ready.bind(person, walk_in))
 
 
@@ -124,6 +124,7 @@ func _on_meshes_ready(meshes: Dictionary, person: Person, walk_in: bool) -> void
 	villager.data = PersonGenerator.make_visitor_data(person) if person.status == Person.STATUS_VISITOR else PersonGenerator.make_data(person)
 	villager.navigation = navigation
 	villager.prebuilt_meshes = meshes
+	villager.visual_stage = AgeLook.visual_stage(person.age(), person.look_age)
 	if walk_in:
 		villager.spawn_at = ENTRY_POINT + Vector3(0, 0, rng.randf_range(-2.0, 2.0))
 	villager.departed.connect(_on_villager_departed)
@@ -146,6 +147,7 @@ func _plan_arrival() -> void:
 
 func _on_day_changed(_day: int) -> void:
 	Population.advance_day(rng)
+	update_bodies()
 	_plan_arrival()
 	for person: Person in Population.visitors():
 		if WorldClock.day - person.arrived_day >= VISITOR_PATIENCE_DAYS:
@@ -214,6 +216,49 @@ func settle_newcomer() -> Person:
 	Population.make_resident(person)
 	_spawn(person, false)
 	return person
+
+
+## After birthdays: toddlers get their first body, people whose looks
+## changed get a new one (built in the background), and anyone whose stage
+## of life changed gets a new daily routine.
+func update_bodies() -> void:
+	for person: Person in Population.residents():
+		var villager = get_villager(person)
+		if villager == null:
+			if not person.is_baby() and not person.founder:
+				_spawn(person, false)
+			continue
+		var stage := AgeLook.visual_stage(person.age(), person.look_age)
+		if villager.visual_stage != stage and not _spawning.has(person.id):
+			_spawning[person.id] = true
+			var look := person.current_look()
+			build_queue.request(look, _on_regrown.bind(person, look, stage))
+		if not person.founder and villager.data.role != PersonGenerator.make_data(person).role:
+			villager.become_resident(PersonGenerator.make_data(person))
+
+
+func _on_regrown(meshes: Dictionary, person: Person, look: CharacterAppearance, stage: int) -> void:
+	_spawning.erase(person.id)
+	var villager = get_villager(person)
+	if villager == null or not person.is_present():
+		return
+	villager.replace_model(look, meshes)
+	villager.visual_stage = stage
+	villager.data.age = person.age()
+
+
+## A child who has lost their family is brought to a couple who wanted one.
+func bring_child_for_adoption(parent_a: Person, parent_b: Person) -> Person:
+	var child := PersonGenerator.create_child(rng, Population.new_id(), Population.taken_first_names(), Population.appearances())
+	Population.add(child)
+	Population.adopt([parent_a, parent_b], child)
+	child.status = Person.STATUS_RESIDENT
+	child.arrived_day = WorldClock.day
+	Population.counters["arrivals"] += 1
+	Population.log_event("adoption", "%s came to live with %s and %s." % [child.first_name, parent_a.first_name, parent_b.first_name], [child.id])
+	GameManager.notify("%s and %s have adopted %s, who is walking in over the bridge." % [parent_a.first_name, parent_b.first_name, child.first_name])
+	_spawn(child, true)
+	return child
 
 
 func queue_invitation(inviter: Person, relation: String) -> void:

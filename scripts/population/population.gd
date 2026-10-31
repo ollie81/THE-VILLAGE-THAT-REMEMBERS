@@ -21,10 +21,14 @@ const COTTAGE_CAPACITY := 4
 ## Tents by the bridge: shelter, not a home.
 const CAMP_ID := "camp"
 const CAMP_CAPACITY := 10
-## Births need child-sized 3D characters, which don't exist yet. The family
-## logic below works (and is tested); the village just doesn't have babies
-## until this is switched on.
-const BIRTHS_ENABLED := false
+## Couples have children (children are real 3D characters from age 3).
+const BIRTHS_ENABLED := true
+## Days between finding out and the birth.
+const PREGNANCY_DAYS := 4
+const MAX_CHILDREN := 4
+const ADULT_AGE := 18
+const DEFAULT_YEAR_DAYS := 10
+const APPRENTICE_AGE := 13
 ## Founders are protected from old age until generations are playable.
 const FOUNDERS_AGE_SAFELY := true
 
@@ -39,6 +43,7 @@ var invitations: Array = []
 
 
 func reset() -> void:
+	Person.year_days = DEFAULT_YEAR_DAYS
 	people.clear()
 	events.clear()
 	home_owners.clear()
@@ -115,12 +120,13 @@ func ensure_founders(founders: Array) -> void:
 		p.first_name = data.display_name
 		p.family_name = ""
 		p.sex = "male" if id in ["elias", "tomas"] else "female"
-		p.birth_day = 1 - data.age * Person.YEAR_DAYS
+		p.birth_day = 1 - data.age * Person.year_days
 		p.profession = _founder_profession(id)
 		p.traits = data.traits
 		p.personality = data.personality.duplicate()
 		p.biography = data.biography
 		p.appearance = AppearanceCodec.to_dict(data.appearance)
+		p.look_age = data.age
 		p.status = Person.STATUS_RESIDENT
 		p.founder = true
 		p.origin = "founder"
@@ -189,17 +195,19 @@ func housing_summary() -> Dictionary:
 
 ## Finds someone a place to live: with their partner or family if there's
 ## room, otherwise the emptiest cottage, a founder's spare room, then the camp.
-func assign_home(person: Person) -> String:
-	var options := homes()
+## `avoid`: a home they're leaving (a grown child moving out).
+func assign_home(person: Person, avoid: String = "") -> String:
+	var options := homes().filter(func(h): return h["id"] != avoid)
 	var preferred: Array = []
 	if person.partner != "" and get_person(person.partner):
 		preferred.append(get_person(person.partner).home)
 	for id in person.relatives:
 		if get_person(String(id)):
 			preferred.append(get_person(String(id)).home)
-	for parent in person.parents:
-		if get_person(String(parent)):
-			preferred.append(get_person(String(parent)).home)
+	if person.age() < ADULT_AGE:
+		for parent in person.parents:
+			if get_person(String(parent)):
+				preferred.append(get_person(String(parent)).home)
 	for home_id in preferred:
 		for home: Dictionary in options:
 			if home["id"] == home_id and home["kind"] != "camp" and _has_space(home, person):
@@ -257,8 +265,22 @@ func stats() -> Dictionary:
 	var jobs := {}
 	var happiness := 0.0
 	var living := residents()
+	var babies := 0
+	var apprentices := 0
+	var expecting := 0
+	var generations := 0
 	for person: Person in living:
 		stages[person.life_stage()] += 1
+		generations = maxi(generations, person.generation)
+		if person.is_baby():
+			babies += 1
+		if person.expecting_day >= 0:
+			expecting += 1
+		if person.life_stage() == Person.STAGE_CHILD:
+			continue
+		if person.life_stage() == Person.STAGE_TEEN:
+			apprentices += 1
+			continue
 		var job := Professions.label(person.profession)
 		jobs[job] = int(jobs.get(job, 0)) + 1
 		happiness += person.happiness
@@ -268,9 +290,11 @@ func stats() -> Dictionary:
 		"children": stages[Person.STAGE_CHILD], "teens": stages[Person.STAGE_TEEN],
 		"adults": stages[Person.STAGE_ADULT], "elders": stages[Person.STAGE_ELDER],
 		"occupations": jobs, "housing": summary,
-		"happiness": happiness / maxf(living.size(), 1.0),
+		"happiness": happiness / maxf(living.size() - stages[Person.STAGE_CHILD] - stages[Person.STAGE_TEEN], 1.0),
 		"couples": living.filter(func(p: Person): return p.partner != "").size() / 2,
 		"counters": counters.duplicate(),
+		"babies": babies, "apprentices": apprentices, "expecting": expecting, "generations": generations,
+		"remembered": remembered().size(),
 	}
 
 
@@ -412,6 +436,8 @@ func register_birth(a: Person, b: Person, rng: RandomNumberGenerator) -> Person:
 	child.id = new_id()
 	child.sex = "female" if rng.randf() < 0.5 else "male"
 	child.birth_day = WorldClock.day
+	child.generation = maxi(a.generation, b.generation) + 1
+	child.look_age = 18
 	child.first_name = NameGenerator.first_name(rng, child.sex, taken_first_names())
 	child.family_name = a.family_name if a.family_name != "" else b.family_name
 	child.parents = [a.id, b.id]
@@ -428,11 +454,17 @@ func register_birth(a: Person, b: Person, rng: RandomNumberGenerator) -> Person:
 	var look_a := AppearanceCodec.from_dict(a.appearance)
 	var look_b := AppearanceCodec.from_dict(b.appearance)
 	var base := look_a if rng.randf() < 0.5 else look_b
-	var look := AppearanceGenerator.generate(rng, child.sex, 0, "farmer", [], base)
+	# The adult they will grow into, from both parents.
+	var look := AppearanceGenerator.generate(rng, child.sex, 22, "farmer", [], base)
 	look.skin_color = look_a.skin_color.lerp(look_b.skin_color, rng.randf_range(0.3, 0.7))
 	look.eye_color = look_a.eye_color if rng.randf() < 0.5 else look_b.eye_color
 	look.work_tool = ""
+	look.hair_color = look_a.hair_color.lerp(look_b.hair_color, rng.randf()) if rng.randf() < 0.5 else base.hair_color
 	child.appearance = AppearanceCodec.to_dict(look)
+	child.ambition = {"id": "friends", "text": "make real friends", "progress": 0.0, "done": false}
+	child.skills = {}
+	for skill in Professions.SKILLS:
+		child.skills[skill] = 0.05
 	a.children.append(child.id)
 	b.children.append(child.id)
 	add(child)
@@ -443,6 +475,10 @@ func register_birth(a: Person, b: Person, rng: RandomNumberGenerator) -> Person:
 
 ## Takes a child (or anyone younger) into a family.
 func adopt(parents_list: Array, child: Person) -> void:
+	var generation := 1
+	for parent: Person in parents_list:
+		generation = maxi(generation, parent.generation + 1)
+	child.generation = generation
 	for parent: Person in parents_list:
 		if not parent.children.has(child.id):
 			parent.children.append(child.id)
@@ -557,18 +593,170 @@ func _home_label(home_id: String) -> String:
 	return home_id
 
 
-## Called once per new day: birthdays, coming of age, old age.
+## Called once per new day: births, birthdays, growing up, old age.
 func advance_day(rng: RandomNumberGenerator) -> void:
+	for person: Person in residents():
+		if person.expecting_day >= 0 and WorldClock.day >= person.expecting_day:
+			var other := get_person(person.expecting_with)
+			person.expecting_day = -1
+			person.expecting_with = ""
+			if other:
+				var baby := register_birth(person, other, rng)
+				GameManager.notify("%s and %s welcomed a baby, %s!" % [person.first_name, other.first_name, baby.first_name])
 	for person: Person in residents():
 		var age := person.age()
 		var yesterday := person.age(WorldClock.day - 1)
 		if age != yesterday:
-			var stage := Person.stage_for_age(age)
-			if stage != Person.stage_for_age(yesterday):
-				log_event("coming_of_age", "%s is now %s." % [person.first_name, "an adult" if stage == Person.STAGE_ADULT else "an elder" if stage == Person.STAGE_ELDER else "a teenager"], [person.id])
+			_birthday(person, age, yesterday, rng)
 		if age >= 75 and not (person.founder and FOUNDERS_AGE_SAFELY):
 			if rng.randf() < (age - 74) * 0.004:
 				die(person)
+
+
+func _birthday(person: Person, age: int, yesterday: int, rng: RandomNumberGenerator) -> void:
+	if age >= APPRENTICE_AGE and yesterday < APPRENTICE_AGE:
+		person.profession = choose_trade(person, rng)
+		log_event("apprentice", "%s, now %d, is learning to be a %s." % [person.first_name, age, Professions.label(person.profession).to_lower()], [person.id])
+	if age >= ADULT_AGE and yesterday < ADULT_AGE:
+		if person.profession == "":
+			person.profession = choose_trade(person, rng)
+		person.ambition = PersonGenerator._ambition(rng, person)
+		log_event("coming_of_age", "%s came of age and works as a %s." % [person.first_name, Professions.label(person.profession).to_lower()], [person.id])
+		GameManager.notify("%s is grown up now, and works as a %s." % [person.first_name, Professions.label(person.profession).to_lower()])
+	elif Person.stage_for_age(age) == Person.STAGE_ELDER and Person.stage_for_age(yesterday) != Person.STAGE_ELDER:
+		log_event("elder", "%s turned %d and is one of the village elders now." % [person.first_name, age], [person.id])
+	person_changed.emit(person)
+
+
+## A young person's trade: often a parent's, otherwise their best skill.
+func choose_trade(person: Person, rng: RandomNumberGenerator) -> String:
+	var parent_jobs: Array = []
+	for parent_id in person.parents:
+		var parent := get_person(String(parent_id))
+		if parent and parent.profession != "":
+			parent_jobs.append(parent.profession)
+	if not parent_jobs.is_empty() and rng.randf() < 0.55:
+		return String(parent_jobs[rng.randi_range(0, parent_jobs.size() - 1)])
+	return Professions.best_for(person.skills)
+
+
+## A couple decides to have a baby (due in PREGNANCY_DAYS). Couples who
+## can't have a baby together may adopt instead (see SocialLife).
+func can_conceive(a: Person, b: Person) -> bool:
+	if not BIRTHS_ENABLED or a.partner != b.id or a.sex == b.sex:
+		return false
+	if a.expecting_day >= 0 or b.expecting_day >= 0 or not has_room_for_more():
+		return false
+	if a.age() < 20 or b.age() < 20 or a.age() > 44 or b.age() > 44:
+		return false
+	return _family_has_room(a)
+
+
+func _family_has_room(a: Person) -> bool:
+	if a.children.size() >= MAX_CHILDREN or a.home == CAMP_ID or a.home == "":
+		return false
+	if residents_of(a.home).size() >= _capacity_of(a.home):
+		return false
+	for child_id in a.children:
+		var child := get_person(String(child_id))
+		if child and child.age() < 2:
+			return false
+	return true
+
+
+func can_adopt(a: Person, b: Person) -> bool:
+	return BIRTHS_ENABLED and a.partner == b.id and a.age() >= 22 and b.age() >= 22 \
+		and has_room_for_more() and _family_has_room(a) and a.children.size() < 3
+
+
+func start_expecting(a: Person, b: Person) -> void:
+	var mother := a if a.sex == "female" else b
+	var other := b if mother == a else a
+	mother.expecting_day = WorldClock.day + PREGNANCY_DAYS
+	mother.expecting_with = other.id
+	log_event("expecting", "%s and %s are expecting a baby." % [mother.first_name, other.first_name], [mother.id, other.id])
+	GameManager.notify("%s and %s are expecting a baby!" % [mother.first_name, other.first_name])
+	person_changed.emit(mother)
+
+
+## Someone who died within the last `days` that this person was close to.
+func recently_lost(person: Person, days: int = 8) -> Person:
+	var close: Array = person.parents + person.children
+	if person.partner != "":
+		close.append(person.partner)
+	close.append_array(person.relatives.keys())
+	for other_id in close:
+		var other := get_person(String(other_id))
+		if other and other.status == Person.STATUS_DEAD and WorldClock.day - other.departed_day <= days:
+			return other
+	for other: Person in people.values():
+		if other.status == Person.STATUS_DEAD and other.partner == "" and WorldClock.day - other.departed_day <= days \
+				and (other.parents.has(person.id) or other.children.has(person.id)):
+			return other
+	return null
+
+
+## One line about someone's family, e.g. "Married to Bram. Children: Ada
+## (6), Teo (a baby). Parents: Mei and Rune (remembered)."
+func family_summary(person: Person) -> String:
+	var parts := PackedStringArray()
+	var partner := get_person(person.partner)
+	if partner:
+		parts.append("%s %s." % ["Married to" if person.married else "Partner:", partner.first_name])
+	if person.expecting_day >= 0:
+		parts.append("Expecting a baby.")
+	var kids := PackedStringArray()
+	for child_id in person.children:
+		var child := get_person(String(child_id))
+		if child:
+			kids.append(_name_with_state(child))
+	if not kids.is_empty():
+		parts.append("Children: %s." % ", ".join(kids))
+	var parent_names := PackedStringArray()
+	for parent_id in person.parents:
+		var parent := get_person(String(parent_id))
+		if parent:
+			parent_names.append(_name_with_state(parent))
+	if not parent_names.is_empty():
+		parts.append("Parents: %s." % " and ".join(parent_names))
+	var sibling_names := PackedStringArray()
+	for sibling_id in siblings(person):
+		var sibling := get_person(String(sibling_id))
+		if sibling:
+			sibling_names.append(_name_with_state(sibling))
+	if not sibling_names.is_empty():
+		parts.append("Siblings: %s." % ", ".join(sibling_names))
+	return " ".join(parts)
+
+
+static func _name_with_state(person: Person) -> String:
+	if person.status == Person.STATUS_DEAD:
+		return "%s (remembered)" % person.first_name
+	if person.status == Person.STATUS_LEFT:
+		return "%s (moved away)" % person.first_name
+	if person.is_baby():
+		return "%s (a baby)" % person.first_name
+	if person.age() < ADULT_AGE:
+		return "%s (%d)" % [person.first_name, person.age()]
+	return person.first_name
+
+
+## People who died, most recent first (the village remembers them).
+func remembered() -> Array:
+	var out: Array = people.values().filter(func(p: Person): return p.status == Person.STATUS_DEAD)
+	out.sort_custom(func(a: Person, b: Person): return a.departed_day > b.departed_day)
+	return out
+
+
+## Keeps everyone's age when the length of a year changes.
+func set_year_days(days: int) -> void:
+	days = maxi(days, 1)
+	if days == Person.year_days:
+		return
+	for person: Person in people.values():
+		var years := float(WorldClock.day - person.birth_day) / Person.year_days
+		person.birth_day = WorldClock.day - int(round(years * days))
+	Person.year_days = days
 
 
 # --- Persistence -----------------------------------------------------------------------------
@@ -578,11 +766,13 @@ func to_dict() -> Dictionary:
 	for id in people:
 		records[id] = (people[id] as Person).to_dict()
 	return {"people": records, "events": events.duplicate(true), "counters": counters.duplicate(),
-		"home_owners": home_owners.duplicate(), "next_id": next_id, "invitations": invitations.duplicate(true)}
+		"home_owners": home_owners.duplicate(), "next_id": next_id, "invitations": invitations.duplicate(true),
+		"year_days": Person.year_days}
 
 
 func from_dict(data: Dictionary) -> void:
 	reset()
+	Person.year_days = int(data.get("year_days", DEFAULT_YEAR_DAYS))
 	var records: Variant = data.get("people", {})
 	if records is Dictionary:
 		for id in records:

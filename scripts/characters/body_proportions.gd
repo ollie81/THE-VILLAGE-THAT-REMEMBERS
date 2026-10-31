@@ -23,8 +23,8 @@ static func for_youth(value: float) -> BodyProportions:
 	var p := BodyProportions.new()
 	p.youth = clampf(value, 0.0, 1.0)
 	var t := p.youth
-	p.leg = lerpf(1.0, 0.47, t)
-	p.torso = lerpf(1.0, 0.6, t)
+	p.leg = lerpf(1.0, 0.44, t)
+	p.torso = lerpf(1.0, 0.57, t)
 	p.head = lerpf(1.0, 0.92, t)
 	p.width = lerpf(1.0, 0.66, t)
 	return p

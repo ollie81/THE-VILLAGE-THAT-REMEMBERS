@@ -89,6 +89,12 @@ func _spawn_villagers() -> void:
 		if person and not person.is_present():
 			continue
 		var villager := Villager.new()
+		if person:
+			# A copy: aging changes their looks, never the authored resource.
+			data = data.duplicate()
+			data.appearance = person.current_look()
+			data.age = person.age()
+			villager.visual_stage = AgeLook.visual_stage(person.age(), person.look_age)
 		villager.data = data
 		villager.navigation = navigation
 		villagers.add_child(villager)

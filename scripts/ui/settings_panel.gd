@@ -4,6 +4,9 @@ extends PanelContainer
 
 var _quality_buttons: Array[Button] = []
 var _touch_buttons: Array[Button] = []
+var _year_buttons: Array[Button] = []
+## Game days per village year for the "Years pass" choices.
+const YEAR_CHOICES: Array[int] = [30, 10, 4]
 var _sensitivity: HSlider
 var _fps_toggle: CheckButton
 
@@ -40,6 +43,19 @@ func _ready() -> void:
 		b.pressed.connect(GameSettings.set_touch_mode.bind(i))
 		touch_row.add_child(b)
 		_touch_buttons.append(b)
+
+	box.add_child(UiTheme.label("Years pass"))
+	var year_row := HBoxContainer.new()
+	box.add_child(year_row)
+	for i in YEAR_CHOICES.size():
+		var b := UiTheme.button(["Slowly", "Normally", "Quickly"][i], 150)
+		b.toggle_mode = true
+		b.pressed.connect(func():
+			Population.set_year_days(YEAR_CHOICES[i])
+			_sync())
+		year_row.add_child(b)
+		_year_buttons.append(b)
+	box.add_child(UiTheme.label("A village year is 30, 10 or 4 days. Faster means more generations.", 16, UiTheme.MUTED))
 
 	box.add_child(UiTheme.label("Camera sensitivity"))
 	_sensitivity = HSlider.new()
@@ -79,6 +95,8 @@ func _sync() -> void:
 		_quality_buttons[i].set_pressed_no_signal(i == GameSettings.quality)
 	for i in _touch_buttons.size():
 		_touch_buttons[i].set_pressed_no_signal(i == GameSettings.touch_mode)
+	for i in _year_buttons.size():
+		_year_buttons[i].set_pressed_no_signal(YEAR_CHOICES[i] == Person.year_days)
 	_sensitivity.set_value_no_signal(GameSettings.camera_sensitivity)
 	_fps_toggle.set_pressed_no_signal(GameSettings.show_fps)
 

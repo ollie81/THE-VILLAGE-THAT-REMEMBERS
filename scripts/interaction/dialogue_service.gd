@@ -37,6 +37,7 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 	else:
 		conversation.lines.append_array(_small_talk(villager))
 		conversation.choices = closing_menu()
+	_family_news(villager, conversation)
 	# Someone who has decided to leave says so, and can be asked to stay.
 	if villager.person and villager.person.leaving and not villager.is_leaving():
 		conversation.lines.append("[sad]I've made up my mind. I'm leaving in the morning.")
@@ -44,6 +45,27 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 		menu.append_array(conversation.choices if conversation.choices.size() > 0 else closing_menu())
 		conversation.choices = menu
 	return conversation
+
+
+## Grief comes first; otherwise a baby on the way or a little one at home.
+static func _family_news(villager, conversation: Conversation) -> void:
+	var person: Person = villager.person
+	if person == null:
+		return
+	var lost := Population.recently_lost(person)
+	if lost:
+		conversation.lines.push_front("[sad]I'm not much company today. %s is gone, and I keep expecting to hear %s voice." % [
+			lost.first_name, "her" if lost.sex == "female" else "his"])
+		return
+	if person.expecting_day >= 0:
+		var days := person.expecting_day - WorldClock.day
+		conversation.lines.append("[happy]The baby's coming any day now!" if days <= 1 else "[happy]We're having a baby! In about %d days." % days)
+		return
+	for child_id in person.children:
+		var child := Population.get_person(String(child_id))
+		if child and child.is_resident() and child.is_baby():
+			conversation.lines.append("[laughing]Little %s kept us up all night again. Worth it, though." % child.first_name)
+			return
 
 
 ## A traveller asking to stay: welcome them, hear more, or turn them away.
