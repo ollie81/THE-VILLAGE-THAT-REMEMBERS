@@ -16,12 +16,12 @@ const HEAD_SCALE := 1.15
 
 ## Head cross-sections relative to the Head joint: [y, half_width, front, back, z_offset].
 const HEAD_PROFILE := [
-	[-0.03, 0.04, 0.03, 0.022, 0.05],
-	[0.0, 0.076, 0.068, 0.054, 0.03],
-	[0.035, 0.088, 0.082, 0.074, 0.016],
-	[0.075, 0.093, 0.094, 0.092, 0.006],
-	[0.12, 0.095, 0.095, 0.104, 0.0],
-	[0.16, 0.094, 0.09, 0.108, -0.005],
+	[-0.026, 0.048, 0.032, 0.024, 0.046],
+	[0.0, 0.082, 0.068, 0.056, 0.028],
+	[0.035, 0.093, 0.082, 0.076, 0.015],
+	[0.075, 0.098, 0.094, 0.093, 0.006],
+	[0.12, 0.099, 0.095, 0.104, 0.0],
+	[0.16, 0.097, 0.09, 0.108, -0.005],
 	[0.2, 0.086, 0.078, 0.1, -0.008],
 	[0.235, 0.067, 0.057, 0.081, -0.012],
 	[0.251, 0.045, 0.037, 0.054, -0.013],
@@ -463,7 +463,7 @@ func _sculpt(p: Vector3, facing: float) -> Vector3:
 	if front <= 0.0:
 		return Vector3.ZERO
 	var d := Vector3.ZERO
-	var es := 0.0345 * look.eye_spacing
+	var es := 0.036 * look.eye_spacing
 	for s: float in [1.0, -1.0]:
 		d.z -= 0.0075 * _gauss(p.x - s * es, (p.y - EYE_Y) * 1.15, 0.024) * front
 		var cheek := _gauss(p.x - s * 0.058, p.y - 0.086, 0.024) * front * (0.4 + look.cheekbones)
@@ -490,7 +490,7 @@ func _skin_xy(x: float, y: float, grow: float = 0.0) -> Vector3:
 ## around the eyes, a lighter forehead.
 func _skin_tint(p: Vector3, facing: float) -> Color:
 	var front := smoothstep(0.1, 0.6, facing)
-	var es := 0.0345 * look.eye_spacing
+	var es := 0.036 * look.eye_spacing
 	var blush := 0.12 * _gauss(p.x, p.y - 0.085, 0.016) + 0.06 * _gauss(p.x, p.y, 0.025)
 	var shade := 0.0
 	for s: float in [1.0, -1.0]:
@@ -588,13 +588,13 @@ func _build_ears() -> void:
 
 ## Eye placement in profile units: centre, radius and forward direction.
 func _eye(s: float) -> Dictionary:
-	var x := 0.0345 * look.eye_spacing * s
-	var r := 0.0156 * look.eye_size
+	var x := 0.036 * look.eye_spacing * s
+	var r := 0.0188 * look.eye_size
 	var sec := _face_section(EYE_Y)
 	var a := acos(clampf(-x / float(sec[0]), -0.999, 0.999))
 	var surface := _skin_local(EYE_Y, a, false)
 	var forward := Vector3(s * 0.12, 0.0, 1.0).normalized()
-	return {"c": Vector3(x, EYE_Y, surface.z - r * 0.72), "r": r, "fwd": forward}
+	return {"c": Vector3(x, EYE_Y, surface.z - r * 0.58), "r": r, "fwd": forward}
 
 
 func _build_eyes() -> void:
@@ -624,9 +624,9 @@ func _build_eyes() -> void:
 		# Eyelids: caps around the eyeball whose opening follows the expression.
 		var tilt := s * (0.5 * look.eye_tilt + 0.32 * _c("brow_down") - 0.28 * _c("brow_sad"))
 		var lid_basis := Basis(fwd, tilt) * basis
-		var upper := clampf(0.98 - 0.38 * _c("wide") + 0.32 * _c("squint") + 0.18 * _c("brow_sad") + 0.12 * _c("brow_down"), 0.5, 2.0)
+		var upper := clampf(0.78 - 0.3 * _c("wide") + 0.32 * _c("squint") + 0.18 * _c("brow_sad") + 0.12 * _c("brow_down"), 0.5, 2.0)
 		upper = lerpf(upper, 2.24, _c("blink"))
-		var lower := clampf(0.72 + 0.4 * _c("squint") + 0.15 * _c("smile") - 0.15 * _c("wide"), 0.4, 1.3)
+		var lower := clampf(0.56 + 0.45 * _c("squint") + 0.15 * _c("smile") - 0.15 * _c("wide"), 0.4, 1.3)
 		lower = lerpf(lower, 0.98, _c("blink"))
 		_lid(c, lid_basis, r, upper, true, lid_skin, lash)
 		_lid(c, lid_basis, r, lower, false, lid_skin, _skin.darkened(0.2))
@@ -677,15 +677,15 @@ func _build_brows() -> void:
 	var sad := _c("brow_sad")
 	var angry := _c("brow_down")
 	for s: float in [1.0, -1.0]:
-		var inner := Vector2(s * (0.015 - 0.005 * angry), 0.146 + up + 0.012 * sad - 0.011 * angry)
-		var peak := Vector2(s * 0.038, 0.153 + 0.006 * look.brow_arch + up + 0.005 * sad - 0.003 * angry)
-		var outer := Vector2(s * 0.062, 0.144 + up * 0.8 - 0.005 * sad + 0.004 * angry)
+		var inner := Vector2(s * (0.015 - 0.005 * angry), 0.15 + up + 0.012 * sad - 0.011 * angry)
+		var peak := Vector2(s * 0.04, 0.158 + 0.006 * look.brow_arch + up + 0.005 * sad - 0.003 * angry)
+		var outer := Vector2(s * 0.066, 0.149 + up * 0.8 - 0.005 * sad + 0.004 * angry)
 		var rings: Array = []
 		var samples := 6
 		for i in samples:
 			var k := float(i) / (samples - 1)
 			var q := inner.lerp(peak, k).lerp(peak.lerp(outer, k), k)
-			var thick := lerpf(0.0062, 0.0026, pow(k, 1.3)) * look.brow_thickness
+			var thick := lerpf(0.0078, 0.0036, pow(k, 1.3)) * look.brow_thickness
 			var p := _hp(_skin_xy(q.x, q.y, 0.0022))
 			rings.append(SkinnedMeshTool.ring(p, thick * HEAD_SCALE, 0.0024 * HEAD_SCALE, 0.0016 * HEAD_SCALE, head, color))
 		t.loft(rings, 6, Vector3.BACK)
@@ -721,7 +721,7 @@ func _build_mouth() -> void:
 	var open := _c("open")
 	var round := _c("round")
 	var full := look.lip_fullness
-	var half := 0.024 * look.mouth_width * (1.0 + 0.12 * smile - 0.28 * round)
+	var half := 0.027 * look.mouth_width * (1.0 + 0.12 * smile - 0.28 * round)
 	var corner_left := MOUTH_Y + 0.011 * smile - 0.01 * _c("frown") + 0.01 * _c("smirk")
 	var corner_right := MOUTH_Y + 0.011 * smile - 0.01 * _c("frown")
 	var upper_y := MOUTH_Y + 0.0025 + 0.003 * open + 0.001 * round
@@ -742,7 +742,7 @@ func _build_mouth() -> void:
 			var center_weight := pow(maxf(1.0 - pow(2.0 * k - 1.0, 2.0), 0.0), 0.75)
 			var corner_y := lerpf(corner_right, corner_left, k)
 			var line_y := lerpf(corner_y, upper_y if upper else lower_y, center_weight)
-			var thick := 0.0012 + (0.0045 if upper else 0.0055) * full * center_weight
+			var thick := 0.0013 + (0.0052 if upper else 0.0066) * full * center_weight
 			if upper:
 				line_y += 0.0008 * (_gauss(k - 0.36, 0.0, 0.08) + _gauss(k - 0.64, 0.0, 0.08))
 			var y := line_y + (thick * 0.6 if upper else -thick * 0.6)
@@ -779,7 +779,7 @@ func _build_skin_details() -> void:
 		for i in count:
 			var x := t.rng.randf_range(-0.058, 0.058)
 			var y := t.rng.randf_range(0.072, 0.112)
-			var near_eye := absf(absf(x) - 0.0345 * look.eye_spacing) < 0.016 and y > 0.1
+			var near_eye := absf(absf(x) - 0.036 * look.eye_spacing) < 0.016 and y > 0.1
 			if near_eye or (absf(x) < 0.012 and y < 0.08):
 				continue
 			var p := _skin_xy(x, y, 0.0004)
@@ -1257,7 +1257,7 @@ func _build_beard(long_beard: bool) -> void:
 	t.smooth_from(start)
 	# Moustache over the upper lip.
 	var rings: Array = []
-	var half := 0.024 * look.mouth_width
+	var half := 0.027 * look.mouth_width
 	for i in 7:
 		var k := float(i) / 6.0
 		var x := lerpf(-half - 0.006, half + 0.006, k)
