@@ -107,6 +107,8 @@ static func create(building: Dictionary) -> Node3D:
 			_build_memory_oak(kit)
 		"build_site":
 			_build_construction_site(kit)
+		"camp":
+			_build_camp(kit, root)
 	kit.finish(root)
 	return root
 
@@ -538,6 +540,32 @@ static func _add_fire(root: Node3D) -> void:
 	light.set_meta("always_on", true)
 	light.add_to_group("night_lights")
 	root.add_child(light)
+
+
+## Canvas tents around a camp fire, for travellers who have no home yet.
+static func _build_camp(kit: Kit, root: Node3D) -> void:
+	var m := kit.mesh
+	var canvas: Array[Color] = [Color(0.82, 0.76, 0.62), Color(0.7, 0.58, 0.42), Color(0.58, 0.64, 0.56), Color(0.76, 0.66, 0.5)]
+	for i in VillageLayout.CAMP_TENTS:
+		var a := TAU * float(i) / VillageLayout.CAMP_TENTS
+		var outward := Vector3(cos(a), 0, sin(a))
+		var centre := outward * 3.7
+		var yaw := atan2(outward.x, outward.z)
+		var basis := Basis(Vector3.UP, yaw)
+		# The prism's ridge runs along its local X: point it at the fire so
+		# the open end (and its door mat) faces inward.
+		m.add_prism(Transform3D(Basis(Vector3.UP, yaw + PI * 0.5), centre), 2.1, 1.7, 1.35, canvas[i % canvas.size()])
+		m.add_box(Transform3D(basis, centre + basis * Vector3(0, 0.02, -1.3)), Vector3(0.9, 0.04, 0.45), Color(0.4, 0.3, 0.2))
+		m.add_cylinder_at(centre + basis * Vector3(0, 0, -1.05), 0.04, 0.04, 1.45, 4, WOOD_DARK)
+	for i in 9:
+		var a := TAU * float(i) / 9.0
+		m.add_blob_at(Vector3(cos(a), 0.08, sin(a)) * 0.75, Vector3(0.22, 0.14, 0.2), STONE)
+	for i in 4:
+		m.add_box_at(Vector3(0, 0.1, 0), Vector3(0.9, 0.12, 0.12), WOOD_DARK, float(i) * PI * 0.25)
+	for i in 3:
+		var a := TAU * float(i) / 3.0 + 0.4
+		m.add_box_at(Vector3(cos(a), 0.22, sin(a)) * 1.7, Vector3(1.3, 0.3, 0.32), WOOD, a + PI * 0.5)
+	_add_fire(root)
 
 
 static func _build_memory_oak(kit: Kit) -> void:

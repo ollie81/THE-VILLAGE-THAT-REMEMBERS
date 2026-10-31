@@ -25,6 +25,7 @@ WorldClock="*res://scripts/core/world_clock.gd"
 GameManager="*res://scripts/core/game_manager.gd"
 SaveService="*res://scripts/core/save_service.gd"
 GameState="*res://scripts/gameplay/game_state.gd"
+Population="*res://scripts/population/population.gd"
 
 [display]
 

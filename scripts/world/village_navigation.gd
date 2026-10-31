@@ -5,6 +5,9 @@ extends RefCounted
 ## villagers walk on the visible dirt paths.
 ## Also hands out activity spots so two villagers never stand in one place.
 
+## Distance between rings of overflow places around a busy spot.
+const OVERFLOW_STEP := 1.1
+
 var _astar := AStar3D.new()
 var _ids: Dictionary = {}
 var _claims: Dictionary = {} # "location:index" -> villager id
@@ -53,12 +56,23 @@ func get_spot_count(location_id: String) -> int:
 	return spots.size()
 
 
+## A spot's position. Indexes past the authored spots are overflow places
+## in rings around them, so a busy location never puts two people on one
+## spot (that renders as one body with two faces).
 func get_spot(location_id: String, index: int) -> Vector3:
 	var location: Dictionary = VillageLayout.get_locations().get(location_id, {})
 	var spots: Array = location.get("spots", [])
 	if spots.is_empty():
 		return Vector3.ZERO
-	return spots[clampi(index, 0, spots.size() - 1)]
+	if index < spots.size():
+		return spots[maxi(index, 0)]
+	return spots[index % spots.size()] + overflow_offset(index, spots.size())
+
+
+static func overflow_offset(index: int, base_count: int) -> Vector3:
+	var ring := index / base_count
+	var angle := float(index) * 2.39996 # golden angle: neighbours spread out
+	return Vector3(cos(angle), 0.0, sin(angle)) * (OVERFLOW_STEP * ring)
 
 
 ## Where a villager standing on this spot should face, or null.
@@ -67,6 +81,8 @@ func get_spot_look(location_id: String, index: int) -> Variant:
 	var looks: Array = location.get("looks", [])
 	if index >= 0 and index < looks.size():
 		return looks[index]
+	if index >= 0 and not looks.is_empty():
+		return looks[index % looks.size()] + overflow_offset(index, looks.size())
 	return null
 
 
@@ -84,14 +100,23 @@ func claim_spot(location_id: String, villager_id: StringName, exclude_index: int
 	for i in count:
 		if i == exclude_index:
 			continue
-		var key := "%s:%d" % [location_id, i]
-		if not _claims.has(key) or _claims[key] == villager_id:
+		if _is_free(location_id, i, villager_id):
 			free.append(i)
-	var index := _rng.randi_range(0, count - 1)
+	var index := -1
 	if not free.is_empty():
 		index = free[_rng.randi_range(0, free.size() - 1)]
+	else:
+		# Everything taken: the first free overflow place.
+		index = count
+		while not _is_free(location_id, index, villager_id) or index == exclude_index:
+			index += 1
 	_claims["%s:%d" % [location_id, index]] = villager_id
 	return index
+
+
+func _is_free(location_id: String, index: int, villager_id: StringName) -> bool:
+	var key := "%s:%d" % [location_id, index]
+	return not _claims.has(key) or _claims[key] == villager_id
 
 
 func release_spot(location_id: String, index: int, villager_id: StringName) -> void:

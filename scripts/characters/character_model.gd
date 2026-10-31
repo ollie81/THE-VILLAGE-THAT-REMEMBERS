@@ -33,6 +33,21 @@ var skeleton: Skeleton3D
 var animation_player: AnimationPlayer
 var animation_tree: AnimationTree
 var head: MeshInstance3D
+var body: MeshInstance3D
+## Meshes prepared before the model enters the tree ({body, head}).
+var prebuilt_meshes: Dictionary = {}
+
+## Level of detail, set by the owner from camera distance:
+## FULL       the real head with facial expressions, animation every frame
+## REDUCED    a simple stand-in head, animation every other frame
+## FAR        stand-in head, animation every fourth frame, no shadow
+enum Detail { FULL, REDUCED, FAR }
+const ANIMATION_STRIDE: Array[int] = [1, 2, 4]
+var detail: int = Detail.FULL
+var _proxy_head: Node3D
+var _animation_frame: int = 0
+var _animation_delta: float = 0.0
+var _on_screen: bool = true
 
 const EXPRESSION_FADE := 0.3
 const BLINK_TIME := 0.16
@@ -65,25 +80,36 @@ func _ready() -> void:
 	set_animation(&"idle")
 
 
+## Body and head meshes for a look: from the offline cache, or generated and
+## cached. Safe to call from a worker thread (it touches no scene nodes).
+static func build_meshes(look: CharacterAppearance, rig: HumanoidRig = null) -> Dictionary:
+	var key := CharacterCache.key_for(look)
+	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.character_body())
+	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.character_face())
+	if body_mesh == null or head_mesh == null:
+		var builder := HumanoidMeshBuilder.new(look, rig if rig else HumanoidRig.new(look))
+		body_mesh = builder.build()
+		head_mesh = builder.build_head()
+		CharacterCache.save_mesh(key, "body", body_mesh)
+		CharacterCache.save_mesh(key, "head", head_mesh)
+	return {"body": body_mesh, "head": head_mesh}
+
+
 func _build() -> void:
 	scale = Vector3.ONE * appearance.height_scale
 	var rig := HumanoidRig.new(appearance)
 	skeleton = rig.create_skeleton()
 	add_child(skeleton)
 
-	# Meshes come from the offline cache when possible; otherwise they are
-	# generated (and cached for next time).
-	var key := CharacterCache.key_for(appearance)
-	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.character_body())
-	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.character_face())
-	if body_mesh == null or head_mesh == null:
-		var builder := HumanoidMeshBuilder.new(appearance, rig)
-		body_mesh = builder.build()
-		head_mesh = builder.build_head()
-		CharacterCache.save_mesh(key, "body", body_mesh)
-		CharacterCache.save_mesh(key, "head", head_mesh)
+	# Meshes built ahead of time (on a worker thread, see CharacterBuildQueue)
+	# are used as-is; otherwise they come from the offline cache or are
+	# generated now.
+	var meshes := prebuilt_meshes if not prebuilt_meshes.is_empty() else build_meshes(appearance, rig)
+	var body_mesh: ArrayMesh = meshes["body"]
+	var head_mesh: ArrayMesh = meshes["head"]
+	prebuilt_meshes = {}
 
-	var body := MeshInstance3D.new()
+	body = MeshInstance3D.new()
 	body.name = "Body"
 	body.mesh = body_mesh
 	skeleton.add_child(body)
@@ -253,6 +279,9 @@ func _process(delta: float) -> void:
 	var moving_target := clampf(_target_speed / (HumanoidAnimations.WALK_SPEED * 0.5), 0.0, 1.0)
 	_move_amount = move_toward(_move_amount, moving_target, delta / BLEND_TIME)
 	_apply_locomotion()
+	if detail != Detail.FULL:
+		_advance_reduced_animation(delta)
+		return
 	if head == null:
 		return
 	for shape in _targets:
@@ -279,6 +308,81 @@ func _process(delta: float) -> void:
 		_talk_weight = move_toward(_talk_weight, 0.0, delta * 6.0)
 	_weights[&"talk"] = _talk_weight
 	_apply_face()
+
+
+## Distant or off-screen people animate less often (or not at all), which
+## is most of the per-character cost on a phone.
+func _advance_reduced_animation(delta: float) -> void:
+	_animation_delta += delta
+	_animation_frame += 1
+	if not _on_screen or _animation_frame < ANIMATION_STRIDE[detail]:
+		return
+	_animation_frame = 0
+	animation_tree.advance(minf(_animation_delta, 0.5))
+	_animation_delta = 0.0
+
+
+## Chooses the level of detail. `on_screen` false freezes animation.
+func set_detail(level: int, on_screen: bool = true) -> void:
+	_on_screen = on_screen
+	if level == detail or animation_tree == null:
+		return
+	detail = level
+	var full := level == Detail.FULL
+	if not full and _proxy_head == null:
+		_proxy_head = _build_proxy_head()
+	if head:
+		head.visible = full
+	if _proxy_head:
+		_proxy_head.visible = not full
+	animation_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE if full \
+		else AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	_animation_frame = 0
+	_animation_delta = 0.0
+	if body:
+		body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if level == Detail.FAR \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+## A ~150-triangle head (skin, hair, hat) that follows the head bone, shown
+## instead of the 6000-triangle expressive head when the person is far away.
+func _build_proxy_head() -> Node3D:
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "ProxyHead"
+	attachment.bone_idx = HumanoidRig.Bone.HEAD
+	skeleton.add_child(attachment)
+	var m := MeshBuilder.new(hash(appearance.hair_style))
+	m.color_jitter = 0.0
+	var look := appearance
+	var bald := look.hair_style == "balding"
+	m.add_blob_at(Vector3(0, 0.1, 0.01), Vector3(0.095, 0.12, 0.105), look.skin_color, 8, 5, 0.0)
+	var hair := look.hair_color
+	if not bald:
+		m.add_blob_at(Vector3(0, 0.145, -0.012), Vector3(0.104, 0.095, 0.108), hair, 8, 4, 0.0)
+	match look.hair_style:
+		"long", "locs":
+			m.add_box_at(Vector3(0, 0.02, -0.07), Vector3(0.2, 0.26, 0.06), hair)
+		"bun":
+			m.add_blob_at(Vector3(0, 0.23, -0.085), Vector3(0.05, 0.045, 0.05), hair, 6, 4, 0.0)
+		"ponytail":
+			m.add_box_at(Vector3(0, 0.05, -0.12), Vector3(0.05, 0.2, 0.05), hair)
+		"curly":
+			m.add_blob_at(Vector3(0, 0.15, -0.01), Vector3(0.125, 0.11, 0.125), hair, 8, 4, 0.0)
+	if look.has_accessory("beard") or look.has_accessory("long_beard"):
+		var long := look.has_accessory("long_beard")
+		m.add_blob_at(Vector3(0, 0.02 - (0.03 if long else 0.0), 0.07), Vector3(0.07, 0.06 + (0.04 if long else 0.0), 0.05), hair, 6, 4, 0.0)
+	var hat := look.hat_color if look.hat_color.a > 0.0 else look.accent_color
+	if look.has_accessory("straw_hat") or look.has_accessory("wide_hat"):
+		m.add_cylinder_at(Vector3(0, 0.19, 0), 0.2, 0.2, 0.02, 10, hat)
+		m.add_cylinder_at(Vector3(0, 0.2, 0), 0.1, 0.09, 0.09, 8, hat)
+	elif look.has_accessory("headwrap"):
+		m.add_blob_at(Vector3(0, 0.19, -0.01), Vector3(0.11, 0.09, 0.115), look.accent_color, 8, 4, 0.0)
+	var mesh := MeshInstance3D.new()
+	mesh.mesh = m.build(Materials.vertex_color())
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Undo the bone's own scale so the proxy matches the real head's size.
+	attachment.add_child(mesh)
+	return attachment
 
 
 func _apply_face() -> void:

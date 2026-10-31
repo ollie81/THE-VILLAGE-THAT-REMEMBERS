@@ -38,6 +38,9 @@ const LOCATION_LABELS := {
 	"forest_edge": "the forest edge",
 	"riverbank": "the riverbank",
 	"bridge": "the bridge",
+	"woodlot": "the woodlot",
+	"quarry": "the quarry",
+	"camp": "the travellers' camp",
 	"home_mara": "Mara's house",
 	"home_elias": "Elias's house",
 	"home_nia": "Nia's house",
@@ -49,7 +52,12 @@ const DEFAULT_WANDER_LOCATIONS: Array[String] = [
 	"plaza", "farm", "garden", "workshop", "storage", "riverbank", "bridge",
 ]
 
+## Where the travellers' camp stands, east of the river.
+const CAMP_TENTS := 10
+
 static var _nav_nodes: Dictionary = {}
+## Locations added while the game runs (homes in player-built cottages).
+static var _dynamic_labels: Dictionary = {}
 static var _locations: Dictionary = {}
 static var _buildings: Array[Dictionary] = []
 
@@ -176,7 +184,26 @@ static func get_locations() -> Dictionary:
 
 
 static func get_location_label(id: String) -> String:
+	if _dynamic_labels.has(id):
+		return String(_dynamic_labels[id])
 	return LOCATION_LABELS.get(id, id.replace("_", " "))
+
+
+## Adds (or replaces) a location at runtime, e.g. the home inside a cottage
+## the player built.
+static func register_location(id: String, spots: Array, looks: Array, inside: bool, label: String) -> void:
+	get_locations()[id] = {"spots": spots, "looks": looks, "inside": inside}
+	_dynamic_labels[id] = label
+
+
+static func unregister_location(id: String) -> void:
+	get_locations().erase(id)
+	_dynamic_labels.erase(id)
+
+
+static func camp_center() -> Vector3:
+	var span := bridge_x_range()
+	return Vector3(span.y + 9.0, 0.0, -7.0)
 
 
 # --- Table construction ---------------------------------------------------------
@@ -299,6 +326,33 @@ static func _build_tables() -> void:
 	for spot in bank_spots:
 		bank_looks.append(spot + Vector3(3.0, 0, 0))
 	_locations["riverbank"] = {"spots": bank_spots, "looks": bank_looks}
+	# Work places for the new trades, beside the forest and the rocks the
+	# player gathers from.
+	var woodlot_spots: Array = []
+	var woodlot_looks: Array = []
+	for z: float in [-12.0, -6.0, 0.0, 6.0, 12.0, 18.0]:
+		woodlot_spots.append(Vector3(-31.2, 0, z))
+		woodlot_looks.append(Vector3(-36.0, 0, z + 1.0))
+	_locations["woodlot"] = {"spots": woodlot_spots, "looks": woodlot_looks}
+	var quarry_spots: Array = []
+	var quarry_looks: Array = []
+	for x: float in [-9.0, -4.5, 0.0, 4.5, 9.0]:
+		quarry_spots.append(Vector3(x, 0, -27.3))
+		quarry_looks.append(Vector3(x * 1.1, 0, -32.0))
+	_locations["quarry"] = {"spots": quarry_spots, "looks": quarry_looks}
+
+	# The travellers' camp: tents in a ring around a fire, east of the river.
+	# Newcomers without a home sleep here.
+	var camp := camp_center()
+	_add_building("camp", "camp", camp, Vector2(10.0, 10.0), "", 0.0)
+	var camp_spots: Array = []
+	var camp_looks: Array = []
+	for i in CAMP_TENTS:
+		var a := TAU * float(i) / CAMP_TENTS
+		camp_spots.append(camp + Vector3(cos(a), 0, sin(a)) * 2.5)
+		camp_looks.append(camp)
+	_locations["camp"] = {"spots": camp_spots, "looks": camp_looks, "inside": true}
+
 	var river_x := river_center_x(BRIDGE_Z)
 	_locations["bridge"] = {
 		"spots": [Vector3(river_x - 1.0, 0, BRIDGE_Z + 0.7), Vector3(river_x + 1.2, 0, BRIDGE_Z - 0.7)],
