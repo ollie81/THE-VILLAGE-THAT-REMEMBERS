@@ -32,6 +32,13 @@ func _ready() -> void:
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_panel.custom_minimum_size = Vector2(1180, 600)
+	# Nearly opaque: the HUD behind it shouldn't show through the text.
+	var background := UiTheme._box(Color(0.12, 0.09, 0.07, 0.97), 14)
+	background.content_margin_left = 22
+	background.content_margin_right = 22
+	background.content_margin_top = 16
+	background.content_margin_bottom = 16
+	_panel.add_theme_stylebox_override("panel", background)
 	add_child(_panel)
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 10)

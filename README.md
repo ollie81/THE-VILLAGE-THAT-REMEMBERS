@@ -356,6 +356,60 @@ is locked: you can gather, build and ask for help in any order and keep playing 
   you and what you've done. It's remembered and raises everyone's opinion.
 - Inventory, buildings, crops, depleted resources, objectives and tasks are saved.
 
+## A growing village: population
+
+The five founders (Mara, Elias, Nia, Tomas and Sera) are where the village starts, not where it ends.
+They keep their hand-written identities; everyone after them is generated.
+
+**New arrivals.** From day 2, travellers walk in over the bridge, at most one at a time, more often
+when there are free beds. Each newcomer is generated (`scripts/population/`):
+
+- **Looks:** skin tone from a wide palette, hair colour, style and greying with age, eye colour, face
+  shape, height and build, dyed clothes, accessories suited to their trade. Ten candidates are made and
+  the one that looks least like anyone already living here is kept (`AppearanceGenerator`). Relatives
+  start from a family member's look.
+- **Who they are:** a unique name, an age, six personality values with three resulting traits, ten
+  skills with one real talent, a profession (talents lean towards trades the village lacks), an
+  ambition, a short history, a timetable shaped by their personality, and lines of their own.
+- **Meeting them:** they wait at the meeting circle. Talk to them to welcome them, hear more, or turn
+  them away. Kind villagers approve of a welcome and are hurt by a refusal; a newcomer's relatives take
+  a refusal personally. A traveller nobody speaks to moves on after two days.
+- **Homes:** each founder's house has a spare bed, the new **Cottage** (Build menu, 18 wood and 8 stone)
+  houses four, and anyone without a bed sleeps at the travellers' camp east of the river until a
+  cottage is finished.
+
+**Independent lives** (`SocialLife`). Villagers near each other get to know each other every hour;
+how fast depends on how well their personalities fit. Friendships form, single adults fall for each
+other, move in together and later marry. Every day each villager weighs up a home, friends, a partner,
+work that suits them and how you treat them. After a few unhappy days they may decide to leave, and
+you can talk them into staying. Happy villagers send for a sibling, cousin, parent, child or friend, who
+arrives with the family name and a family resemblance. Ambitions progress and come true.
+
+**Families (architecture, ready for generations).** Life records keep partners, marriage, parents,
+children and other relatives. Births (with looks and personality from both parents), adoption, family
+trees, aging (a village year is 30 days, with child, teen, adult and elder stages), death of old age and
+inheritance of homes all work and are tested. Births are switched off (`Population.BIRTHS_ENABLED`)
+until there are child-sized 3D characters, and the founders are protected from old age for now.
+
+**Population panel** (*People* button or **P**): total population, adults, teenagers, children and
+elders, couples, happiness, occupations, beds in homes, free beds and campers, arrivals, departures,
+people turned away, births, deaths, partnerships and marriages, every villager, and recent events.
+
+**Performance on phones.**
+
+- **Population cap:** the village stops attracting travellers at 50 people.
+- **Building characters:** a new character's head takes about half a second to build, so it's built on
+  a worker thread and cached, and characters appear one by one, never all at once (also after loading).
+- **Detail by distance:** beyond 16 m a villager swaps their 6,000-triangle expressive head for a
+  stand-in of about 150 triangles and animates every other frame. Beyond 38 m they animate every fourth
+  frame and cast no shadow. Off-screen and sleeping villagers don't animate at all.
+- **Shared assets:** every generated character uses the same skeleton, animations and materials.
+- **No shared spots:** busy places hand out extra spots in rings around the usual ones, so two people
+  never stand on the same spot.
+
+Tests: `godot --headless --path . res://tests/population_test.tscn` (64 checks). Screenshots:
+`godot --path . --resolution 1612x720 res://tools/population_screenshots.tscn -- --out=/tmp/shots`.
+
 ## Status
 
 ### Implemented
@@ -366,7 +420,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks** and the gameplay test **45/45**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **64/64**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

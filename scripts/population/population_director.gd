@@ -197,12 +197,22 @@ func bring_traveller() -> Person:
 	var person := PersonGenerator.create(rng, Population.new_id(), Population.taken_first_names(),
 		Population.appearances(), relative, relation)
 	Population.add(person)
-	Population.log_event("visitor", "%s, a %s, came to the village." % [person.full_name(), Professions.label(person.profession).to_lower()], [person.id])
+	Population.log_event("visitor", "%s, a %s, came over the bridge." % [person.full_name(), Professions.label(person.profession).to_lower()], [person.id])
 	_spawn(person, true)
 	if relative:
 		GameManager.notify("%s's %s %s is walking over the bridge." % [relative.first_name, relation, person.first_name])
 	else:
 		GameManager.notify("A traveller is crossing the bridge: %s, a %s." % [person.first_name, Professions.label(person.profession).to_lower()])
+	return person
+
+
+## Adds a newcomer who already lives here (no walk-in, no welcome), placed
+## where their timetable says. For tests, tools and future scripted events.
+func settle_newcomer() -> Person:
+	var person := PersonGenerator.create(rng, Population.new_id(), Population.taken_first_names(), Population.appearances())
+	Population.add(person)
+	Population.make_resident(person)
+	_spawn(person, false)
 	return person
 
 
