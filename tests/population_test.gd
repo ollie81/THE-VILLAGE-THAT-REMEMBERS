@@ -219,6 +219,8 @@ func _run() -> void:
 
 	# --- Leaving ---------------------------------------------------------------------------
 	var unhappy: Person = arrivals[3]
+	# Only adults decide to leave on their own (newcomers can be teenagers).
+	unhappy.birth_day = WorldClock.day - 30 * Person.year_days
 	var unhappy_villager = GameManager.get_villager(StringName(unhappy.id))
 	unhappy_villager.mind.adjust_opinion(GameManager.PLAYER_ID, -60.0, -40.0)
 	unhappy.unhappy_days = 5
