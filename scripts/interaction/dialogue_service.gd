@@ -40,6 +40,13 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 		conversation.lines.append_array(_small_talk(villager))
 		conversation.choices = menu_for(villager)
 	_family_news(villager, conversation)
+	if RequestBoard.instance and not mind.is_hostile(actor_id):
+		var forgot := RequestBoard.instance.forgotten_line(villager)
+		if forgot != "":
+			conversation.lines.append(forgot)
+		var ask := RequestBoard.instance.reminder_for(villager)
+		if ask != "":
+			conversation.lines.append(ask)
 	# Someone who has decided to leave says so, and can be asked to stay.
 	if villager.person and villager.person.leaving and not villager.is_leaving():
 		conversation.lines.append("[sad]I've made up my mind. I'm leaving in the morning.")
@@ -90,6 +97,8 @@ static func visitor_menu(can_ask_more: bool) -> Array:
 ## The closing menu for this villager ("What's new?" only if they have news).
 static func menu_for(villager) -> Array:
 	var menu := closing_menu()
+	if RequestBoard.instance and villager:
+		menu = RequestBoard.instance.choices_for(villager) + menu
 	if villager and not Chatter.has_news(villager):
 		menu = menu.filter(func(c): return String(c.get("action", "")) != "news")
 	return menu

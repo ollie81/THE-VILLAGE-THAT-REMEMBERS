@@ -76,6 +76,7 @@ var _reaction_time: float = 0.0
 var _reaction_animation: StringName = &""
 var _reaction_look: Vector3 = Vector3.ZERO
 var _bubble: Label3D
+var _marker: Label3D
 var _bubble_time: float = 0.0
 ## When they last said something out loud (so they don't chatter nonstop).
 var last_spoke_msec: int = -100000
@@ -286,6 +287,27 @@ func react(animation: StringName, duration: float, look_at: Vector3, line: Strin
 
 func is_reacting() -> bool:
 	return _reaction_time > 0.0
+
+
+## A sign above their head ("!" they want something, "…" a message for
+## them); "" hides it.
+func set_marker(text: String) -> void:
+	if text == "":
+		if _marker:
+			_marker.visible = false
+		return
+	if _marker == null:
+		_marker = Label3D.new()
+		_marker.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_marker.font_size = 96
+		_marker.outline_size = 22
+		_marker.pixel_size = 0.005
+		_marker.modulate = Color(1.0, 0.82, 0.3)
+		_marker.outline_modulate = Color(0.15, 0.08, 0.02, 1.0)
+		add_child(_marker)
+	_marker.text = text
+	_marker.position = Vector3(0, data.appearance.standing_height() + 0.75, 0)
+	_marker.visible = state != State.INSIDE
 
 
 ## Says a line out loud: a bubble above their head, and their voice.

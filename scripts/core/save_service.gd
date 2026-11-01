@@ -59,6 +59,21 @@ func apply_saved_population() -> void:
 		Population.from_dict(saved)
 
 
+## A saved section by name ({} if none or saving is off).
+func section(key: String) -> Dictionary:
+	if not enabled:
+		return {}
+	var value: Variant = _data.get(key, {})
+	return value if value is Dictionary else {}
+
+
+## Real seconds since the game was last saved (0 for a new game).
+func seconds_since_save() -> float:
+	if not enabled or not _data.has("saved_unix"):
+		return 0.0
+	return maxf(Time.get_unix_time_from_system() - float(_data["saved_unix"]), 0.0)
+
+
 ## Saved mind (memories, opinions) of one villager, for people whose bodies
 ## are spawned after loading.
 func villager_state(id: String) -> Dictionary:
@@ -111,6 +126,8 @@ func save_game() -> void:
 		"villagers": villager_states,
 		"game_state": GameState.to_dict(),
 		"population": Population.to_dict(),
+		"requests": RequestBoard.instance.to_dict() if RequestBoard.instance else {},
+		"saved_unix": Time.get_unix_time_from_system(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:

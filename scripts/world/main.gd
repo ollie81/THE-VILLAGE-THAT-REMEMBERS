@@ -48,6 +48,10 @@ func _ready() -> void:
 	add_child(SocialLife.new())
 	add_child(PlayerSocial.new())
 	add_child(VillageGifts.new())
+	var requests := RequestBoard.new()
+	add_child(requests)
+	requests.from_dict(SaveService.section("requests"))
+	add_child(AwayTime.new())
 
 	add_child(GossipSystem.new())
 	add_child(TaskSystem.new())
@@ -57,6 +61,7 @@ func _ready() -> void:
 	add_child(hud)
 
 	SaveService.apply_loaded_state()
+	_welcome_back.call_deferred()
 
 
 func _spawn_player() -> void:
@@ -100,3 +105,13 @@ func _spawn_villagers() -> void:
 		villager.data = data
 		villager.navigation = navigation
 		villagers.add_child(villager)
+
+
+## Coming back to a saved village: time has passed while you were away.
+## Then today's requests are asked.
+func _welcome_back() -> void:
+	var away := SaveService.seconds_since_save()
+	if away > 0.0 and AwayTime.instance:
+		AwayTime.instance.catch_up(AwayTime.seconds_to_hours(away))
+	if RequestBoard.instance:
+		RequestBoard.instance.start()

@@ -472,6 +472,30 @@ bubbles show what they say.
 Tests: `godot --headless --path . res://tests/life_test.tscn` (45 checks). Screenshots:
 `tools/life_screenshots.tscn`; every pose: `tools/pose_gallery.tscn`.
 
+## Reasons to come back every day
+
+**While you were away...** The village keeps living while the game is closed or in the background.
+When you come back, the clock moves on by the time you were gone (at normal speed, at most one village
+day, so a week away never ruins anything). Days pass, babies are born, travellers arrive, friends
+talk by the fire or argue at the well, helpers keep working and crops ripen. Then a short story tells
+you what happened (`AwayTime`).
+
+**Today's requests.** Each morning two to four villagers ask you for something that comes from their
+own lives (`RequestBoard`):
+
+- **Bring something:** "Tomas has a fever again. Could you bring me 3 herbs?"
+- **Pass on a message:** an apology, a thank-you, an invitation to sit by the fire.
+- **Check on someone:** a mother worried about her son, someone whose partner has been quiet lately.
+
+A **!** floats over people asking for something and a **…** over people a message is for. The
+*Today's requests* card under the objective lists them. Doing a request is warmly thanked, sometimes
+with a gift, and remembered. Passing on a message changes how the two villagers feel about each other
+too. A request left undone is remembered gently ("You never came by with the firewood yesterday. It's
+alright.").
+
+Tests: `godot --headless --path . res://tests/hooks_test.tscn` (31 checks). Screenshots:
+`tools/hooks_screenshots.tscn`.
+
 ## Status
 
 ### Implemented
@@ -482,7 +506,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **45/45**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

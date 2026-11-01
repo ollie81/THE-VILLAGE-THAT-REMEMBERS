@@ -37,6 +37,8 @@ func _exit_tree() -> void:
 # --- Hourly: getting to know each other ------------------------------------------
 
 func hourly() -> void:
+	if AwayTime.catching_up:
+		return  # AwayTime runs its own, quicker version while you're away
 	var present: Array = []
 	for villager in GameManager.villagers:
 		if villager.person and villager.person.is_resident() and villager.visible and not villager.is_leaving():
