@@ -82,35 +82,128 @@ func voice_of(speaker) -> Dictionary:
 		sex = "male"
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(key)
-	var pitch := (1.18 if sex == "female" else 0.86) + rng.randf_range(-0.08, 0.08)
+	# Wide, person-specific ranges, so two women or two men still sound
+	# clearly different even on a phone with a single voice.
+	var pitch := rng.randf_range(1.0, 1.35) if sex == "female" else rng.randf_range(0.68, 0.95)
 	if age < 13:
-		pitch = 1.45 + rng.randf_range(-0.05, 0.1)
+		pitch = rng.randf_range(1.45, 1.65)
 	elif age < 17:
-		pitch = lerpf(1.4, pitch, (age - 13) / 4.0)
+		pitch = lerpf(1.45, pitch, (age - 13) / 4.0)
 	elif age > 60:
-		pitch -= 0.06
-	var rate := 1.0 + (extraversion - 0.5) * 0.25 - (0.12 if age > 60 else 0.0) + (0.08 if age < 13 else 0.0)
-	rate += (0.5 - calm) * 0.1
-	var base_hz := (205.0 if sex == "female" else 120.0) * (pitch / (1.18 if sex == "female" else 0.86))
+		pitch -= 0.1
+	var rate := rng.randf_range(0.9, 1.1) + (extraversion - 0.5) * 0.3 + (0.5 - calm) * 0.12
+	if age > 60:
+		rate -= 0.15
+	elif age < 13:
+		rate += 0.1
+	var base_hz := 120.0 * pitch / 0.82 if sex == "male" else 205.0 * pitch / 1.18
 	if age < 13:
-		base_hz = 290.0
-	return {"pitch": clampf(pitch, 0.5, 2.0), "rate": clampf(rate, 0.6, 1.5), "base_hz": base_hz, "seed": hash(key), "sex": sex}
+		base_hz = 290.0 * pitch / 1.55
+	return {"pitch": clampf(pitch, 0.5, 2.0), "rate": clampf(rate, 0.7, 1.4), "base_hz": base_hz, "seed": hash(key), "sex": sex}
 
 
-## A text-to-speech voice for this speaker: prefers English voices and
-## spreads people across the voices the device has.
+## Known voice codes in Android's speech engines (Google and Samsung): which
+## are women's and which men's. Their names otherwise don't say.
+const GOOGLE_VOICES := {
+	"iob": "female", "iog": "female", "iol": "male", "iom": "male", "sfg": "female", "tpc": "female", "tpd": "male", "tpf": "female",
+	"gba": "female", "gbb": "male", "gbc": "female", "gbd": "male", "gbg": "female", "rjs": "male",
+	"aua": "female", "aub": "male", "auc": "female", "aud": "male",
+	"ena": "female", "enc": "female", "end": "male", "ene": "male",
+}
+
+
+## "female", "male" or "" (unknown) for a device voice.
+static func voice_sex(voice: Dictionary) -> String:
+	var name := (String(voice.get("name", "")) + " " + String(voice.get("id", ""))).to_lower()
+	for code in GOOGLE_VOICES:
+		if name.contains("-x-" + code):
+			return GOOGLE_VOICES[code]
+	if name.contains("smtf"):
+		return "female"
+	if name.contains("smtm"):
+		return "male"
+	if name.contains("female") or name.contains("woman"):
+		return "female"
+	if name.contains("male") or name.contains("man "):
+		return "male"
+	return ""
+
+
+## English voices that work offline, if the device has any.
+func english_voices() -> Array:
+	var english: Array = _tts_voices.filter(func(v): return String(v.get("language", "")).to_lower().begins_with("en"))
+	var pool: Array = english if not english.is_empty() else _tts_voices.duplicate()
+	var offline: Array = pool.filter(func(v): return not String(v.get("id", v.get("name", ""))).to_lower().contains("network"))
+	return offline if not offline.is_empty() else pool
+
+
+## A text-to-speech voice for this speaker: one of the device's voices of
+## their sex if it has any, each person keeping their own.
 func tts_voice_id(speaker) -> String:
-	if _tts_voices.is_empty():
+	var pool := english_voices()
+	if pool.is_empty():
 		return ""
-	var english: Array = _tts_voices.filter(func(v): return String(v.get("language", "")).begins_with("en"))
-	var pool: Array = english if not english.is_empty() else _tts_voices
 	var voice := voice_of(speaker)
-	# Some engines name voices by gender ("female", "male"); use that if so.
-	var matching: Array = pool.filter(func(v): return String(v.get("name", "")).to_lower().contains(voice["sex"]) \
-		and not (voice["sex"] == "male" and String(v.get("name", "")).to_lower().contains("female")))
-	if not matching.is_empty():
-		pool = matching
-	return String(pool[absi(int(voice["seed"])) % pool.size()].get("id", ""))
+	var matching: Array = pool.filter(func(v): return voice_sex(v) == voice["sex"])
+	if matching.is_empty():
+		matching = pool.filter(func(v): return voice_sex(v) == "")
+	if matching.is_empty():
+		matching = pool
+	# Hand voices out in turn among people of the same sex (in a stable
+	# order), so nobody shares a voice until every voice is in use.
+	var key := _speaker_key(speaker)
+	var same: Array = []
+	for villager in GameManager.villagers:
+		if voice_of(villager)["sex"] == voice["sex"]:
+			same.append(_speaker_key(villager))
+	same.sort()
+	var rank := same.find(key)
+	if rank < 0:
+		rank = absi(int(voice["seed"]))
+	return String(matching[rank % matching.size()].get("id", ""))
+
+
+static func _speaker_key(speaker) -> String:
+	if speaker != null and speaker.get("data") != null:
+		return String(speaker.data.id)
+	return "player"
+
+
+## e.g. "12 voices (5 women's, 6 men's)" for the settings screen.
+func voices_summary() -> String:
+	var pool := english_voices()
+	if pool.is_empty():
+		return "No speech voices on this device."
+	var women := pool.filter(func(v): return voice_sex(v) == "female").size()
+	var men := pool.filter(func(v): return voice_sex(v) == "male").size()
+	return "%d voice%s found (%d women's, %d men's)." % [pool.size(), "" if pool.size() == 1 else "s", women, men]
+
+
+## Plays a few villagers' voices one after another (Settings → Test voices).
+func test_voices() -> void:
+	var lines := ["[happy]Good morning! The bread's still warm.", "Mind the mud by the well, it's deep today.",
+		"[laughing]Bet you can't catch me!", "[happy]Welcome back. We missed you."]
+	# Two women and two men if the village has them, so the difference shows.
+	var women: Array = GameManager.villagers.filter(func(v): return voice_of(v)["sex"] == "female")
+	var men: Array = GameManager.villagers.filter(func(v): return voice_of(v)["sex"] == "male")
+	var speakers: Array = women.slice(0, 2) + men.slice(0, 2)
+	var delay := 0.0
+	for i in speakers.size():
+		var who = speakers[i]
+		var line: String = lines[i % lines.size()]
+		get_tree().create_timer(delay).timeout.connect(func():
+			if is_instance_valid(who):
+				speak_queued(who, "%s here. %s" % [who.data.display_name, line]))
+		delay += 2.8
+
+
+## Like speak(), but waits for the previous line instead of cutting it off.
+func speak_queued(speaker, text: String) -> void:
+	if mode == Mode.SPOKEN and has_speech():
+		var voice := voice_of(speaker)
+		DisplayServer.tts_speak(clean_text(text), tts_voice_id(speaker), int(volume * 100.0), float(voice["pitch"]), float(voice["rate"]))
+	elif mode != Mode.OFF:
+		_play_babble(speaker, clean_text(text))
 
 
 # --- Speaking ----------------------------------------------------------------------

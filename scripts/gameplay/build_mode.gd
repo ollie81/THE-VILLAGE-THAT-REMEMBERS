@@ -17,6 +17,13 @@ var active: bool = false
 var type: StringName = &""
 var reason: String = ""
 
+## "" normally; "move" or "remove" while picking a building to change.
+var edit_mode: String = ""
+## The structure being moved (hidden while its preview follows the player).
+var moving: PlacedStructure = null
+
+signal edit_mode_changed(mode: String)
+
 var _ghost: Node3D
 var _turns: int = 0
 var _position := Vector3.ZERO
@@ -63,6 +70,9 @@ func cancel() -> void:
 	if not active:
 		return
 	active = false
+	if moving and is_instance_valid(moving):
+		moving.visible = true
+	moving = null
 	if _ghost:
 		_ghost.queue_free()
 		_ghost = null
@@ -89,11 +99,48 @@ func confirm() -> String:
 		GameManager.notify(reason)
 		return reason
 	var info := StructureCatalog.info(type)
+	if moving and is_instance_valid(moving):
+		moving.move_to(_position, current_yaw())
+		moving.visible = true
+		moving = null
+		GameManager.notify("%s moved." % info["name"])
+		cancel()
+		return ""
 	GameState.spend(info["cost"])
 	GameState.add_structure(type, _position, current_yaw())
 	GameManager.notify("%s placed. Work on it to finish building." % info["name"])
 	cancel()
 	return ""
+
+
+# --- Moving and removing ---------------------------------------------------------------
+
+## Starts picking a building to move ("move") or remove ("remove"); "" stops.
+func set_edit_mode(mode: String) -> void:
+	edit_mode = mode
+	edit_mode_changed.emit(mode)
+
+
+## Picks up a structure: its preview follows the player until placed again.
+func start_move(structure: PlacedStructure) -> void:
+	set_edit_mode("")
+	start(structure.get_type())
+	moving = structure
+	structure.visible = false
+	_update(0.0)
+
+
+## Takes a structure down and gives back half of what it cost.
+func remove(structure: PlacedStructure) -> Dictionary:
+	set_edit_mode("")
+	var info := structure.get_info()
+	var refund := {}
+	for resource in info["cost"]:
+		refund[resource] = int(info["cost"][resource]) / 2
+		GameState.add(resource, int(refund[resource]))
+	structure.take_down()
+	GameManager.notify("%s removed. You got back %s." % [info["name"], GameState.cost_text(refund)])
+	return refund
 
 
 func _process(delta: float) -> void:
@@ -121,7 +168,8 @@ func _update(_delta: float) -> void:
 ## Why `structure_type` can't go at `at`, or "" if it can.
 static func placement_reason(structure_type: StringName, at: Vector3, yaw: float) -> String:
 	var info := StructureCatalog.info(structure_type)
-	var missing := GameState.missing_text(info["cost"])
+	var moving_now: bool = instance != null and instance.moving != null
+	var missing := "" if moving_now else GameState.missing_text(info["cost"])
 	if missing != "":
 		return missing
 	var radius := StructureCatalog.radius(structure_type)
@@ -130,6 +178,8 @@ static func placement_reason(structure_type: StringName, at: Vector3, yaw: float
 		return blocked
 	if instance and instance.get_tree():
 		for structure in instance.get_tree().get_nodes_in_group("placed_structures"):
+			if structure == instance.moving:
+				continue
 			var other: float = StructureCatalog.radius(structure.get_type())
 			if Vector2(at.x - structure.global_position.x, at.z - structure.global_position.z).length() < radius + other + 0.3:
 				return "Too close to your %s" % String(structure.get_info()["name"]).to_lower()

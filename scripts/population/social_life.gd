@@ -121,6 +121,8 @@ func _update_happiness(villager, person: Person) -> void:
 	happiness += clampf(villager.mind.get_affection(GameManager.PLAYER_ID) * 0.15, -15.0, 15.0)
 	if bool(person.ambition.get("done", false)):
 		happiness += 10.0
+	# A lovely village (flowers, lanterns, the market...) lifts everyone.
+	happiness += minf(GameState.beauty(), 12.0)
 	happiness -= person.trait_weight("neuroticism") * 8.0
 	person.happiness = clampf(happiness, 0.0, 100.0)
 	person.unhappy_days = person.unhappy_days + 1 if person.happiness < UNHAPPY else 0

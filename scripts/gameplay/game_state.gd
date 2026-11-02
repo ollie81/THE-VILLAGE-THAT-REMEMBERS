@@ -76,6 +76,17 @@ func add(resource: StringName, amount: int) -> void:
 	check_objectives()
 
 
+## What a new village starts with, so you can build straight away. Not
+## counted as gathered (the "gather supplies" goal still needs gathering).
+const STARTER_KIT := {&"wood": 15, &"stone": 8, &"food": 4, &"herbs": 3}
+
+
+func give_starter_kit() -> void:
+	for resource in STARTER_KIT:
+		inventory[resource] = count(resource) + int(STARTER_KIT[resource])
+		inventory_changed.emit(resource, int(STARTER_KIT[resource]), count(resource))
+
+
 func can_afford(cost: Dictionary) -> bool:
 	for resource in cost:
 		if count(resource) < int(cost[resource]):
@@ -119,6 +130,20 @@ func add_structure(type: StringName, position: Vector3, yaw: float) -> Dictionar
 	structures.append(record)
 	structure_added.emit(record)
 	return record
+
+
+## How lovely the village is: flowers, lanterns, the market, the
+## founders' stone... Villagers are happier in a beautiful village.
+func beauty() -> float:
+	var total := 0.0
+	for record in structures:
+		if bool(record["complete"]):
+			total += StructureCatalog.beauty(StringName(String(record["type"])))
+	return total
+
+
+func remove_structure(record: Dictionary) -> void:
+	structures.erase(record)
 
 
 func completed_structures(type: StringName) -> int:

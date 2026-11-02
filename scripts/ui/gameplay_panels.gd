@@ -14,6 +14,10 @@ var _placement_bar: PanelContainer
 var _placement_reason: Label
 var _place_button: Button
 var _build_button: Button
+var _category: String = "Homes"
+var _tab_buttons: Dictionary = {}
+var _edit_bar: PanelContainer
+var _edit_label: Label
 
 
 func _ready() -> void:
@@ -24,6 +28,7 @@ func _ready() -> void:
 	_build_objective()
 	_build_build_menu()
 	_build_placement_bar()
+	_build_edit_bar()
 	GameState.inventory_changed.connect(func(_r, _a, _t): _refresh())
 	GameState.objective_changed.connect(func(_i): _refresh())
 	GameState.objective_completed.connect(_on_objective_completed)
@@ -35,6 +40,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var build := BuildMode.instance
 	_placement_bar.visible = build != null and build.active
+	_edit_bar.visible = build != null and build.edit_mode != "" and not build.active
+	if _edit_bar.visible:
+		_edit_label.text = "Walk up to something you built and tap %s." % ("Move" if build.edit_mode == "move" else "Remove (you get half back)")
 	if _placement_bar.visible:
 		var info := StructureCatalog.info(build.type)
 		_placement_reason.text = "%s  ·  %s" % [info["name"], "Ready to place" if build.reason == "" else build.reason]
@@ -117,13 +125,43 @@ func _build_build_menu() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	_build_menu.add_child(box)
-	box.add_child(UiTheme.label("Build", 30, UiTheme.ACCENT))
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	box.add_child(header)
+	var title := UiTheme.label("Build", 30, UiTheme.ACCENT)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	for tab in StructureCatalog.CATEGORIES:
+		var tab_button := UiTheme.button(String(tab), 120)
+		tab_button.toggle_mode = true
+		tab_button.pressed.connect(func():
+			_category = String(tab)
+			_refresh_build_list())
+		header.add_child(tab_button)
+		_tab_buttons[String(tab)] = tab_button
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(700, 380)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
 	_build_list = VBoxContainer.new()
 	_build_list.add_theme_constant_override("separation", 6)
-	box.add_child(_build_list)
+	scroll.add_child(_build_list)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 10)
+	box.add_child(footer)
+	var move := UiTheme.button("Move something", 220)
+	move.pressed.connect(func():
+		_build_menu.visible = false
+		BuildMode.instance.set_edit_mode("move"))
+	footer.add_child(move)
+	var remove := UiTheme.button("Remove something", 240)
+	remove.pressed.connect(func():
+		_build_menu.visible = false
+		BuildMode.instance.set_edit_mode("remove"))
+	footer.add_child(remove)
 	var close := UiTheme.button("Close", 140)
 	close.pressed.connect(func(): _build_menu.visible = false)
-	box.add_child(close)
+	footer.add_child(close)
 
 
 func _refresh_build_list() -> void:
@@ -131,11 +169,15 @@ func _refresh_build_list() -> void:
 		return
 	for child in _build_list.get_children():
 		child.queue_free()
-	for type in StructureCatalog.ORDER:
+	for tab in _tab_buttons:
+		_tab_buttons[tab].set_pressed_no_signal(tab == _category)
+	for type in StructureCatalog.CATEGORIES[_category]:
 		var info := StructureCatalog.info(type)
 		var affordable := GameState.can_afford(info["cost"])
-		var button := UiTheme.button("%s  —  %s\n%s" % [info["name"], GameState.cost_text(info["cost"]), info["description"]], 580)
-		button.custom_minimum_size = Vector2(580, 64)
+		var built := GameState.completed_structures(type)
+		var name_text := String(info["name"]) + ("  (built: %d)" % built if built > 0 else "")
+		var button := UiTheme.button("%s  —  %s\n%s" % [name_text, GameState.cost_text(info["cost"]), info["description"]], 680)
+		button.custom_minimum_size = Vector2(680, 64)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 19)
 		if not affordable:
@@ -170,6 +212,24 @@ func _choose_structure(type: StringName) -> void:
 
 
 # --- Placement controls ----------------------------------------------------------------
+
+## Shown while choosing something to move or remove.
+func _build_edit_bar() -> void:
+	_edit_bar = PanelContainer.new()
+	_edit_bar.visible = false
+	_edit_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_edit_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_edit_bar.offset_top = 110
+	add_child(_edit_bar)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	_edit_bar.add_child(row)
+	_edit_label = UiTheme.label("", 20)
+	row.add_child(_edit_label)
+	var done := UiTheme.button("Done", 120)
+	done.pressed.connect(func(): BuildMode.instance.set_edit_mode(""))
+	row.add_child(done)
+
 
 func _build_placement_bar() -> void:
 	_placement_bar = PanelContainer.new()

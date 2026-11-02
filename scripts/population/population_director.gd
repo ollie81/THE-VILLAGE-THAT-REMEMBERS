@@ -45,6 +45,10 @@ func _ready() -> void:
 	Population.person_changed.connect(_on_person_changed)
 	if StructureManager.instance:
 		StructureManager.instance.structure_completed.connect(_on_structure_completed)
+		StructureManager.instance.structure_moved.connect(func(s):
+			if s.get_type() == &"cottage":
+				_register_home(s))
+		StructureManager.instance.structure_removed.connect(_on_structure_removed)
 	_register_cottage_homes()
 	_link_founders()
 	_spawn_saved_people()
@@ -100,6 +104,24 @@ func _on_structure_completed(structure) -> void:
 	var moved := Population.rehouse_campers()
 	if not moved.is_empty():
 		GameManager.notify("%s moved out of the camp into the new cottage." % _names(moved))
+
+
+## A cottage was taken down: the people who lived there find somewhere else.
+func _on_structure_removed(structure) -> void:
+	if structure.get_type() != &"cottage" or not structure.is_complete():
+		return
+	var home_id: String = structure.home_id()
+	VillageLayout.unregister_location(home_id)
+	Population.home_owners.erase(home_id)
+	var moved: Array = []
+	for person: Person in Population.residents():
+		if person.home == home_id:
+			person.home = ""
+			Population.assign_home(person, home_id)
+			moved.append(person)
+	Population.housing_changed.emit()
+	if not moved.is_empty():
+		GameManager.notify("%s had to move out of the cottage." % _names(moved))
 
 
 # --- Bodies ----------------------------------------------------------------------------

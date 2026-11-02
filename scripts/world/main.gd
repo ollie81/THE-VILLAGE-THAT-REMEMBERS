@@ -23,6 +23,8 @@ func _ready() -> void:
 	SaveService.apply_saved_clock()
 	SaveService.apply_saved_game_state()
 	SaveService.apply_saved_population()
+	if SaveService.enabled and not SaveService.has_save():
+		GameState.give_starter_kit()
 	var world := Node3D.new()
 	world.name = "World"
 	add_child(world)

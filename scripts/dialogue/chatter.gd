@@ -170,6 +170,13 @@ static func _topics(villager) -> Array:
 		topics.append(_topic("growth:%d" % (population / 5), "[happy]%d of us now! When I came there were five." % population
 			if person == null or person.founder else "[happy]The village is growing. %d people! It feels alive." % population, 1.3))
 
+	# --- How the village looks ---
+	var beauty := GameState.beauty()
+	if beauty >= 4.0:
+		topics.append(_topic("beauty:%d" % int(beauty / 4.0), ["[happy]Have you noticed how lovely the village is getting? The flowers, the lanterns...",
+			"[happy]I walked past the new things you built this morning. It feels like a real home now.",
+			"[laughing]Visitors will think we're a proper town!"][int(beauty) % 3], 1.5))
+
 	# --- The moment ---
 	var hour := WorldClock.time_of_day
 	if hour >= 20.0 or hour < 5.0:

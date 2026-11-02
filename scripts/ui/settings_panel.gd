@@ -66,9 +66,15 @@ func _ready() -> void:
 			_sync())
 		voice_row.add_child(b)
 		_voice_buttons.append(b)
-	var voice_hint := "Spoken uses your device's text-to-speech voices." if Voices.has_speech() \
-		else "This device has no text-to-speech voices installed, so Spoken falls back to Babble."
-	box.add_child(UiTheme.label(voice_hint, 16, UiTheme.MUTED))
+	var voice_hint := Voices.voices_summary() + " More voices: phone Settings → Text-to-speech → Install voice data." \
+		if Voices.has_speech() else "This device has no text-to-speech voices installed, so Spoken falls back to Babble."
+	var hint_label := UiTheme.label(voice_hint, 16, UiTheme.MUTED)
+	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint_label.custom_minimum_size = Vector2(600, 0)
+	box.add_child(hint_label)
+	var test := UiTheme.button("Test voices", 220)
+	test.pressed.connect(Voices.test_voices)
+	box.add_child(test)
 
 	box.add_child(UiTheme.label("Years pass"))
 	var year_row := HBoxContainer.new()

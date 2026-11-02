@@ -6,6 +6,8 @@ extends Node3D
 static var instance: StructureManager
 
 signal structure_completed(structure: PlacedStructure)
+signal structure_moved(structure: PlacedStructure)
+signal structure_removed(structure: PlacedStructure)
 
 var _last_clock: float = -1.0
 
@@ -16,6 +18,7 @@ func _ready() -> void:
 	for record in GameState.structures:
 		_spawn(record)
 	GameState.structure_added.connect(_spawn)
+	WorldClock.day_changed.connect(_on_new_day)
 
 
 func _exit_tree() -> void:
@@ -28,8 +31,19 @@ func _spawn(record: Dictionary) -> PlacedStructure:
 	structure.add_to_group("placed_structures")
 	structure.completed.connect(func(s): GameManager.notify("%s finished!" % s.get_info()["name"]))
 	structure.completed.connect(func(s): structure_completed.emit(s))
+	structure.moved.connect(func(s): structure_moved.emit(s))
+	structure.removed.connect(func(s): structure_removed.emit(s))
 	add_child(structure)
 	return structure
+
+
+## Each morning: hens lay, fruit trees grow.
+func _on_new_day(_day: int) -> void:
+	var eggs := 0
+	for structure in structures():
+		eggs += structure.new_day()
+	if eggs > 0 and not AwayTime.catching_up:
+		GameManager.notify("The hens laid eggs overnight: +%d food." % eggs)
 
 
 func structures() -> Array:

@@ -6,10 +6,16 @@ extends Node3D
 ## the well waters them and a house is somewhere to sleep.
 
 signal completed(structure: PlacedStructure)
+signal moved(structure: PlacedStructure)
+signal removed(structure: PlacedStructure)
 
 ## Game hours from planting to harvest.
 const CROP_HOURS := 8.0
 const HARVEST_FOOD := 4
+## Fruit trees: days from planting until they bear fruit, and the fruit.
+const FRUIT_TREE_DAYS := 2
+const FRUIT_FOOD := 2
+const EGGS_FOOD := 2
 
 var record: Dictionary
 var interactable: Interactable
@@ -18,6 +24,7 @@ var _visual: Node3D
 var _label: Label3D
 var _crops: MeshInstance3D
 var _crop_stage: int = -1
+var _tree_shown: String = ""
 
 
 static func create(structure_record: Dictionary) -> PlacedStructure:
@@ -61,7 +68,12 @@ func _ready() -> void:
 func _rebuild() -> void:
 	if _visual:
 		_visual.queue_free()
-	if is_complete():
+	if is_complete() and get_type() == &"fruit_tree":
+		_visual = StructureCatalog.create_fruit_tree(tree_growth(), has_fruit())
+		_label.visible = tree_growth() < 1.0
+		_label.text = "Growing (%d%%)" % int(tree_growth() * 100.0)
+		_tree_shown = "%.2f/%s" % [tree_growth(), has_fruit()]
+	elif is_complete():
 		_visual = StructureCatalog.create_finished(get_type())
 		_label.visible = false
 	else:
@@ -71,7 +83,7 @@ func _rebuild() -> void:
 	add_child(_visual)
 	_crop_stage = -1
 	_update_crops()
-	interactable.enabled = not (is_complete() and get_type() in [&"lantern"])
+	interactable.enabled = true
 
 
 func work_fraction() -> float:
@@ -87,6 +99,8 @@ func add_work(amount: float) -> bool:
 	record["work"] = minf(float(record["work"]) + amount, float(get_info()["work"]))
 	if float(record["work"]) >= float(get_info()["work"]) - 0.001:
 		record["complete"] = true
+		if get_type() == &"fruit_tree":
+			record["planted_day"] = WorldClock.day
 		_rebuild()
 		completed.emit(self)
 		GameState.check_objectives()
@@ -145,13 +159,71 @@ func _update_crops() -> void:
 	add_child(_crops)
 
 
+# --- Moving and removing --------------------------------------------------------------
+
+func move_to(at: Vector3, yaw: float) -> void:
+	record["position"] = [at.x, at.y, at.z]
+	record["yaw"] = yaw
+	position = at
+	rotation.y = yaw
+	if get_type() == &"cottage" and is_complete():
+		moved.emit(self)
+
+
+## Takes the structure down for good. People living in a cottage move out
+## (to another home or the camp).
+func take_down() -> void:
+	GameState.remove_structure(record)
+	removed.emit(self)
+	queue_free()
+
+
+# --- Fruit trees and hens --------------------------------------------------------------
+
+## 0 (just planted) .. 1 (grown).
+func tree_growth() -> float:
+	var planted := int(record.get("planted_day", WorldClock.day))
+	return clampf(float(WorldClock.day - planted) / FRUIT_TREE_DAYS, 0.0, 1.0)
+
+
+func has_fruit() -> bool:
+	return tree_growth() >= 1.0 and int(record.get("picked_day", -1)) != WorldClock.day
+
+
+## Called each morning: trees grow a little, hens lay.
+func new_day() -> int:
+	if not is_complete():
+		return 0
+	match get_type():
+		&"fruit_tree":
+			_refresh_tree()
+		&"chicken_coop":
+			GameState.add(&"food", EGGS_FOOD)
+			return EGGS_FOOD
+	return 0
+
+
+func _refresh_tree() -> void:
+	if get_type() == &"fruit_tree" and is_complete() and _tree_shown != "%.2f/%s" % [tree_growth(), has_fruit()]:
+		_rebuild()
+
+
 # --- Interaction ------------------------------------------------------------------------
 
 func can_interact(_actor) -> bool:
 	return true
 
 
+func _edit_mode() -> String:
+	return BuildMode.instance.edit_mode if BuildMode.instance else ""
+
+
 func get_interaction_verb() -> String:
+	match _edit_mode():
+		"move":
+			return "Move"
+		"remove":
+			return "Remove"
 	if not is_complete():
 		return "Build"
 	match get_type():
@@ -165,11 +237,22 @@ func get_interaction_verb() -> String:
 			return "Visit"
 		&"bench":
 			return "Sit"
+		&"fruit_tree":
+			return "Pick" if has_fruit() else "Look"
+		&"chicken_coop":
+			return "Look"
+		&"market_stall", &"flower_bed", &"statue", &"fence", &"stone_path", &"lantern":
+			return "Admire"
 	return "Use"
 
 
 func get_interaction_prompt() -> String:
 	var info := get_info()
+	match _edit_mode():
+		"move":
+			return "Move this %s" % String(info["name"]).to_lower()
+		"remove":
+			return "Remove this %s (get half back)" % String(info["name"]).to_lower()
 	if not is_complete():
 		return "Build %s  (%d / %d)" % [String(info["name"]).to_lower(), int(record["work"]), int(info["work"])]
 	match get_type():
@@ -185,6 +268,12 @@ func get_interaction_prompt() -> String:
 			return "Sleep until morning" if _is_night() else "Your house  (sleep here at night)"
 		&"bench":
 			return "Sit and rest"
+		&"fruit_tree":
+			if has_fruit():
+				return "Pick fruit  (+%d food)" % FRUIT_FOOD
+			return "Fruit tree (growing, %d%%)" % int(tree_growth() * 100.0) if tree_growth() < 1.0 else "Fruit tree (picked today)"
+		&"chicken_coop":
+			return "Chicken coop  (+%d food every morning)" % EGGS_FOOD
 		&"cottage":
 			return "Cottage  (%d / %d living here)" % [Population.residents_of(home_id()).size(), Population.COTTAGE_CAPACITY]
 	return String(info["name"])
@@ -201,6 +290,13 @@ func door_point() -> Vector3:
 
 
 func _on_interacted(actor: Node) -> void:
+	match _edit_mode():
+		"move":
+			BuildMode.instance.start_move(self)
+			return
+		"remove":
+			BuildMode.instance.remove(self)
+			return
 	use(actor)
 
 
@@ -261,6 +357,23 @@ func use(actor: Node = null) -> String:
 			else:
 				_notify("You sit for a while and watch the village go by.")
 			return "rest"
+		&"fruit_tree":
+			if has_fruit():
+				if actor and actor.has_method("perform_action"):
+					actor.perform_action(&"gather", 1.0, global_position)
+				record["picked_day"] = WorldClock.day
+				GameState.add(&"food", FRUIT_FOOD)
+				FloatingText.spawn(get_parent(), global_position + Vector3(0, 2.0, 0), "+%d Food" % FRUIT_FOOD)
+				_rebuild()
+				return "picked"
+			_notify("It's still growing. Come back in a day or two." if tree_growth() < 1.0 else "You picked it clean today. More tomorrow.")
+			return "growing"
+		&"chicken_coop":
+			_notify("The hens cluck at you. They lay %d food's worth of eggs every morning." % EGGS_FOOD)
+			return "hens"
+		&"market_stall", &"flower_bed", &"statue", &"fence", &"stone_path", &"lantern":
+			_notify("The village looks lovelier for it. (Village beauty: %d)" % int(GameState.beauty()))
+			return "admired"
 		&"cottage":
 			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
 			_notify("Nobody lives here yet." if names.is_empty() else "Home of %s." % ", ".join(names))
