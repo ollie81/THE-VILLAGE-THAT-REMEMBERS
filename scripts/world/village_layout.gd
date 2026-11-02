@@ -11,6 +11,10 @@ const PLAYABLE_HALF_SIZE := 62.0
 
 const PLAZA_RADIUS := 7.5
 const PLAZA_RING_RADIUS := 6.2
+## The plaza floor's top above its platform base, and the log seats' top
+## above the floor (see BuildingFactory._build_plaza).
+const PLAZA_FLOOR_TOP := 0.04
+const PLAZA_SEAT_HEIGHT := 0.67
 
 const RIVER_BASE_X := 32.0
 const RIVER_HALF_WIDTH := 3.6
@@ -94,7 +98,20 @@ static func get_walk_height(x: float, z: float) -> float:
 	var ground := TerrainGenerator.get_height(x, z)
 	if is_on_bridge(x, z):
 		return maxf(ground, bridge_deck_height(x))
+	# The meeting circle is a stone floor raised level over the slope.
+	if x * x + z * z < PLAZA_RADIUS * PLAZA_RADIUS:
+		return maxf(ground, plaza_floor_height())
 	return ground
+
+
+static var _plaza_floor: float = NAN
+
+## Height of the meeting circle's stone floor (the platform is built level
+## with the highest ground under it; see BuildingFactory._build_plaza).
+static func plaza_floor_height() -> float:
+	if is_nan(_plaza_floor):
+		_plaza_floor = BuildingFactory._base_height(Vector3.ZERO, Vector2(PLAZA_RADIUS * 2.0, PLAZA_RADIUS * 2.0), 0.0) + PLAZA_FLOOR_TOP
+	return _plaza_floor
 
 
 static func ground_point(x: float, z: float) -> Vector3:
@@ -212,7 +229,7 @@ static func plaza_seats() -> Array:
 		var along := Basis(Vector3.UP, atan2(centre.x, centre.z)) * Vector3.RIGHT
 		for side: float in [-0.6, 0.6]:
 			var at := centre + along * side
-			seats.append({"position": at, "yaw": atan2(-at.x, -at.z), "height": 0.66})
+			seats.append({"position": at, "yaw": atan2(-at.x, -at.z), "height": PLAZA_SEAT_HEIGHT})
 	return seats
 
 
@@ -302,7 +319,7 @@ static func _build_tables() -> void:
 	for seat: Dictionary in plaza_seats():
 		seat_spots.append(seat["position"])
 		seat_looks.append(Vector3.ZERO)
-	_locations["plaza_seats"] = {"spots": seat_spots, "looks": seat_looks, "seat_height": 0.66}
+	_locations["plaza_seats"] = {"spots": seat_spots, "looks": seat_looks, "seat_height": PLAZA_SEAT_HEIGHT}
 
 	# The farm and garden are fenced, so they get an interior waypoint.
 	_nav_nodes["farm_inner"] = Vector3(12.0, 0.0, 11.4)

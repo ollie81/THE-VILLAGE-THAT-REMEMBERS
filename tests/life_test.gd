@@ -97,7 +97,8 @@ func _run() -> void:
 	_check(seat_height > 0.05 and seat_height < 0.35, "raised onto the seat (%.2f m)" % seat_height)
 	var hips_y := player.model.skeleton.global_transform * player.model.skeleton.get_bone_global_pose(HumanoidRig.Bone.HIPS).origin
 	var ground := VillageLayout.get_walk_height(player.global_position.x, player.global_position.z)
-	_check(absf(hips_y.y - ground - 0.66) < 0.12, "hips rest on the log top (%.2f m, log 0.66 m)" % (hips_y.y - ground))
+	var log_top := VillageLayout.plaza_floor_height() + VillageLayout.PLAZA_SEAT_HEIGHT
+	_check(absf(hips_y.y - log_top) < 0.06, "hips rest on the log top (hips %.2f m, log top %.2f m)" % [hips_y.y, log_top])
 	var sit_pos := player.global_position
 	Input.action_press("move_forward")
 	await _frames(20)
