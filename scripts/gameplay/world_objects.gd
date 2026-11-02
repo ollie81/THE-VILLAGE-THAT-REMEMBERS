@@ -14,6 +14,17 @@ func _ready() -> void:
 	meeting = VillageMeeting.new()
 	add_child(meeting)
 	_add_object("FirePit", Vector3.ZERO, 2.0, _fire_prompt, _fire_verb, _use_fire)
+	# The fire crackles; you hear it as you come near.
+	var crackle := AudioStreamPlayer3D.new()
+	crackle.name = "FireSound"
+	crackle.stream = Sounds.fire_stream()
+	crackle.bus = Sounds.BUS_AMBIENCE
+	crackle.unit_size = 3.0
+	crackle.max_distance = 28.0
+	crackle.volume_db = -4.0
+	crackle.autoplay = true
+	get_node("FirePit").add_child(crackle)
+	crackle.position = Vector3(0, 0.5, 0)
 	var workshop := VillageLayout.get_building("workshop")
 	# The bench itself (where villagers working at the workshop look), not
 	# the spot where they stand.

@@ -20,6 +20,7 @@ var detector: InteractionDetector
 var spawn_point: Vector3 = Vector3.ZERO
 
 var _action_time: float = 0.0
+var _step_distance: float = 0.0
 var _action_animation: StringName = &""
 
 signal posed(pose: StringName)
@@ -223,11 +224,24 @@ func _physics_process(delta: float) -> void:
 		detector.try_interact(self)
 
 	_update_animation(horizontal.length())
+	_footsteps(horizontal.length(), delta)
 
 	# Safety net: never let the player fall out of the world.
 	if global_position.y < -25.0:
 		global_position = spawn_point
 		velocity = Vector3.ZERO
+
+
+## A step sound each half stride while walking or running on the ground.
+func _footsteps(speed: float, delta: float) -> void:
+	if not is_on_floor() or speed < 0.4:
+		_step_distance = 0.0
+		return
+	_step_distance += speed * delta
+	var stride := HumanoidAnimations.RUN_STRIDE if speed > walk_speed + 0.6 else HumanoidAnimations.WALK_STRIDE
+	if _step_distance >= stride * 0.5:
+		_step_distance = 0.0
+		Sounds.play("step", null, -15.0 if speed <= walk_speed + 0.6 else -11.0)
 
 
 func _update_animation(speed: float) -> void:

@@ -72,6 +72,13 @@ func harvest(actor: Node = null) -> int:
 	var amount := harvest_amount()
 	if actor and actor.has_method("perform_action"):
 		actor.perform_action(info["anim"], float(info["time"]), global_position)
+	# The sound lands when the axe or pick strikes (the swing's downstroke).
+	var sound: String = {&"tree": "chop", &"rock": "stone"}.get(kind, "gather")
+	var at := global_position
+	if is_inside_tree():
+		get_tree().create_timer(0.0 if sound == "gather" else 0.6).timeout.connect(func():
+			Sounds.play(sound, at)
+			Sounds.play("pickup", at, -8.0))
 	GameState.add(info["resource"], amount)
 	FloatingText.spawn(get_parent(), global_position + Vector3(0, 2.2 if kind == &"tree" else 1.2, 0),
 		"+%d %s" % [amount, GameState.RESOURCE_NAMES[info["resource"]]])

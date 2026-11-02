@@ -521,6 +521,23 @@ alright.").
 Tests: `godot --headless --path . res://tests/hooks_test.tscn` (31 checks). Screenshots:
 `tools/hooks_screenshots.tscn`.
 
+## Sound and music
+
+Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):
+
+- **Music:** a plucked melody over warm chords for the day, and slower music-box bells for the night,
+  cross-fading at dusk and dawn. The themes are composed on first launch in the background (about five
+  seconds) and saved, so later launches start the music straight away (`Music`).
+- **Effects:** the axe going into wood, a pick on stone, rustling herbs, hammering, footsteps, a chime
+  when something's built, button clicks, a bell for notices and requests (`SoundBank`).
+- **The village:** wind, birds by day, crickets at night and the fire crackling at the meeting circle
+  (louder as you walk up to it).
+- **Settings:** separate volumes for *Music*, *Sound effects* and *Birds, wind and fire*, remembered
+  between launches.
+
+Tests: `godot --headless --path . res://tests/sound_test.tscn` (25 checks). To listen without the game,
+`godot --headless --path . -s res://tools/sound_check.gd -- --out=/some/dir` writes every sound to WAV.
+
 ## Status
 
 ### Implemented
@@ -531,7 +548,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **35/35**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **35/35**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

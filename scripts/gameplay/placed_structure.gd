@@ -307,6 +307,10 @@ func use(actor: Node = null) -> String:
 		if actor and actor.has_method("perform_action"):
 			actor.perform_action(&"work", 1.0, global_position)
 		var finished := add_work(1.0)
+		var at := global_position
+		get_tree().create_timer(0.55).timeout.connect(func(): Sounds.play("hammer", at))
+		if finished:
+			get_tree().create_timer(0.8).timeout.connect(func(): Sounds.play("built", at))
 		var message := "%s finished!" % get_info()["name"] if finished else ""
 		FloatingText.spawn(get_parent(), global_position + Vector3(0, 2.0, 0), "Built!" if finished else "+1 work")
 		return message
@@ -318,6 +322,7 @@ func use(actor: Node = null) -> String:
 				record["crop_hours"] = -1.0
 				_update_crops()
 				GameState.add(&"food", HARVEST_FOOD)
+				Sounds.play("pickup", global_position)
 				GameState.increment(&"harvests")
 				FloatingText.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), "+%d Food" % HARVEST_FOOD)
 				return "harvested"
@@ -363,6 +368,7 @@ func use(actor: Node = null) -> String:
 					actor.perform_action(&"gather", 1.0, global_position)
 				record["picked_day"] = WorldClock.day
 				GameState.add(&"food", FRUIT_FOOD)
+				Sounds.play("pickup", global_position)
 				FloatingText.spawn(get_parent(), global_position + Vector3(0, 2.0, 0), "+%d Food" % FRUIT_FOOD)
 				_rebuild()
 				return "picked"

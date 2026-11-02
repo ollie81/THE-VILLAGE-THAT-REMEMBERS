@@ -63,6 +63,7 @@ func _ready() -> void:
 	add_child(hud)
 
 	SaveService.apply_loaded_state()
+	Sounds.start_music()
 	_welcome_back.call_deferred()
 
 

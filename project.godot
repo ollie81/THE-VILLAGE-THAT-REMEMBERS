@@ -28,6 +28,7 @@ GameState="*res://scripts/gameplay/game_state.gd"
 Population="*res://scripts/population/population.gd"
 Voices="*res://scripts/core/voices.gd"
 AdRewards="*res://scripts/core/ad_rewards.gd"
+Sounds="*res://scripts/audio/sounds.gd"
 
 [display]
 

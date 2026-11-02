@@ -59,6 +59,8 @@ func _ready() -> void:
 	GameManager.opinion_changed.connect(_on_opinion_changed)
 	GameManager.gossip_shared.connect(_on_gossip_shared)
 	GameManager.notice.connect(show_notice)
+	GameManager.notice.connect(func(_m): Sounds.play("notify", null, -10.0))
+	GameManager.conversation_started.connect(func(_v, _c): Sounds.play("open", null, -6.0))
 	_refresh_buttons()
 
 

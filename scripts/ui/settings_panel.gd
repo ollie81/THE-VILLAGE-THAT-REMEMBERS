@@ -55,6 +55,22 @@ func _ready() -> void:
 		touch_row.add_child(b)
 		_touch_buttons.append(b)
 
+	for bus in [Sounds.BUS_MUSIC, Sounds.BUS_EFFECTS, Sounds.BUS_AMBIENCE]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		box.add_child(row)
+		var name_label := UiTheme.label({Sounds.BUS_MUSIC: "Music", Sounds.BUS_EFFECTS: "Sound effects", Sounds.BUS_AMBIENCE: "Birds, wind and fire"}[bus])
+		name_label.custom_minimum_size = Vector2(240, 0)
+		row.add_child(name_label)
+		var slider := HSlider.new()
+		slider.min_value = 0.0
+		slider.max_value = 1.0
+		slider.step = 0.05
+		slider.value = float(Sounds.volumes[bus])
+		slider.custom_minimum_size = Vector2(330, 40)
+		slider.value_changed.connect(func(v): Sounds.set_volume(bus, v))
+		row.add_child(slider)
+
 	box.add_child(UiTheme.label("Voices"))
 	var voice_row := HBoxContainer.new()
 	box.add_child(voice_row)

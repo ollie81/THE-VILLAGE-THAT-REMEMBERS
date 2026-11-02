@@ -54,4 +54,5 @@ static func button(text: String, min_width: float = 0.0) -> Button:
 	b.text = text
 	b.custom_minimum_size = Vector2(min_width, 56)
 	b.focus_mode = Control.FOCUS_NONE
+	b.pressed.connect(func(): Sounds.play("click", null, -6.0))
 	return b
