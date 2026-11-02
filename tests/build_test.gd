@@ -220,5 +220,7 @@ func _run() -> void:
 	_check(unique_pitches.size() == pitches.size(), "and everyone has their own pitch too: %s" % str(pitches))
 	Voices._tts_voices = []
 
+	# Quit straight away, possibly while the newcomer's character is still
+	# being built on a worker thread: that must not hang (it used to).
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)

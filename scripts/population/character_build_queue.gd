@@ -43,6 +43,7 @@ func _process(_delta: float) -> void:
 		_task_id = -1
 		var done: Callable = _current["done"]
 		_current = {}
+		CharacterModel.save_to_cache(_result)
 		if done.is_valid():
 			done.call(_result)
 		_result = {}
@@ -53,8 +54,9 @@ func _process(_delta: float) -> void:
 	_task_id = WorkerThreadPool.add_task(_build.bind(look), false, "Build character")
 
 
+## Worker thread: builds without saving (see CharacterModel.build_meshes).
 func _build(look: CharacterAppearance) -> void:
-	_result = CharacterModel.build_meshes(look)
+	_result = CharacterModel.build_meshes(look, null, false)
 
 
 func _exit_tree() -> void:

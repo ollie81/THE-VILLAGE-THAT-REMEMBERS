@@ -91,19 +91,33 @@ func _ready() -> void:
 	set_animation(&"idle")
 
 
-## Body and head meshes for a look: from the offline cache, or generated and
-## cached. Safe to call from a worker thread (it touches no scene nodes).
-static func build_meshes(look: CharacterAppearance, rig: HumanoidRig = null) -> Dictionary:
+## Body and head meshes for a look: from the offline cache, or generated.
+## `save` writes new ones to the cache. On a worker thread pass save = false
+## and call save_to_cache() on the main thread afterwards: saving reads the
+## mesh back from the rendering server, which waits for the main thread.
+static func build_meshes(look: CharacterAppearance, rig: HumanoidRig = null, save: bool = true) -> Dictionary:
 	var key := CharacterCache.key_for(look)
 	var body_mesh := CharacterCache.load_mesh(key, "body", Materials.character_body())
 	var head_mesh := CharacterCache.load_mesh(key, "head", Materials.character_face())
+	var fresh := false
 	if body_mesh == null or head_mesh == null:
 		var builder := HumanoidMeshBuilder.new(look, rig if rig else HumanoidRig.new(look))
 		body_mesh = builder.build()
 		head_mesh = builder.build_head()
-		CharacterCache.save_mesh(key, "body", body_mesh)
-		CharacterCache.save_mesh(key, "head", head_mesh)
-	return {"body": body_mesh, "head": head_mesh}
+		fresh = true
+	var meshes := {"body": body_mesh, "head": head_mesh, "key": key, "fresh": fresh}
+	if save:
+		save_to_cache(meshes)
+	return meshes
+
+
+## Main thread only.
+static func save_to_cache(meshes: Dictionary) -> void:
+	if not bool(meshes.get("fresh", false)):
+		return
+	CharacterCache.save_mesh(String(meshes["key"]), "body", meshes["body"])
+	CharacterCache.save_mesh(String(meshes["key"]), "head", meshes["head"])
+	meshes["fresh"] = false
 
 
 func _build() -> void:
