@@ -78,7 +78,8 @@ func add(resource: StringName, amount: int) -> void:
 
 ## What a new village starts with, so you can build straight away. Not
 ## counted as gathered (the "gather supplies" goal still needs gathering).
-const STARTER_KIT := {&"wood": 15, &"stone": 8, &"food": 4, &"herbs": 3}
+## Enough for your own house straight away.
+const STARTER_KIT := {&"wood": 20, &"stone": 10, &"food": 4, &"herbs": 3}
 
 
 func give_starter_kit() -> void:

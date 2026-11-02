@@ -17,6 +17,11 @@ var _choice_box: VBoxContainer
 var _choice_buttons: Array[Button] = []
 var _footer: HBoxContainer
 var _show_choices_after_typing := false
+## True while the player's own answer is on screen.
+var _player_speaking := false
+
+## Answers that describe something you do rather than words you say.
+const ACTION_WORDS := ["Insult", "Pay", "Play", "Give", "Be", "Bring", "Hug", "Tease", "Ignore", "Steal", "Thank", "Wave", "Share"]
 
 
 func _ready() -> void:
@@ -91,6 +96,13 @@ func _set_speaker(villager) -> void:
 	var data: VillagerData = villager.data
 	_partner = villager
 	GameManager.speaker = villager
+	_show_partner_name()
+
+
+func _show_partner_name() -> void:
+	if _partner == null or not is_instance_valid(_partner):
+		return
+	var data: VillagerData = _partner.data
 	_name_label.text = data.display_name
 	_subtitle_label.text = "%d · %s" % [data.age, data.role]
 
@@ -102,6 +114,8 @@ func _show_line(line: String) -> void:
 		if speaker:
 			_set_speaker(speaker)
 		line = line.substr(line.find(" ") + 1)
+	_end_player_line()
+	_show_partner_name()
 	var parts := split_expression(line)
 	_text_label.text = parts[1]
 	if _partner and is_instance_valid(_partner):
@@ -123,6 +137,7 @@ func _process(delta: float) -> void:
 	_text_label.visible_ratio = minf(_text_label.visible_ratio + delta * CHARACTERS_PER_SECOND / length, 1.0)
 	if _text_label.visible_ratio >= 1.0:
 		_typing = false
+		_end_player_line()
 		if _partner and is_instance_valid(_partner):
 			_partner.model.set_talking(false)
 		if _show_choices_after_typing:
@@ -133,6 +148,7 @@ func advance() -> void:
 	if _typing:
 		_text_label.visible_ratio = 1.0
 		_typing = false
+		_end_player_line()
 		if _partner and is_instance_valid(_partner):
 			_partner.model.set_talking(false)
 		if _show_choices_after_typing:
@@ -165,10 +181,46 @@ func _show_choices() -> void:
 func _choose(index: int) -> void:
 	if not _choice_box.visible or index >= _conversation.choices.size():
 		return
+	var said := _conversation.choice_texts()[index]
 	_conversation.choose(index)
 	_choice_box.visible = false
 	_footer.visible = true
-	advance()
+	if is_spoken_answer(said):
+		_show_player_line(said)
+	else:
+		advance()
+
+
+## Whether an answer is words the player says (spoken aloud and shown as
+## theirs) rather than an action like "Pay them a compliment."
+static func is_spoken_answer(text: String) -> bool:
+	var t := text.strip_edges()
+	if t == "" or t.ends_with("...") or t.ends_with("…"):
+		return false
+	var first := t.split(" ")[0]
+	return not (first in ACTION_WORDS and " them" in t)
+
+
+## The player says their answer before the villager replies.
+func _show_player_line(text: String) -> void:
+	_player_speaking = true
+	_name_label.text = "You"
+	_subtitle_label.text = ""
+	_text_label.text = text
+	_text_label.visible_ratio = 0.0
+	_typing = true
+	Voices.speak(GameManager.player, text, true)
+	if GameManager.player and GameManager.player.get("model"):
+		GameManager.player.model.set_talking(true)
+	_continue_button.text = "Continue" if _conversation.has_lines() or _conversation.has_choices() else "Goodbye"
+
+
+func _end_player_line() -> void:
+	if not _player_speaking:
+		return
+	_player_speaking = false
+	if GameManager.player and GameManager.player.get("model"):
+		GameManager.player.model.set_talking(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:

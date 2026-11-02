@@ -60,6 +60,19 @@ class Kit:
 		shape.position = base + Vector3(0.0, height * 0.5, 0.0)
 		body.add_child(shape)
 
+	## A low round platform with sloping sides, so it can be walked onto.
+	func ramp_disc_collider(top_y: float, top_radius: float, bottom_y: float, bottom_radius: float, sides: int = 16) -> void:
+		var points := PackedVector3Array()
+		for i in sides:
+			var a := TAU * i / sides
+			points.append(Vector3(cos(a) * top_radius, top_y, sin(a) * top_radius))
+			points.append(Vector3(cos(a) * bottom_radius, bottom_y, sin(a) * bottom_radius))
+		var hull := ConvexPolygonShape3D.new()
+		hull.points = points
+		var shape := CollisionShape3D.new()
+		shape.shape = hull
+		body.add_child(shape)
+
 	func finish(root: Node3D) -> void:
 		var main_mesh := mesh.build(Materials.vertex_color())
 		if main_mesh:
@@ -476,6 +489,9 @@ static func _build_plaza(kit: Kit, root: Node3D) -> void:
 	var r := VillageLayout.PLAZA_RADIUS
 	m.add_cylinder_at(Vector3(0, -0.58, 0), r, r, 0.62, 24, Color(0.5, 0.48, 0.44))
 	m.add_cylinder_at(Vector3(0, -0.58, 0), r * 0.62, r * 0.62, 0.645, 18, Color(0.56, 0.52, 0.46))
+	# Walk on the floor, not through it (it's raised above the lowest ground);
+	# the sloping rim lets you step up onto it.
+	kit.ramp_disc_collider(VillageLayout.PLAZA_FLOOR_TOP, r, -0.6, r + 1.2)
 	# Paving stones dotted over the surface.
 	for i in 36:
 		var angle := m.rng.randf() * TAU

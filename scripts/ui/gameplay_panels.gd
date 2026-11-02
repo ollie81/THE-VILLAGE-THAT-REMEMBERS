@@ -18,6 +18,8 @@ var _category: String = "Homes"
 var _tab_buttons: Dictionary = {}
 var _edit_bar: PanelContainer
 var _edit_label: Label
+## A line at the top of the Build menu: what you have, or what's missing.
+var _menu_message: Label
 
 
 func _ready() -> void:
@@ -139,8 +141,12 @@ func _build_build_menu() -> void:
 			_refresh_build_list())
 		header.add_child(tab_button)
 		_tab_buttons[String(tab)] = tab_button
+	_menu_message = UiTheme.label("", 19, UiTheme.MUTED)
+	_menu_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_menu_message.custom_minimum_size = Vector2(700, 0)
+	box.add_child(_menu_message)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(700, 380)
+	scroll.custom_minimum_size = Vector2(700, 340)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 	_build_list = VBoxContainer.new()
@@ -176,7 +182,10 @@ func _refresh_build_list() -> void:
 		var affordable := GameState.can_afford(info["cost"])
 		var built := GameState.completed_structures(type)
 		var name_text := String(info["name"]) + ("  (built: %d)" % built if built > 0 else "")
-		var button := UiTheme.button("%s  —  %s\n%s" % [name_text, GameState.cost_text(info["cost"]), info["description"]], 680)
+		var price := GameState.cost_text(info["cost"])
+		if not affordable:
+			price += "   (%s)" % GameState.missing_text(info["cost"]).to_lower()
+		var button := UiTheme.button("%s  —  %s\n%s" % [name_text, price, info["description"]], 680)
 		button.custom_minimum_size = Vector2(680, 64)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 19)
@@ -189,7 +198,33 @@ func _refresh_build_list() -> void:
 func _toggle_build_menu() -> void:
 	_build_menu.visible = not _build_menu.visible
 	if _build_menu.visible:
+		_show_menu_message("")
+		# Open where there's something you can build now.
+		if not _can_afford_any(_category):
+			for tab in StructureCatalog.CATEGORIES:
+				if _can_afford_any(tab):
+					_category = tab
+					break
 		_refresh_build_list()
+
+
+func _can_afford_any(tab: String) -> bool:
+	for type in StructureCatalog.CATEGORIES[tab]:
+		if GameState.can_afford(StructureCatalog.info(type)["cost"]):
+			return true
+	return false
+
+
+## `text` in red, or (when empty) a reminder of what you have to build with.
+func _show_menu_message(text: String) -> void:
+	if _menu_message == null:
+		return
+	if text == "":
+		_menu_message.text = "Tap something to build it. Grey things need more materials: chop trees, mine rocks, pick herbs."
+		_menu_message.add_theme_color_override("font_color", UiTheme.MUTED)
+	else:
+		_menu_message.text = text
+		_menu_message.add_theme_color_override("font_color", Color(1.0, 0.62, 0.5))
 
 
 ## B opens and closes the Build menu on a keyboard.
@@ -204,7 +239,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _choose_structure(type: StringName) -> void:
 	var info := StructureCatalog.info(type)
 	if not GameState.can_afford(info["cost"]):
-		GameManager.notify("%s to build a %s." % [GameState.missing_text(info["cost"]), String(info["name"]).to_lower()])
+		var message := "%s to build a %s. Chop trees for wood, mine rocks for stone and pick herbs." % [GameState.missing_text(info["cost"]), String(info["name"]).to_lower()]
+		_show_menu_message(message)
+		GameManager.notify(message)
+		Sounds.play("click", null, -2.0)
 		return
 	_build_menu.visible = false
 	if BuildMode.instance:
@@ -217,9 +255,11 @@ func _choose_structure(type: StringName) -> void:
 func _build_edit_bar() -> void:
 	_edit_bar = PanelContainer.new()
 	_edit_bar.visible = false
-	_edit_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	# Bottom middle: clear of messages, and where thumbs are.
+	_edit_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	_edit_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_edit_bar.offset_top = 110
+	_edit_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_edit_bar.offset_bottom = -24
 	add_child(_edit_bar)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
@@ -234,9 +274,11 @@ func _build_edit_bar() -> void:
 func _build_placement_bar() -> void:
 	_placement_bar = PanelContainer.new()
 	_placement_bar.visible = false
-	_placement_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	# Bottom middle: clear of messages, and where thumbs are.
+	_placement_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	_placement_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_placement_bar.offset_top = 110
+	_placement_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_placement_bar.offset_bottom = -24
 	add_child(_placement_bar)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)

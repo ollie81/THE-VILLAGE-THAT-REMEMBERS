@@ -88,7 +88,7 @@ func _process(delta: float) -> void:
 
 	if mode == GameManager.CameraMode.EXPLORATION:
 		yaw -= look.x * 0.0055 * sensitivity
-		pitch = clampf(pitch - look.y * 0.0045 * sensitivity, -1.2, 0.45)
+		pitch = clampf(pitch - look.y * 0.0045 * sensitivity, -1.2, 0.35)
 		distance = clampf(distance - zoom * 0.6, 2.2, 10.0)
 	else:
 		_update_management(delta, look, pan, zoom)
@@ -168,6 +168,11 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	else:
 		_current_distance = lerpf(_current_distance, wanted, clampf(delta * 4.0, 0.0, 1.0))
 	var position := pivot + offset * _current_distance
+	# Never dip under the ground (looking up from below shows the village
+	# from underneath).
+	var ground := VillageLayout.get_walk_height(position.x, position.z) + 0.35
+	if position.y < ground:
+		position.y = ground
 	return Transform3D(Basis.looking_at(pivot - position, Vector3.UP), position)
 
 

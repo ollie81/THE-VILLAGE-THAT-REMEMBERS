@@ -96,12 +96,30 @@ func _run() -> void:
 	await _frames(3)
 	_check(panels._build_list.get_child_count() == StructureCatalog.CATEGORIES["Village"].size(), "the Village tab lists %d things" % StructureCatalog.CATEGORIES["Village"].size())
 	panels._build_menu.visible = false
+	# Too poor for a home: the menu opens where you can build something,
+	# rows say what's missing, and tapping one explains it in the menu.
+	GameState.inventory[&"wood"] = 5
+	GameState.inventory[&"stone"] = 0
+	panels._category = "Homes"
+	panels._toggle_build_menu()
+	await _frames(2)
+	_check(panels._category != "Homes", "with 5 wood the Build menu opens on %s, where something is affordable" % panels._category)
+	panels._category = "Homes"
+	panels._refresh_build_list()
+	await _frames(2)
+	var house_row: Button = panels._build_list.get_child(0)
+	_check(house_row.text.contains("need 15 more wood and 10 more stone"), "a house you can't afford says what's missing")
+	panels._choose_structure(&"house")
+	_check(panels._build_menu.visible and not BuildMode.instance.active and panels._menu_message.text.begins_with("Need 15 more wood"),
+		"tapping it explains, inside the menu: %s" % panels._menu_message.text)
+	panels._build_menu.visible = false
+	GameState.inventory[&"wood"] = 0
 
 	# --- Starter kit ----------------------------------------------------------------------
 	var gathered := int(GameState.collected[&"wood"])
 	GameState.give_starter_kit()
-	_check(GameState.count(&"wood") == 15 and GameState.count(&"stone") == 8 and int(GameState.collected[&"wood"]) == gathered,
-		"a new village starts with 15 wood and 8 stone (not counted as gathered)")
+	_check(GameState.count(&"wood") == 20 and GameState.count(&"stone") == 10 and int(GameState.collected[&"wood"]) == gathered,
+		"a new village starts with 20 wood and 10 stone, enough for a house (not counted as gathered)")
 	GameState.add(&"wood", 60)
 	GameState.add(&"stone", 40)
 	GameState.add(&"herbs", 10)
@@ -187,6 +205,58 @@ func _run() -> void:
 	_check(newcomer.home != cottage_home and newcomer.home != "", "when a cottage comes down, its people move elsewhere (%s)" % newcomer.home)
 	_check(not VillageLayout.get_locations().has(cottage_home), "and nobody walks home to it any more")
 
+	# --- The meeting circle and the camera ----------------------------------------------------
+	player.global_position = Vector3(0.0, 1.0, 3.0)
+	await _frames(30)
+	_check(absf(player.global_position.y - VillageLayout.plaza_floor_height()) < 0.05,
+		"the player stands on the meeting circle's floor, not sunk into it (%.2f vs %.2f)" % [player.global_position.y, VillageLayout.plaza_floor_height()])
+	var rig: CameraRig = _main.camera_rig
+	var low := INF
+	for yaw in [0.0, 1.6, 3.2, 4.8]:
+		rig.yaw = yaw
+		rig.pitch = 1.0  # past the limit: looking up as far as possible
+		rig._process(0.016)
+		var cam := rig.camera.global_position
+		low = minf(low, cam.y - VillageLayout.get_walk_height(cam.x, cam.z))
+	_check(rig.pitch <= 0.35 and low >= 0.3, "looking up, the camera stays above the ground (%.2f m)" % low)
+	rig.pitch = -0.3
+	player.global_position = VillageLayout.ground_point(-30.0, 10.0) + Vector3(0, 0.4, 0)
+	await _frames(10)
+
+	# --- The player speaks their answers ------------------------------------------------------
+	_check(DialoguePanel.is_spoken_answer("I'll keep watch with you tonight.") and not DialoguePanel.is_spoken_answer("Pay them a compliment.")
+		and not DialoguePanel.is_spoken_answer("Be kind..."), "answers in words are spoken; actions aren't")
+	var dialogue: DialoguePanel = _main.find_child("DialoguePanel", true, false)
+	var talk_to = GameManager.get_villager(&"nia")
+	talk_to.global_position = player.global_position + Vector3(1.5, 0, 0)
+	await _frames(3)
+	GameManager.start_conversation(talk_to)
+	await _frames(3)
+	var guard := 0
+	while not dialogue._choice_box.visible and dialogue.visible and guard < 20:
+		dialogue.advance()
+		await _frames(2)
+		guard += 1
+	var spoken := -1
+	for i in dialogue._conversation.choices.size():
+		if DialoguePanel.is_spoken_answer(dialogue._conversation.choice_texts()[i]):
+			spoken = i
+			break
+	if spoken >= 0:
+		var said := dialogue._conversation.choice_texts()[spoken]
+		dialogue._choose(spoken)
+		await _frames(2)
+		_check(dialogue._name_label.text == "You" and dialogue._text_label.text == said, "choosing an answer, you say it: \"%s\"" % said)
+		dialogue.advance()
+		dialogue.advance()
+		await _frames(2)
+		_check(dialogue._name_label.text != "You" or not dialogue.visible, "then they reply (%s)" % dialogue._name_label.text)
+	else:
+		_check(false, "the conversation offered an answer in words")
+	if GameManager.is_in_conversation():
+		GameManager.end_conversation()
+	await _frames(3)
+
 	# --- Voices ----------------------------------------------------------------------------
 	Voices._tts_voices = [
 		{"id": "en-us-x-iob-local", "name": "en-us-x-iob-local", "language": "en_US"},
@@ -212,7 +282,10 @@ func _run() -> void:
 			right_sex = false
 		_check(not id.contains("network"), "%s speaks with %s (%s)" % [villager.data.display_name, id, Voices.voice_of(villager)["sex"]])
 	_check(right_sex, "women get women's voices and men get men's")
-	_check(ids.size() == 5, "the five founders each have a different voice (%d)" % ids.size())
+	# 3 women's and 3 men's voices: everyone differs while there are enough.
+	var women := GameManager.villagers.filter(func(v): return Voices.voice_of(v)["sex"] == "female").size()
+	var possible := mini(women, 3) + mini(GameManager.villagers.size() - women, 3)
+	_check(ids.size() == possible, "the villagers each have a different voice (%d of %d)" % [ids.size(), possible])
 	var pitches := GameManager.villagers.map(func(v): return snappedf(Voices.voice_of(v)["pitch"], 0.01))
 	var unique_pitches := {}
 	for p in pitches:

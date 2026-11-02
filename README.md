@@ -466,7 +466,9 @@ more until they run out ("You've heard all my news today!"). Greetings vary too.
 text-to-speech voices (Android, Windows, macOS, Linux with speech-dispatcher). Android's voices are
 recognised by their codes (Google's `en-us-x-iom`, Samsung's `SMTm`...) as women's or men's. Each
 villager gets a voice of their own (nobody shares until all are in use) plus their own pitch and pace:
-children higher, elders slower, outgoing people faster. *Test voices* plays a few of them; more voices
+children higher, elders slower, outgoing people faster. You speak too: when you pick an answer in
+words, it appears as yours ("You") and is said aloud in your own voice before the villager replies
+(answers that are actions, like "Pay them a compliment.", aren't). *Test voices* plays a few of them; more voices
 can be installed in the phone's Text-to-speech settings. *Babble* is a
 murmur generated on the device in each person's pitch range, one blip per syllable, rising for
 questions. *Off* is silent. Nearby villagers' greetings and reactions are voiced too, and speech
@@ -477,7 +479,7 @@ Tests: `godot --headless --path . res://tests/life_test.tscn` (45 checks). Scree
 
 ## Building your village
 
-A new village starts with 15 wood, 8 stone, 4 food and 3 herbs, so you can build straight away. The
+A new village starts with 20 wood, 10 stone, 4 food and 3 herbs, enough to build your own house straight away. The
 **Build** menu has three tabs:
 
 | Tab | What you can build |
@@ -490,11 +492,15 @@ A new village starts with 15 wood, 8 stone, 4 food and 3 herbs, so you can build
   Homes rise in stages: posts, walls plank by plank, roof beams, then thatch.
 - **Village beauty:** flowers, lanterns, fences, paths, the market and the founders' stone add to it,
   which makes villagers happier, and they notice and talk about it.
+- **Can't afford it yet?** Each item says what's missing ("need 3 more wood"), tapping it explains
+  inside the menu, and the menu opens on a tab where you can build something now.
+- **Placing:** the preview follows you (green where it can go, red where it can't, with the reason).
+  *Rotate*, *Place* and *Cancel* sit at the bottom of the screen.
 - **Move something / Remove something** (bottom of the Build menu): walk up to anything you built and
   tap it. Moving is free. Removing gives back half the cost, and people living in a removed cottage
   find another home.
 
-Tests: `godot --headless --path . res://tests/build_test.tscn` (35 checks). Screenshots:
+Tests: `godot --headless --path . res://tests/build_test.tscn` (43 checks). Screenshots:
 `tools/build_screenshots.tscn`.
 
 ## Reasons to come back every day
@@ -548,7 +554,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **35/35**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **43/43**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
