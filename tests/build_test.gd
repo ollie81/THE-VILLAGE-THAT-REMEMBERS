@@ -205,6 +205,23 @@ func _run() -> void:
 	_check(newcomer.home != cottage_home and newcomer.home != "", "when a cottage comes down, its people move elsewhere (%s)" % newcomer.home)
 	_check(not VillageLayout.get_locations().has(cottage_home), "and nobody walks home to it any more")
 
+	# --- Finding room, clearing the land ----------------------------------------------------
+	GameState.add(&"wood", 20)
+	GameState.add(&"stone", 10)
+	var blocked_at: Vector3 = ResourceSpawner.nodes[0].global_position
+	_check(BuildMode.placement_reason(&"house", blocked_at, 0.0) != "", "a house can't go right on top of a tree")
+	var free := BuildMode.nearest_free_spot(&"house", blocked_at, 0.0, blocked_at + Vector3(20, 0, 0))
+	_check(free != Vector3.INF and BuildMode.placement_reason(&"house", free, 0.0) == "" and free.distance_to(blocked_at) <= BuildMode.SEARCH_RADIUS + 0.5,
+		"so the preview moves to the nearest free spot (%.1f m away)" % (free.distance_to(blocked_at) if free != Vector3.INF else -1.0))
+	var wild: Dictionary = {}
+	for entry: Dictionary in NatureSpawner._clearable:
+		if entry["kind"] == "tree" and entry.has("shape") and not entry.get("gone", false):
+			wild = entry
+			break
+	var cleared := NatureSpawner.clear_area(wild["pos"], 0.5)
+	_check(cleared >= 1 and wild.get("gone", false) and (wild["shape"] as CollisionShape3D).disabled,
+		"building somewhere clears the trees there, trunks and all (%d)" % cleared)
+
 	# --- The meeting circle and the camera ----------------------------------------------------
 	player.global_position = Vector3(0.0, 1.0, 3.0)
 	await _frames(30)

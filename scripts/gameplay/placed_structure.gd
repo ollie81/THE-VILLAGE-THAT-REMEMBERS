@@ -49,6 +49,8 @@ func _ready() -> void:
 	var p: Array = record["position"]
 	position = Vector3(float(p[0]), float(p[1]), float(p[2]))
 	rotation.y = float(record["yaw"])
+	# Clear the trees and bushes where this goes.
+	NatureSpawner.clear_area(position, StructureCatalog.radius(get_type()))
 	name = "%s_%d" % [String(record["type"]).to_pascal_case(), int(record["uid"])]
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -166,6 +168,7 @@ func move_to(at: Vector3, yaw: float) -> void:
 	record["yaw"] = yaw
 	position = at
 	rotation.y = yaw
+	NatureSpawner.clear_area(position, StructureCatalog.radius(get_type()))
 	if get_type() == &"cottage" and is_complete():
 		moved.emit(self)
 

@@ -17,9 +17,15 @@ var _detail_range: float = 45.0
 var _grass_density: float = 1.0
 var _grass_root: Node3D
 
+## Every tree, bush, rock and log: {pos, kind, multimesh, index, shape}, so
+## building somewhere clears the land under it (see clear_area).
+static var _clearable: Array = []
+const CLEARABLE := ["tree", "pine", "bush", "rock", "log"]
+
 
 func spawn(parent: Node3D) -> void:
 	rng.seed = SEED
+	_clearable = []
 	_detail_range = GameSettings.detail_view_distance()
 	_grass_density = GameSettings.grass_density()
 	_build_meshes()
@@ -37,7 +43,12 @@ func spawn(parent: Node3D) -> void:
 	_scatter_village_trees()
 	_scatter_rocks()
 	_scatter_river_details()
-	_flush(root, ["tree", "pine", "bush", "rock", "log"])
+	_flush(root, CLEARABLE)
+	# Land already cleared for things the player built.
+	for record in GameState.structures:
+		var at: Array = record.get("position", [])
+		if at.size() == 3:
+			clear_area(Vector3(at[0], at[1], at[2]), StructureCatalog.radius(StringName(record.get("type", ""))))
 
 	# Small details live under their own node so quality changes can rebuild them.
 	_grass_root = Node3D.new()
@@ -183,22 +194,49 @@ func _random_xform(x: float, z: float, scale_min: float, scale_max: float, sink:
 	return Transform3D(basis, Vector3(x, TerrainGenerator.get_height(x, z) - sink, z))
 
 
-func _add_instance(kind: String, variant: int, xform: Transform3D) -> void:
+func _add_instance(kind: String, variant: int, xform: Transform3D) -> Dictionary:
 	var cx := int(floor(xform.origin.x / CHUNK_SIZE))
 	var cz := int(floor(xform.origin.z / CHUNK_SIZE))
 	var key := "%s_%d|%d|%d" % [kind, variant, cx, cz]
 	if not _batches.has(key):
-		_batches[key] = {"kind": kind, "mesh": "%s_%d" % [kind, variant], "transforms": []}
+		_batches[key] = {"kind": kind, "mesh": "%s_%d" % [kind, variant], "transforms": [], "entries": []}
 	_batches[key]["transforms"].append(xform)
+	var entry := {"pos": xform.origin, "kind": kind}
+	_batches[key]["entries"].append(entry)
+	return entry
+
+
+## Removes trees, bushes, rocks and logs within `radius` of `center` (the
+## land is cleared for something built there). Returns how many went.
+static func clear_area(center: Vector3, radius: float) -> int:
+	var cleared := 0
+	for entry: Dictionary in _clearable:
+		if entry.get("gone", false):
+			continue
+		var pos: Vector3 = entry["pos"]
+		var reach := radius + (1.2 if entry["kind"] in ["tree", "pine"] else 0.4)
+		if Vector2(pos.x - center.x, pos.z - center.z).length() > reach:
+			continue
+		var multimesh: MultiMesh = entry.get("multimesh")
+		if multimesh == null:
+			continue
+		multimesh.set_instance_transform(int(entry["index"]), Transform3D(Basis().scaled(Vector3.ZERO), pos))
+		var shape: CollisionShape3D = entry.get("shape")
+		if shape and is_instance_valid(shape):
+			shape.disabled = true
+		entry["gone"] = true
+		cleared += 1
+	return cleared
 
 
 func _add_tree(x: float, z: float, prefer_pine: bool) -> void:
 	var pine := rng.randf() < (0.7 if prefer_pine else 0.25)
 	var xform := _random_xform(x, z, 0.85, 1.35)
+	var entry: Dictionary
 	if pine:
-		_add_instance("pine", rng.randi_range(0, 1), xform)
+		entry = _add_instance("pine", rng.randi_range(0, 1), xform)
 	else:
-		_add_instance("tree", rng.randi_range(0, 2), xform)
+		entry = _add_instance("tree", rng.randi_range(0, 2), xform)
 	_mark_occupied(x, z)
 	if absf(x) < VillageLayout.PLAYABLE_HALF_SIZE + 1.0 and absf(z) < VillageLayout.PLAYABLE_HALF_SIZE + 1.0:
 		var cylinder := CylinderShape3D.new()
@@ -208,6 +246,7 @@ func _add_tree(x: float, z: float, prefer_pine: bool) -> void:
 		shape.shape = cylinder
 		shape.position = xform.origin + Vector3(0, 1.4, 0)
 		_tree_body.add_child(shape)
+		entry["shape"] = shape
 
 
 # --- Scatter passes -----------------------------------------------------------------
@@ -277,7 +316,7 @@ func _scatter_rocks() -> void:
 			continue
 		var big := rng.randf() < 0.3
 		var xform := _random_xform(x, z, 1.4 if big else 0.4, 2.4 if big else 1.0, 0.1)
-		_add_instance("rock", rng.randi_range(0, 1), xform)
+		var rock := _add_instance("rock", rng.randi_range(0, 1), xform)
 		if big:
 			var sphere := SphereShape3D.new()
 			sphere.radius = 0.5 * xform.basis.get_scale().x
@@ -285,6 +324,7 @@ func _scatter_rocks() -> void:
 			shape.shape = sphere
 			shape.position = xform.origin + Vector3(0, 0.05, 0)
 			_tree_body.add_child(shape)
+			rock["shape"] = shape
 
 
 func _scatter_river_details() -> void:
@@ -359,8 +399,14 @@ func _flush(parent: Node3D, kinds: Array) -> void:
 		multimesh.transform_format = MultiMesh.TRANSFORM_3D
 		multimesh.mesh = _meshes[batch["mesh"]]
 		multimesh.instance_count = transforms.size()
+		var entries: Array = batch["entries"]
+		var clearable: bool = CLEARABLE.has(batch["kind"])
 		for i in transforms.size():
 			multimesh.set_instance_transform(i, transforms[i])
+			if clearable:
+				entries[i]["multimesh"] = multimesh
+				entries[i]["index"] = i
+				_clearable.append(entries[i])
 		var instance := MultiMeshInstance3D.new()
 		instance.name = String(key).replace("|", "_")
 		instance.multimesh = multimesh

@@ -29,6 +29,14 @@ var _turns: int = 0
 var _position := Vector3.ZERO
 var _valid_material: StandardMaterial3D
 var _invalid_material: StandardMaterial3D
+## The spot straight ahead last frame, and the free spot found near it (so
+## the search only runs when the player has moved to a new grid cell).
+var _searched_from := Vector3.INF
+var _searched_turns: int = -1
+var _found: Vector3 = Vector3.INF
+
+## How far from the spot ahead to look for room when that spot is taken.
+const SEARCH_RADIUS := 9.0
 
 
 func _ready() -> void:
@@ -59,6 +67,7 @@ func start(structure_type: StringName) -> void:
 	type = structure_type
 	active = true
 	_turns = 0
+	_searched_from = Vector3.INF
 	_ghost = StructureCatalog.create_finished(type)
 	_strip_ghost(_ghost)
 	add_child(_ghost)
@@ -155,7 +164,16 @@ func _update(_delta: float) -> void:
 	var ahead: Vector3 = player.global_position + player.get_facing() * (DISTANCE_AHEAD + StructureCatalog.radius(type) * 0.6)
 	ahead.x = snappedf(ahead.x, GRID)
 	ahead.z = snappedf(ahead.z, GRID)
-	_position = Vector3(ahead.x, _ground_height(ahead, current_yaw()), ahead.z)
+	var yaw := current_yaw()
+	# Ahead is taken (trees, steep ground, a path)? Use the nearest free spot,
+	# so the preview turns green somewhere close instead of staying red.
+	if ahead != _searched_from or _turns != _searched_turns:
+		_searched_from = ahead
+		_searched_turns = _turns
+		_found = ahead if placement_reason(type, ahead, yaw) == "" else nearest_free_spot(type, ahead, yaw, player.global_position)
+	if _found != Vector3.INF:
+		ahead = _found
+	_position = Vector3(ahead.x, _ground_height(ahead, yaw), ahead.z)
 	_ghost.global_position = _position
 	_ghost.rotation.y = current_yaw()
 	var new_reason := placement_reason(type, _position, current_yaw())
@@ -163,6 +181,38 @@ func _update(_delta: float) -> void:
 		reason = new_reason
 		_tint(_ghost, _valid_material if reason == "" else _invalid_material)
 		validity_changed.emit(reason)
+
+
+## The closest place near `around` where `structure_type` fits, not on top
+## of the player; Vector3.INF if there's none (or it can't be afforded).
+static func nearest_free_spot(structure_type: StringName, around: Vector3, yaw: float, player_at: Vector3) -> Vector3:
+	var info := StructureCatalog.info(structure_type)
+	var moving_now: bool = instance != null and instance.moving != null
+	if not moving_now and GameState.missing_text(info["cost"]) != "":
+		return Vector3.INF
+	var keep_clear := StructureCatalog.radius(structure_type) + 0.8
+	var ring := 1.0
+	while ring <= SEARCH_RADIUS:
+		var best := Vector3.INF
+		var best_distance := INF
+		var steps := int(ceil(TAU * ring / 1.0))
+		for i in steps:
+			var a := TAU * i / steps
+			var spot := around + Vector3(cos(a) * ring, 0.0, sin(a) * ring)
+			spot.x = snappedf(spot.x, GRID)
+			spot.z = snappedf(spot.z, GRID)
+			if Vector2(spot.x - player_at.x, spot.z - player_at.z).length() < keep_clear:
+				continue
+			if placement_reason(structure_type, spot, yaw) != "":
+				continue
+			var d := Vector2(spot.x - player_at.x, spot.z - player_at.z).length()
+			if d < best_distance:
+				best_distance = d
+				best = spot
+		if best != Vector3.INF:
+			return best
+		ring += 1.0
+	return Vector3.INF
 
 
 ## Why `structure_type` can't go at `at`, or "" if it can.

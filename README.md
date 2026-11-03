@@ -494,13 +494,15 @@ A new village starts with 20 wood, 10 stone, 4 food and 3 herbs, enough to build
   which makes villagers happier, and they notice and talk about it.
 - **Can't afford it yet?** Each item says what's missing ("need 3 more wood"), tapping it explains
   inside the menu, and the menu opens on a tab where you can build something now.
-- **Placing:** the preview follows you (green where it can go, red where it can't, with the reason).
+- **Placing:** the preview follows you, green where it can go. If the spot ahead is taken (a tree,
+  steep ground, a path), it jumps to the nearest free spot; it's red, with the reason, only when
+  there's no room nearby. Building clears the wild trees, bushes and rocks under it.
   *Rotate*, *Place* and *Cancel* sit at the bottom of the screen.
 - **Move something / Remove something** (bottom of the Build menu): walk up to anything you built and
   tap it. Moving is free. Removing gives back half the cost, and people living in a removed cottage
   find another home.
 
-Tests: `godot --headless --path . res://tests/build_test.tscn` (43 checks). Screenshots:
+Tests: `godot --headless --path . res://tests/build_test.tscn` (46 checks). Screenshots:
 `tools/build_screenshots.tscn`.
 
 ## Reasons to come back every day
@@ -554,7 +556,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **43/43**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **46/46**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
