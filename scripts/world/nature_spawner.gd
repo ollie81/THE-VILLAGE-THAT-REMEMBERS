@@ -49,6 +49,13 @@ func spawn(parent: Node3D) -> void:
 		var at: Array = record.get("position", [])
 		if at.size() == 3:
 			clear_area(Vector3(at[0], at[1], at[2]), StructureCatalog.radius(StringName(record.get("type", ""))))
+	# Trees the player felled (and rocks they broke) that haven't grown back.
+	for key in GameState.depleted.keys():
+		if String(key).begins_with("wild_"):
+			var id := int(String(key).substr(5))
+			if id >= 0 and id < _clearable.size():
+				_clearable[id]["felled"] = true
+				_set_shown(_clearable[id], false)
 
 	# Small details live under their own node so quality changes can rebuild them.
 	_grass_root = Node3D.new()
@@ -201,7 +208,7 @@ func _add_instance(kind: String, variant: int, xform: Transform3D) -> Dictionary
 	if not _batches.has(key):
 		_batches[key] = {"kind": kind, "mesh": "%s_%d" % [kind, variant], "transforms": [], "entries": []}
 	_batches[key]["transforms"].append(xform)
-	var entry := {"pos": xform.origin, "kind": kind}
+	var entry := {"pos": xform.origin, "kind": kind, "xform": xform, "scale": xform.basis.get_scale().x}
 	_batches[key]["entries"].append(entry)
 	return entry
 
@@ -217,16 +224,79 @@ static func clear_area(center: Vector3, radius: float) -> int:
 		var reach := radius + (1.2 if entry["kind"] in ["tree", "pine"] else 0.4)
 		if Vector2(pos.x - center.x, pos.z - center.z).length() > reach:
 			continue
-		var multimesh: MultiMesh = entry.get("multimesh")
-		if multimesh == null:
+		if entry.get("multimesh") == null:
 			continue
-		multimesh.set_instance_transform(int(entry["index"]), Transform3D(Basis().scaled(Vector3.ZERO), pos))
-		var shape: CollisionShape3D = entry.get("shape")
-		if shape and is_instance_valid(shape):
-			shape.disabled = true
+		_set_shown(entry, false)
 		entry["gone"] = true
 		cleared += 1
 	return cleared
+
+
+static func _set_shown(entry: Dictionary, shown: bool) -> void:
+	var multimesh: MultiMesh = entry.get("multimesh")
+	if multimesh == null:
+		return
+	var pos: Vector3 = entry["pos"]
+	multimesh.set_instance_transform(int(entry["index"]), entry["xform"] if shown else Transform3D(Basis().scaled(Vector3.ZERO), pos))
+	var shape: CollisionShape3D = entry.get("shape")
+	if shape and is_instance_valid(shape):
+		shape.set_deferred("disabled", not shown)
+
+
+# --- Wild trees and rocks the player can work ------------------------------------------
+
+## Whether a tree or rock out in the world can be chopped or mined: trees and
+## bigger rocks inside the playable area that are still standing.
+static func is_workable(entry: Dictionary) -> bool:
+	if entry.get("gone", false) or entry.get("felled", false) or entry.get("multimesh") == null:
+		return false
+	var kind: String = entry["kind"]
+	if kind == "rock":
+		if float(entry["scale"]) < 0.7:
+			return false
+	elif kind != "tree" and kind != "pine":
+		return false
+	var pos: Vector3 = entry["pos"]
+	var half := VillageLayout.PLAYABLE_HALF_SIZE
+	return absf(pos.x) < half and absf(pos.z) < half
+
+
+## The closest workable tree or rock within `reach` of `at`, or {}.
+static func nearest_workable(at: Vector3, reach: float) -> Dictionary:
+	var best: Dictionary = {}
+	var best_distance := reach
+	for entry: Dictionary in _clearable:
+		var pos: Vector3 = entry["pos"]
+		var d := Vector2(pos.x - at.x, pos.z - at.z).length()
+		if d < best_distance and is_workable(entry):
+			best_distance = d
+			best = entry
+	return best
+
+
+## Fells a tree or breaks up a rock until `regrow_day` (saved in
+## GameState.depleted so it stays down after loading).
+static func fell(entry: Dictionary, regrow_day: int) -> void:
+	entry["felled"] = true
+	_set_shown(entry, false)
+	GameState.depleted["wild_%d" % int(entry["id"])] = regrow_day
+
+
+## Brings back wild trees and rocks whose time has come (each morning).
+static func regrow(day: int) -> int:
+	var count := 0
+	for entry: Dictionary in _clearable:
+		if not entry.get("felled", false):
+			continue
+		var key := "wild_%d" % int(entry["id"])
+		if day >= int(GameState.depleted.get(key, 0)):
+			GameState.depleted.erase(key)
+			entry["felled"] = false
+			entry["hits"] = 0
+			if not entry.get("gone", false):
+				_set_shown(entry, true)
+			count += 1
+	return count
 
 
 func _add_tree(x: float, z: float, prefer_pine: bool) -> void:
@@ -406,6 +476,7 @@ func _flush(parent: Node3D, kinds: Array) -> void:
 			if clearable:
 				entries[i]["multimesh"] = multimesh
 				entries[i]["index"] = i
+				entries[i]["id"] = _clearable.size()
 				_clearable.append(entries[i])
 		var instance := MultiMeshInstance3D.new()
 		instance.name = String(key).replace("|", "_")

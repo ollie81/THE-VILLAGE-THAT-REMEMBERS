@@ -219,8 +219,57 @@ func _run() -> void:
 			wild = entry
 			break
 	var cleared := NatureSpawner.clear_area(wild["pos"], 0.5)
+	await _frames(2)
 	_check(cleared >= 1 and wild.get("gone", false) and (wild["shape"] as CollisionShape3D).disabled,
 		"building somewhere clears the trees there, trunks and all (%d)" % cleared)
+
+	# --- Chopping any tree, mining any rock ----------------------------------------------------
+	var trees := 0
+	var rocks := 0
+	for entry: Dictionary in NatureSpawner._clearable:
+		if NatureSpawner.is_workable(entry):
+			if entry["kind"] == "rock":
+				rocks += 1
+			else:
+				trees += 1
+	_check(trees > 100 and rocks > 10, "every tree and rock around the village can be worked (%d trees, %d rocks)" % [trees, rocks])
+	var wild_tree: Dictionary = {}
+	for entry: Dictionary in NatureSpawner._clearable:
+		var pos: Vector3 = entry["pos"]
+		if NatureSpawner.is_workable(entry) and entry["kind"] != "rock" and pos.length() > 30.0 \
+				and ResourceSpawner.nodes.all(func(n): return n.global_position.distance_to(pos) > 6.0):
+			wild_tree = entry
+			break
+	var tree_at: Vector3 = wild_tree["pos"]
+	player.global_position = tree_at + Vector3(1.4, 0.6, 0.0)
+	player.face_towards(tree_at)
+	await _frames(30)
+	var detector: InteractionDetector = player.detector
+	_check(detector.focused != null and detector.focused.handler is WildHarvest and detector.focused.get_verb() == "Chop",
+		"walking up to an ordinary tree offers Chop (%s)" % (detector.focused.get_verb() if detector.focused else "nothing"))
+	var wood_before := GameState.count(&"wood")
+	for i in WildHarvest.HITS:
+		detector.try_interact(player)
+		await _frames(3)
+	_check(GameState.count(&"wood") == wood_before + WildHarvest.HITS * WildHarvest.YIELD, "three chops give %d wood" % (WildHarvest.HITS * WildHarvest.YIELD))
+	_check(wild_tree.get("felled", false) and not NatureSpawner.is_workable(wild_tree) and GameState.depleted.has("wild_%d" % int(wild_tree["id"])),
+		"and the tree comes down")
+	WorldClock.advance(24.0 * WildHarvest.REGROW_DAYS)
+	await _frames(3)
+	_check(NatureSpawner.is_workable(wild_tree), "it grows back after %d days" % WildHarvest.REGROW_DAYS)
+	var wild_rock: Dictionary = {}
+	for entry: Dictionary in NatureSpawner._clearable:
+		if NatureSpawner.is_workable(entry) and entry["kind"] == "rock":
+			wild_rock = entry
+			break
+	var rock_at: Vector3 = wild_rock["pos"]
+	player.global_position = rock_at + Vector3(1.6, 0.6, 0.0)
+	player.face_towards(rock_at)
+	await _frames(30)
+	var stone_before := GameState.count(&"stone")
+	detector.try_interact(player)
+	await _frames(3)
+	_check(GameState.count(&"stone") == stone_before + WildHarvest.YIELD, "and any rock can be mined for stone (%s)" % (detector.focused.get_verb() if detector.focused else "nothing"))
 
 	# --- The meeting circle and the camera ----------------------------------------------------
 	player.global_position = Vector3(0.0, 1.0, 3.0)

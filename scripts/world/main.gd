@@ -33,6 +33,7 @@ func _ready() -> void:
 	RiverBuilder.build(world)
 	NatureSpawner.new().spawn(world)
 	ResourceSpawner.spawn(world)
+	world.add_child(WildHarvest.new())
 	world.add_child(StructureManager.new())
 	world.add_child(WorldObjects.new())
 

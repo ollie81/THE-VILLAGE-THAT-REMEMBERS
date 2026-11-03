@@ -122,7 +122,7 @@ func _build_hint() -> void:
 	_hint_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_hint_label.add_theme_constant_override("outline_size", 6)
 	if GameSettings.touch_controls_visible():
-		_hint_label.text = "Left stick to walk (push fully to run) · drag right side to look · walk up to a villager and tap Talk"
+		_hint_label.text = "Left stick to walk · drag right side to look · walk up to a villager to Talk, a tree to Chop, a rock to Mine"
 	else:
 		_hint_label.text = "WASD walk · Shift run · Space jump · Right-drag look · E talk · Tab village view · T speed up time"
 	_root.add_child(_hint_label)

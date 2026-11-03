@@ -113,7 +113,10 @@ func _run() -> void:
 	WorldClock.set_time(21.0)
 	await _frames(2)
 	_check(Sounds.current_theme() == Music.NIGHT, "after dark the night theme takes over")
-	await _seconds(2.0)
+	# Wait for the fade (in real time, so allow for a slow machine).
+	var fade_start := Time.get_ticks_msec()
+	while not (_music_volume(night_stream) > -40.0 and _music_volume(day_stream) < -25.0) and Time.get_ticks_msec() - fade_start < 10000:
+		await get_tree().process_frame
 	_check(_music_volume(night_stream) > -40.0 and _music_volume(day_stream) < -25.0,
 		"cross-fading (night %.0f dB, day %.0f dB)" % [_music_volume(night_stream), _music_volume(day_stream)])
 	WorldClock.set_time(10.0)

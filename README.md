@@ -479,6 +479,10 @@ Tests: `godot --headless --path . res://tests/life_test.tscn` (45 checks). Scree
 
 ## Building your village
 
+**Wood and stone:** every tree and rock around the village can be worked. Walk up to one and tap
+*Chop* or *Mine* (2 wood or stone a time, 3 with tools). A tree comes down after three chops and a
+rock breaks up after three blows; they grow back three days later (`WildHarvest`).
+
 A new village starts with 20 wood, 10 stone, 4 food and 3 herbs, enough to build your own house straight away. The
 **Build** menu has three tabs:
 
@@ -502,7 +506,7 @@ A new village starts with 20 wood, 10 stone, 4 food and 3 herbs, enough to build
   tap it. Moving is free. Removing gives back half the cost, and people living in a removed cottage
   find another home.
 
-Tests: `godot --headless --path . res://tests/build_test.tscn` (46 checks). Screenshots:
+Tests: `godot --headless --path . res://tests/build_test.tscn` (52 checks). Screenshots:
 `tools/build_screenshots.tscn`.
 
 ## Reasons to come back every day
@@ -556,7 +560,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **46/46**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
