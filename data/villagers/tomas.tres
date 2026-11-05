@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.78, 0.58, 0.45, 1)
+hair_color = Color(0.56, 0.55, 0.53, 1)
+eye_color = Color(0.36, 0.48, 0.58, 1)
+shirt_color = Color(0.2, 0.26, 0.46, 1)
+pants_color = Color(0.36, 0.33, 0.3, 1)
+accent_color = Color(0.42, 0.28, 0.16, 1)
+shoe_color = Color(0.3, 0.2, 0.12, 1)
+apron_color = Color(0.42, 0.27, 0.15, 1)
+hair_style = "short"
+accessories = PackedStringArray("glasses", "beard", "apron")
+work_tool = "hammer"
+height_scale = 0.98
+build_width = 1.0
+shoulder_width = 1.0
+hip_width = 1.0
+chest_shape = 0.0
+sleeve_length = 0.8
+tunic_length = 0.0
+stoop = 0.12
+cheekbones = 0.35
+brow_ridge = 0.7
+brow_thickness = 1.55
+brow_arch = 0.3
+brow_color = Color(0.62, 0.6, 0.57, 1)
+eye_size = 0.94
+nose_length = 1.15
+nose_width = 1.08
+lip_fullness = 0.8
+wrinkles = 1.0
+resting_face = {"smile": 0.2, "brow_sad": 0.12}
+
+[resource]
+script = ExtResource("1_data")
+id = &"tomas"
+display_name = "Tomas"
+age = 61
+role = "Craftsman"
+traits = PackedStringArray("Wise", "Patient", "Traditional")
+biography = "Tomas has carved, forged and mended nearly every tool in the village. He remembers how things were done before, and he believes the old ways are worth keeping."
+appearance = SubResource("Resource_look")
+home_location = "home_tomas"
+walk_speed = 1.15
+schedule = [{"hour": 6.0, "activity": "socialize", "location": "plaza", "label": "Watching the sunrise by the fire"}, {"hour": 8.0, "activity": "work", "location": "workshop", "label": "Shaping tools at the workshop", "anim": "work"}, {"hour": 12.0, "activity": "rest", "location": "home", "label": "Resting at home"}, {"hour": 14.0, "activity": "work", "location": "workshop", "label": "Mending tools at the workshop", "anim": "work"}, {"hour": 18.0, "activity": "socialize", "location": "plaza", "label": "Telling old stories by the fire"}, {"hour": 21.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("plaza", "workshop")
+first_meeting_lines = PackedStringArray("[happy]A new face. Sit, sit. My knees prefer conversations that happen sitting down.", "[sad]My grandfather carved the story stone in the meeting circle. Every mark is something this village chose to remember.")
+returning_lines = PackedStringArray("A good tool outlives the hand that made it. A good name outlives both.", "[worried]The young ones want everything faster. Wood doesn't care what you want.", "[happy]You came back. That's how a stranger becomes a neighbour.")
+activity_comments = {"work": "Steady hands, steady heart. Pass me that file, would you?", "socialize": "Pull up a log. The fire has heard all my stories, but you haven't.", "rest": "An old man's afternoon nap is sacred, you know."}
+personality = {"openness": 0.3, "conscientiousness": 0.9, "extraversion": 0.4, "agreeableness": 0.75, "neuroticism": 0.25, "tradition": 0.95}

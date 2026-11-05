@@ -1,0 +1,67 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="The Village That Remembers"
+config/description="Your actions never disappear."
+config/version="0.1.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameSettings="*res://scripts/core/game_settings.gd"
+InputRouter="*res://scripts/core/input_router.gd"
+WorldClock="*res://scripts/core/world_clock.gd"
+GameManager="*res://scripts/core/game_manager.gd"
+SaveService="*res://scripts/core/save_service.gd"
+GameState="*res://scripts/gameplay/game_state.gd"
+Population="*res://scripts/population/population.gd"
+Voices="*res://scripts/core/voices.gd"
+AdRewards="*res://scripts/core/ad_rewards.gd"
+Sounds="*res://scripts/audio/sounds.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+window/energy_saving/keep_screen_on=true
+
+[layer_names]
+
+3d_physics/layer_1="world"
+3d_physics/layer_2="player"
+3d_physics/layer_3="villagers"
+3d_physics/layer_4="interaction"
+3d_physics/layer_5="boundaries"
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+renderer/rendering_method.web="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
+lights_and_shadows/positional_shadow/atlas_size=256
+environment/defaults/default_clear_color=Color(0.55, 0.7, 0.85, 1)
+
+[audio]
+
+general/text_to_speech=true
