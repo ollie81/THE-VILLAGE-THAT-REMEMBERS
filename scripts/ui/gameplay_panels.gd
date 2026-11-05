@@ -52,6 +52,13 @@ func _process(_delta: float) -> void:
 		_place_button.disabled = build.reason != ""
 	var exploring := GameManager.camera_mode == GameManager.CameraMode.EXPLORATION
 	_build_button.visible = exploring and not GameManager.is_in_conversation()
+	# The guide's next step replaces the general hint, and the Build button
+	# glows when the next step is to build something.
+	var guide := Guide.instance
+	if guide and guide.step != "" and not GameState.is_week_complete():
+		_objective_hint.text = guide.step
+	var glow := guide != null and guide.wanted_build != &"" and not _build_menu.visible
+	_build_button.modulate = Color(1.0, 0.9 + 0.1 * sin(Time.get_ticks_msec() * 0.006), 0.55 + 0.45 * absf(sin(Time.get_ticks_msec() * 0.003))) if glow else Color.WHITE
 	_objective_box.visible = not GameManager.is_in_conversation() and not _placement_bar.visible
 
 
@@ -185,7 +192,12 @@ func _refresh_build_list() -> void:
 		var price := GameState.cost_text(info["cost"])
 		if not affordable:
 			price += "   (%s)" % GameState.missing_text(info["cost"]).to_lower()
+		var wanted: bool = Guide.instance != null and Guide.instance.wanted_build == type
+		if wanted:
+			name_text = "★ " + name_text + "  (your next step)"
 		var button := UiTheme.button("%s  —  %s\n%s" % [name_text, price, info["description"]], 680)
+		if wanted:
+			button.add_theme_color_override("font_color", UiTheme.ACCENT)
 		button.custom_minimum_size = Vector2(680, 64)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 19)
@@ -199,8 +211,14 @@ func _toggle_build_menu() -> void:
 	_build_menu.visible = not _build_menu.visible
 	if _build_menu.visible:
 		_show_menu_message("")
-		# Open where there's something you can build now.
-		if not _can_afford_any(_category):
+		var guide := Guide.instance
+		if guide and guide.wanted_build != &"":
+			# Open on what the guide asks for.
+			for tab in StructureCatalog.CATEGORIES:
+				if StructureCatalog.CATEGORIES[tab].has(guide.wanted_build):
+					_category = tab
+			_show_menu_message("Choose %s, then walk to where you want it and tap Place." % StructureCatalog.info(guide.wanted_build)["name"], true)
+		elif not _can_afford_any(_category):
 			for tab in StructureCatalog.CATEGORIES:
 				if _can_afford_any(tab):
 					_category = tab
@@ -216,7 +234,7 @@ func _can_afford_any(tab: String) -> bool:
 
 
 ## `text` in red, or (when empty) a reminder of what you have to build with.
-func _show_menu_message(text: String) -> void:
+func _show_menu_message(text: String, good: bool = false) -> void:
 	if _menu_message == null:
 		return
 	if text == "":
@@ -224,7 +242,7 @@ func _show_menu_message(text: String) -> void:
 		_menu_message.add_theme_color_override("font_color", UiTheme.MUTED)
 	else:
 		_menu_message.text = text
-		_menu_message.add_theme_color_override("font_color", Color(1.0, 0.62, 0.5))
+		_menu_message.add_theme_color_override("font_color", UiTheme.ACCENT if good else Color(1.0, 0.62, 0.5))
 
 
 ## B opens and closes the Build menu on a keyboard.

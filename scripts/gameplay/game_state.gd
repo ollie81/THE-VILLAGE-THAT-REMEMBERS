@@ -17,7 +17,7 @@ const OBJECTIVES := [
 	{"id": "meet", "day": 1, "title": "Meet the villagers",
 		"hint": "Walk up to each villager and talk to them."},
 	{"id": "gather", "day": 2, "title": "Gather supplies",
-		"hint": "Chop trees west of the village and break rocks in the quarry to the north."},
+		"hint": "Walk up to any tree and tap Chop, and any rock and tap Mine."},
 	{"id": "farm_plot", "day": 3, "title": "Prepare a farm plot",
 		"hint": "Open Build and place a Farm plot, then work on it until it's finished."},
 	{"id": "harvest", "day": 4, "title": "Plant and harvest crops",

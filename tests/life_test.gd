@@ -12,6 +12,7 @@ var _main = null
 func _ready() -> void:
 	SaveService.enabled = false
 	PopulationDirector.auto_arrivals = false
+	Guide.rewards = false  # this test counts resources exactly
 	GameState.reset()
 	_run.call_deferred()
 

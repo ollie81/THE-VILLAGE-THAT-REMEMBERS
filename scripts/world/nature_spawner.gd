@@ -262,12 +262,15 @@ static func is_workable(entry: Dictionary) -> bool:
 
 
 ## The closest workable tree or rock within `reach` of `at`, or {}.
-static func nearest_workable(at: Vector3, reach: float) -> Dictionary:
+## `want` "tree" or "rock" limits it to one kind.
+static func nearest_workable(at: Vector3, reach: float, want: String = "") -> Dictionary:
 	var best: Dictionary = {}
 	var best_distance := reach
 	for entry: Dictionary in _clearable:
 		var pos: Vector3 = entry["pos"]
 		var d := Vector2(pos.x - at.x, pos.z - at.z).length()
+		if want != "" and (want == "rock") != (entry["kind"] == "rock"):
+			continue
 		if d < best_distance and is_workable(entry):
 			best_distance = d
 			best = entry

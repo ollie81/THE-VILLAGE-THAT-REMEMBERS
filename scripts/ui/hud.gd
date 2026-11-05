@@ -39,6 +39,7 @@ func _ready() -> void:
 	_build_notice()
 
 	_root.add_child(GameplayPanels.new())
+	_root.add_child(GuideArrow.new())
 	_root.add_child(PopulationPanel.new())
 	_root.add_child(ActionsMenu.new())
 	_root.add_child(GiftsPanel.new())

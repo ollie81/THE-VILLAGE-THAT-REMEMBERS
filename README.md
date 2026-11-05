@@ -533,6 +533,21 @@ alright.").
 Tests: `godot --headless --path . res://tests/hooks_test.tscn` (31 checks). Screenshots:
 `tools/hooks_screenshots.tscn`.
 
+## The guide
+
+The current objective always says what to do next, and shows where:
+
+- **A marker** floats over the next thing to do: the next villager to meet, the nearest tree to chop or
+  rock to mine, your building site, your farm plot, the fire for the meeting.
+- **An arrow at the edge of the screen** points to it when it's behind you or off to the side, with
+  how far it is ("Nia · 24 m").
+- **Building:** when the next step is to build something, the Build button glows and the Build menu
+  opens on it, marked "★ your next step". Short of materials, the guide sends you to a tree or rock.
+- **Rewards:** each finished objective brings a gift from the villagers (food, wood, stone, herbs).
+
+Tests: `godot --headless --path . res://tests/guide_test.tscn` (17 checks). Screenshots:
+`tools/guide_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):
@@ -560,7 +575,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **17/17**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

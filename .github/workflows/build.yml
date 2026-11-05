@@ -34,6 +34,8 @@ jobs:
         run: timeout 900 godot --headless --path . res://tests/build_test.tscn
       - name: Run sound test
         run: timeout 900 godot --headless --path . res://tests/sound_test.tscn
+      - name: Run guide test
+        run: timeout 900 godot --headless --path . res://tests/guide_test.tscn
 
   android:
     name: Android APK
