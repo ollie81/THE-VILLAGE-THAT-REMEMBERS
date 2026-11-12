@@ -189,7 +189,7 @@ static func _candidate(rng: RandomNumberGenerator, sex: String, age: int, profes
 		look.jaw_width = rng.randf_range(0.86, 1.0) if female else rng.randf_range(0.98, 1.2)
 		look.nose_length = rng.randf_range(0.85, 1.18)
 		look.nose_width = rng.randf_range(0.85, 1.25)
-		look.eye_size = rng.randf_range(0.98, 1.22)
+		look.eye_size = rng.randf_range(0.9, 1.12)
 	look.chin = rng.randf_range(0.85, 1.25)
 	look.cheekbones = rng.randf_range(0.2, 0.85)
 	look.brow_ridge = rng.randf_range(0.15, 0.4) if female else rng.randf_range(0.35, 0.8)
