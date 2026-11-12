@@ -816,8 +816,13 @@ func _build_hair() -> void:
 	t.material_id = SkinnedMeshTool.Surface.HAIR
 	var head := _bind(B.HEAD)
 	match look.hair_style:
+		"bald":
+			pass
 		"balding":
 			_hair_shell(0.3, 0.135, 0.03, 0.009, 0.17)
+		"short":
+			_hair_shell(0.196, 0.135, 0.02, 0.012)
+			_hair_fringe()
 		"long":
 			_hair_shell(0.196, 0.04, 0.0, 0.014)
 			_hair_long_drape()
@@ -854,7 +859,6 @@ func _build_hair() -> void:
 				t.ellipsoid(Transform3D(basis, p - outward * 0.003), _hair.lightened(t.rng.randf_range(-0.03, 0.06)), head, 7, 4, 0.12)
 		_:
 			_hair_shell(0.196, 0.135, 0.02, 0.012)
-			_hair_fringe()
 
 
 ## Three soft, swept locks break up the otherwise smooth short-hair silhouette.
@@ -862,14 +866,16 @@ func _build_hair() -> void:
 func _hair_fringe() -> void:
 	var head := _bind(B.HEAD)
 	for i in 3:
-		var a := lerpf(1.18, 1.96, float(i) / 2.0)
-		var root := _head_surface(0.205, a, 0.014)
-		var middle := _head_surface(0.184, a + (0.035 if i == 0 else (-0.035 if i == 2 else 0.0)), 0.017)
-		var tip := _head_surface(0.158 + (0.006 if i == 1 else 0.0), a + (0.07 if i == 0 else (-0.07 if i == 2 else 0.0)), 0.009)
+		# Keep each broad lock close to the scalp and sweep all three in the
+		# same direction rather than spreading them into separate spikes.
+		var base_angle: float = 1.34 + float(i) * 0.055
+		var root := _head_surface(0.211, base_angle, 0.003)
+		var middle := _head_surface(0.196, base_angle + 0.035, 0.004)
+		var tip := _head_surface(0.178, base_angle + 0.07, 0.003)
 		t.loft([
-			SkinnedMeshTool.ring(root, 0.014, 0.011, 0.012, head, _hair.lightened(0.025)),
-			SkinnedMeshTool.ring(middle, 0.011, 0.008, 0.009, head, _hair),
-			SkinnedMeshTool.ring(tip, 0.0015, 0.0015, 0.0015, head, _hair.darkened(0.04)),
+			SkinnedMeshTool.ring(root, 0.022, 0.006, 0.006, head, _hair),
+			SkinnedMeshTool.ring(middle, 0.015, 0.0045, 0.0045, head, _hair),
+			SkinnedMeshTool.ring(tip, 0.001, 0.001, 0.001, head, _hair),
 		], 7, Vector3.BACK, false, true)
 
 
@@ -1044,17 +1050,19 @@ func _build_clothing_details() -> void:
 
 ## A small, folded pocket gives plain shirts a readable tailored detail.
 func _build_chest_pocket() -> void:
-	var side := 1.0 if look.accent_color.get_luminance() > _shirt.get_luminance() else -1.0
-	var y := 1.315
-	var x := side * 0.075
-	var section := _torso_section(y)
-	var z: float = section[4] + section[2] * sqrt(maxf(0.0, 1.0 - pow(x / section[1], 2.0))) - 0.003
+	if look.has_accessory("apron") or look.has_accessory("vest"):
+		return
+	var side: float = 1.0 if look.accent_color.get_luminance() > _shirt.get_luminance() else -1.0
+	var y: float = 1.315
+	var x: float = side * 0.11
+	var section: Array = _torso_section(y)
+	var z: float = float(section[4]) + float(section[2]) * sqrt(maxf(0.0, 1.0 - pow(x / float(section[1]), 2.0))) - 0.003
 	var chest := _bind(B.CHEST)
-	var pocket := _shirt.lightened(0.12)
+	var pocket := _shirt.darkened(0.08)
 	t.material_id = SkinnedMeshTool.Surface.CLOTH
-	t.box(Transform3D(Basis.IDENTITY, Vector3(x, y, z)), Vector3(0.052, 0.064, 0.009), pocket, chest)
+	t.box(Transform3D(Basis.IDENTITY, Vector3(x, y, z)), Vector3(0.06, 0.07, 0.009), pocket, chest)
 	t.material_id = SkinnedMeshTool.Surface.DETAIL
-	t.tube(Vector3(x - 0.026, y + 0.029, z + 0.006), Vector3(x + 0.026, y + 0.029, z + 0.006),
+	t.tube(Vector3(x - 0.03, y + 0.032, z + 0.006), Vector3(x + 0.03, y + 0.032, z + 0.006),
 		0.0015, 0.0015, _shirt.darkened(0.24), chest, chest, 4)
 	t.ellipsoid_at(Vector3(x, y + 0.012, z + 0.009), Vector3(0.003, 0.003, 0.002), LEATHER.lightened(0.2), chest, 5, 3)
 
