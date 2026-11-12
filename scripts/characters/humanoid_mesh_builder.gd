@@ -599,7 +599,7 @@ func _build_ears() -> void:
 ## Eye placement in profile units: centre, radius and forward direction.
 func _eye(s: float) -> Dictionary:
 	var x := 0.036 * look.eye_spacing * s
-	var r := 0.0188 * look.eye_size
+	var r := 0.0172 * look.eye_size
 	var sec := _face_section(EYE_Y)
 	var a := acos(clampf(-x / float(sec[0]), -0.999, 0.999))
 	var surface := _skin_local(EYE_Y, a, false)
@@ -629,7 +629,7 @@ func _build_eyes() -> void:
 			var radius := r * sin(psi)
 			rings.append(SkinnedMeshTool.ring(c + fwd * r * (cos(psi) + 0.03), radius, radius, radius, head, step[1]))
 		t.loft(rings, 14, y_axis, false, true)
-		t.ellipsoid_at(c + fwd * r * 1.06 + y_axis * r * 0.3 - x_axis * r * 0.25 * s, Vector3.ONE * r * 0.12, Color(1, 1, 1), head, 6, 4)
+		t.ellipsoid_at(c + fwd * r * 1.06 + y_axis * r * 0.3 - x_axis * r * 0.25 * s, Vector3.ONE * r * 0.09, Color(1, 1, 1), head, 6, 4)
 		t.ellipsoid_at(c - x_axis * r * 0.92 * s - y_axis * r * 0.05 + fwd * r * 0.25, Vector3(r * 0.2, r * 0.15, r * 0.15), Color(0.86, 0.55, 0.52), head, 6, 4)
 		# Eyelids: caps around the eyeball whose opening follows the expression.
 		var tilt := s * (0.5 * look.eye_tilt + 0.32 * _c("brow_down") - 0.28 * _c("brow_sad"))
