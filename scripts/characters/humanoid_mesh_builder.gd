@@ -992,16 +992,6 @@ func _hair_clumps(count: int, thickness: float) -> void:
 		t.ellipsoid(Transform3D(basis, p), _hair.lightened(0.04 * float(i % 3) - 0.02), _bind(B.HEAD), 7, 4, 0.1)
 
 
-## Tufts along the hairline so the hair has a soft front edge.
-func _hair_fringe(thickness: float, count: int) -> void:
-	for i in count:
-		var a := lerpf(PI * 0.5 - 0.75, PI * 0.5 + 0.75, float(i) / maxf(count - 1, 1))
-		var p := _head_surface(0.2, a, thickness * 0.8)
-		var outward := (p - _head_point(Vector3(0, 0.2, 0))).normalized()
-		var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.028, 0.011, 0.007))
-		t.ellipsoid(Transform3D(basis, p - outward * 0.004), _hair.lightened(0.03 * (i % 2)), _bind(B.HEAD), 7, 4, 0.06)
-
-
 ## Long hair falling over the back and framing the face.
 func _hair_long_drape() -> void:
 	var rows := [
@@ -1058,7 +1048,7 @@ func _build_chest_pocket() -> void:
 	var y := 1.315
 	var x := side * 0.075
 	var section := _torso_section(y)
-	var z := section[4] + section[2] * sqrt(maxf(0.0, 1.0 - pow(x / section[1], 2.0))) - 0.003
+	var z: float = section[4] + section[2] * sqrt(maxf(0.0, 1.0 - pow(x / section[1], 2.0))) - 0.003
 	var chest := _bind(B.CHEST)
 	var pocket := _shirt.lightened(0.12)
 	t.material_id = SkinnedMeshTool.Surface.CLOTH

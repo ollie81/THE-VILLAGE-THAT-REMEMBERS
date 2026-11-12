@@ -12,11 +12,16 @@ static func lines_for(villager, count: int = 1) -> Array[String]:
 	var said: Array = villager.mind.memory.find("told", GameManager.PLAYER_ID).map(func(e): return String(e["detail"]))
 	var fresh: Array = topics.filter(func(t): return not said.has(String(t["key"])))
 	var out: Array[String] = []
-	fresh.sort_custom(func(a, b): return float(a["weight"]) > float(b["weight"]))
-	# The most interesting few, in a different order each time.
-	var shortlist: Array = fresh.slice(0, 5)
+	# Village news they haven't told you yet comes first, newest first:
+	# that's what people want to share ("Have you seen the new baby?").
+	var news: Array = fresh.filter(func(t): return String(t["key"]).begins_with("event:"))
+	news.sort_custom(func(a, b): return int(String(a["key"]).get_slice(":", 1)) > int(String(b["key"]).get_slice(":", 1)))
+	var rest: Array = fresh.filter(func(t): return not String(t["key"]).begins_with("event:"))
+	rest.sort_custom(func(a, b): return float(a["weight"]) > float(b["weight"]))
+	# Then the most interesting few of the rest, in a different order each time.
+	var shortlist: Array = rest.slice(0, 5)
 	shortlist.shuffle()
-	for topic: Dictionary in shortlist:
+	for topic: Dictionary in news + shortlist:
 		if out.size() >= count:
 			break
 		out.append(String(topic["line"]))
