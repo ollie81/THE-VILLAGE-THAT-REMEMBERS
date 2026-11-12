@@ -854,6 +854,23 @@ func _build_hair() -> void:
 				t.ellipsoid(Transform3D(basis, p - outward * 0.003), _hair.lightened(t.rng.randf_range(-0.03, 0.06)), head, 7, 4, 0.12)
 		_:
 			_hair_shell(0.196, 0.135, 0.02, 0.012)
+			_hair_fringe()
+
+
+## Three soft, swept locks break up the otherwise smooth short-hair silhouette.
+## They are part of the same head mesh and follow the head bone.
+func _hair_fringe() -> void:
+	var head := _bind(B.HEAD)
+	for i in 3:
+		var a := lerpf(1.18, 1.96, float(i) / 2.0)
+		var root := _head_surface(0.205, a, 0.014)
+		var middle := _head_surface(0.184, a + (0.035 if i == 0 else (-0.035 if i == 2 else 0.0)), 0.017)
+		var tip := _head_surface(0.158 + (0.006 if i == 1 else 0.0), a + (0.07 if i == 0 else (-0.07 if i == 2 else 0.0)), 0.009)
+		t.loft([
+			SkinnedMeshTool.ring(root, 0.014, 0.011, 0.012, head, _hair.lightened(0.025)),
+			SkinnedMeshTool.ring(middle, 0.011, 0.008, 0.009, head, _hair),
+			SkinnedMeshTool.ring(tip, 0.0015, 0.0015, 0.0015, head, _hair.darkened(0.04)),
+		], 7, Vector3.BACK, false, true)
 
 
 ## Hair grown over the sculpted scalp. Coverage is defined by a hairline
@@ -1030,7 +1047,25 @@ func _build_clothing_details() -> void:
 			t.material_id = SkinnedMeshTool.Surface.CLOTH
 	if look.tunic_length >= 0.3:
 		_build_tunic_skirt()
+	else:
+		_build_chest_pocket()
 	_build_belt(LEATHER)
+
+
+## A small, folded pocket gives plain shirts a readable tailored detail.
+func _build_chest_pocket() -> void:
+	var side := 1.0 if look.accent_color.get_luminance() > _shirt.get_luminance() else -1.0
+	var y := 1.315
+	var x := side * 0.075
+	var z := _torso_front(y) - 0.012
+	var chest := _bind(B.CHEST)
+	var pocket := _shirt.lightened(0.12)
+	t.material_id = SkinnedMeshTool.Surface.CLOTH
+	t.box(Transform3D(Basis.IDENTITY, Vector3(x, y, z)), Vector3(0.052, 0.064, 0.009), pocket, chest)
+	t.material_id = SkinnedMeshTool.Surface.DETAIL
+	t.tube(Vector3(x - 0.026, y + 0.029, z + 0.006), Vector3(x + 0.026, y + 0.029, z + 0.006),
+		0.0015, 0.0015, _shirt.darkened(0.24), chest, chest, 4)
+	t.ellipsoid_at(Vector3(x, y + 0.012, z + 0.009), Vector3(0.003, 0.003, 0.002), LEATHER.lightened(0.2), chest, 5, 3)
 
 
 func _build_belt(color: Color) -> void:
