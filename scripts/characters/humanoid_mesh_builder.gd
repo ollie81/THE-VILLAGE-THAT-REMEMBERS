@@ -840,6 +840,11 @@ func _build_hair() -> void:
 		"locs":
 			_hair_shell(0.19, 0.13, 0.04, 0.012)
 			_hair_locs()
+		"short":
+			_hair_shell(0.196, 0.135, 0.02, 0.012)
+			_hair_temples(0.009)
+			_hair_clumps(11, 0.009)
+			_hair_fringe(0.009, 7)
 		"curly":
 			_hair_shell(0.19, 0.13, 0.03, 0.014)
 			for i in 44:
