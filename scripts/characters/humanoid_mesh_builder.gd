@@ -1057,7 +1057,8 @@ func _build_chest_pocket() -> void:
 	var side := 1.0 if look.accent_color.get_luminance() > _shirt.get_luminance() else -1.0
 	var y := 1.315
 	var x := side * 0.075
-	var z := _torso_front(y) - 0.012
+	var section := _torso_section(y)
+	var z := section[4] + section[2] * sqrt(maxf(0.0, 1.0 - pow(x / section[1], 2.0))) - 0.003
 	var chest := _bind(B.CHEST)
 	var pocket := _shirt.lightened(0.12)
 	t.material_id = SkinnedMeshTool.Surface.CLOTH
