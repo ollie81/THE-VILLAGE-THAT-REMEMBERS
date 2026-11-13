@@ -128,7 +128,16 @@ func _run() -> void:
 	GameState.check_objectives()
 	await _frames(3)
 	guide.refresh()
-	_check(GameState.is_week_complete() and guide.target == Vector3.INF and not arrow.showing, "after the week, it steps aside")
+	_check(GameState.is_week_complete() and guide.target_label == "Workshop" and guide.step.contains("sword"),
+		"after the week, it points to the next adventure: %s" % guide.step)
+	GameState.set_flag(&"has_sword")
+	Thornwood.instance.mission_started = true
+	guide.refresh()
+	_check(guide.target_label == "Thornlings" and guide.target.distance_to(Thornwood.instance.center) < 0.1, "then to the thornlings in the west woods")
+	Thornwood.instance.mission_done = true
+	guide.refresh()
+	await _frames(2)
+	_check(guide.target == Vector3.INF and not arrow.showing, "and steps aside when there's nothing left to do")
 
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)

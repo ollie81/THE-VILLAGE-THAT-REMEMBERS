@@ -9,6 +9,7 @@ const RADIUS := 2.6
 const MASK_INTERACTION := 8
 
 var focused: Interactable = null
+var _had_focus: bool = false
 
 
 func _ready() -> void:
@@ -26,6 +27,14 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	# A target that was freed (e.g. furniture in a room you just left) looks
+	# equal to null, so it must be dropped explicitly or its prompt lingers.
+	if not is_instance_valid(focused):
+		if focused != null or _had_focus:
+			focused = null
+			_had_focus = false
+			focus_changed.emit(null)
+			GameManager.interaction_focus_changed.emit(null)
 	var best: Interactable = null
 	var best_score := INF
 	var facing := Vector3.FORWARD
@@ -46,6 +55,7 @@ func _physics_process(_delta: float) -> void:
 			best = candidate
 	if best != focused:
 		focused = best
+		_had_focus = best != null
 		focus_changed.emit(best)
 		GameManager.interaction_focus_changed.emit(best)
 

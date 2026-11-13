@@ -38,6 +38,8 @@ jobs:
         run: timeout 900 godot --headless --path . res://tests/guide_test.tscn
       - name: Run retention test
         run: timeout 900 godot --headless --path . res://tests/retention_test.tscn
+      - name: Run adventure test
+        run: timeout 900 godot --headless --path . res://tests/adventure_test.tscn
 
   android:
     name: Android APK

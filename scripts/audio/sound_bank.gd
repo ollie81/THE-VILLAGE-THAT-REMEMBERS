@@ -57,6 +57,31 @@ static func effects() -> Dictionary:
 			var base := 2600.0 + kind * 500.0 + rng.randf_range(-200, 200)
 			Synth.mix(bird, Synth.sweep(base, base * rng.randf_range(1.1, 1.5), rng.randf_range(0.06, 0.12)), n * 0.13, 0.7)
 		add.call("bird", bird)
+	# Combat: a sword swish, a hit, being hurt, a shield block, a creature's
+	# squeak, and a soft pop when one is beaten (stylised, never gory).
+	for v in 2:
+		var swing := Synth.envelope(Synth.noise(0.22, 0.35 + v * 0.1, rng), 0.06, 0.07)
+		Synth.mix(swing, Synth.envelope(Synth.sweep(700.0 + v * 80, 320.0, 0.2, 0.03), 0.03, 0.08), 0.0, 0.25)
+		add.call("swing", swing)
+		var hit := Synth.thump(170.0 + v * 30, 0.22)
+		Synth.mix(hit, Synth.envelope(Synth.noise(0.08, 0.7, rng), 0.0005, 0.02), 0.0, 0.7)
+		add.call("hit", hit)
+	var hurt := Synth.thump(110.0, 0.3)
+	Synth.mix(hurt, Synth.envelope(Synth.sweep(420.0, 260.0, 0.25, 0.01), 0.01, 0.1), 0.0, 0.5)
+	add.call("hurt", hurt)
+	var block := Synth.envelope(Synth.sweep(900.0, 860.0, 0.3, 0.0005), 0.0005, 0.08)
+	Synth.mix(block, Synth.thump(240.0, 0.2), 0.0, 0.8)
+	add.call("block", block)
+	for v in 2:
+		var squeak := Synth.buffer(0.3)
+		Synth.mix(squeak, Synth.sweep(900.0 + v * 200, 1500.0 + v * 250, 0.12, 0.005), 0.0, 0.8)
+		Synth.mix(squeak, Synth.sweep(1500.0 + v * 250, 1100.0, 0.1, 0.005), 0.12, 0.6)
+		add.call("squeak", squeak)
+	var pop := Synth.buffer(0.6)
+	Synth.mix(pop, Synth.envelope(Synth.noise(0.2, 0.5, rng), 0.002, 0.06), 0.0, 0.6)
+	for i in 3:
+		Synth.mix(pop, Synth.bell(Synth.midi_hz([84.0, 88.0, 91.0][i]), 0.4), 0.05 + i * 0.06, 0.3)
+	add.call("pop", pop)
 	var cricket := Synth.buffer(0.6)
 	for n in 6:
 		Synth.mix(cricket, Synth.envelope(Synth.sweep(4200.0, 4300.0, 0.03, 0.002), 0.001, 0.02), n * 0.05 + (0.25 if n >= 3 else 0.0), 0.5)

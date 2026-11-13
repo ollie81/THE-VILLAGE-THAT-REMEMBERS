@@ -5,6 +5,8 @@ extends Node3D
 ## the village stores).
 
 const TOOLS_COST := {&"wood": 4, &"stone": 3}
+const SWORD_COST := {&"wood": 8, &"stone": 6}
+const EDGE_COST := {&"wood": 6, &"stone": 12}
 
 var meeting: VillageMeeting
 
@@ -106,16 +108,56 @@ func _use_fire(_actor) -> void:
 
 # --- Workshop: tools -------------------------------------------------------------
 
+## The bench's recipes, in order: tools, then a sword and shield, then (after
+## the thornlings are chased off) a steel edge for the sword.
+func _next_recipe() -> String:
+	if not GameState.get_flag(&"has_tools"):
+		return "tools"
+	if not GameState.get_flag(&"has_sword"):
+		return "sword"
+	if not GameState.get_flag(&"sword_upgraded") and Thornwood.instance and Thornwood.instance.mission_done:
+		return "edge"
+	return ""
+
+
 func _bench_prompt() -> String:
-	if GameState.get_flag(&"has_tools"):
-		return "Workshop bench  (your tools are ready)"
-	return "Craft better tools  (%s)" % GameState.cost_text(TOOLS_COST)
+	match _next_recipe():
+		"tools":
+			return "Craft better tools  (%s)" % GameState.cost_text(TOOLS_COST)
+		"sword":
+			return "Forge a sword and shield  (%s)" % GameState.cost_text(SWORD_COST)
+		"edge":
+			return "Put a steel edge on your sword  (%s; hits twice as hard)" % GameState.cost_text(EDGE_COST)
+	return "Workshop bench  (your tools and sword are ready)"
 
 
 func _use_bench(actor) -> void:
-	if GameState.get_flag(&"has_tools"):
-		GameManager.notify("Your axe and pick are sharp. Every chop and strike gives one more.")
-		return
+	match _next_recipe():
+		"sword":
+			if not GameState.spend(SWORD_COST):
+				GameManager.notify(GameState.missing_text(SWORD_COST) + " to forge a sword and shield.")
+				return
+			if actor and actor.has_method("perform_action"):
+				actor.perform_action(&"work", 1.5, global_position)
+			GameState.set_flag(&"has_sword")
+			if actor and actor.get("combat") and actor.combat:
+				actor.combat.refresh_equipment()
+			GameManager.notify("You forged a sword and a shield. (F or Attack to swing, Q or Block to guard, C or Dodge to dodge.)")
+			if Thornwood.instance:
+				Thornwood.instance.start_mission()
+			return
+		"edge":
+			if not GameState.spend(EDGE_COST):
+				GameManager.notify(GameState.missing_text(EDGE_COST) + " for a steel edge.")
+				return
+			if actor and actor.has_method("perform_action"):
+				actor.perform_action(&"work", 1.5, global_position)
+			GameState.set_flag(&"sword_upgraded")
+			GameManager.notify("A steel edge! Your sword now hits twice as hard.")
+			return
+		"":
+			GameManager.notify("Your tools are sharp and your sword is ready.")
+			return
 	if not GameState.spend(TOOLS_COST):
 		GameManager.notify(GameState.missing_text(TOOLS_COST) + " to craft tools.")
 		return

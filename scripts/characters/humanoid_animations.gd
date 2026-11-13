@@ -35,6 +35,10 @@ const CLIPS := {
 	&"cheer": [0.8, "_cheer"],
 	&"dance": [1.6, "_dance"],
 	&"bow": [2.0, "_bow"],
+	&"slash": [0.55, "_slash"],
+	&"block": [1.2, "_block"],
+	&"dodge": [0.45, "_dodge"],
+	&"hurt": [0.4, "_hurt"],
 }
 
 static var _cache: Dictionary = {}
@@ -356,3 +360,67 @@ func _bow(x: float) -> Dictionary:
 	_arm(p, -1.0, -0.6 * bend, 0.1, -1.3 * bend)
 	p["hips"] = Vector3(0, 0, -0.06 * bend)
 	return p
+
+
+# --- Combat ---------------------------------------------------------------------------
+
+## A diagonal sword stroke with the right hand: wind up over the shoulder,
+## sweep across and down, recover. The shield arm stays up.
+func _slash(x: float) -> Dictionary:
+	var p := _base()
+	var wind := smoothstep(0.0, 0.3, x) * (1.0 - smoothstep(0.3, 0.45, x))
+	var strike := smoothstep(0.3, 0.48, x) * (1.0 - smoothstep(0.6, 1.0, x))
+	_arm(p, -1.0, -0.5 - 1.3 * wind - 0.9 * strike, 0.2 + 1.1 * wind - 0.25 * strike, -0.4 - 0.9 * wind + 0.1 * strike)
+	p[B.RIGHT_HAND] = Vector3(0.1 - 0.4 * strike, 0, 0)
+	_arm(p, 1.0, -0.9, 0.2, -1.3, 0.2)
+	p[B.SPINE] = Vector3(0.08 + 0.12 * strike, 0, 0)
+	p[B.CHEST] = Vector3(0.05, 0.45 * wind - 0.6 * strike, 0)
+	p[B.HEAD] = Vector3(0.05, -0.25 * wind + 0.3 * strike, 0)
+	_leg(p, -1.0, -0.4 * strike - 0.1, 0.35 * strike + 0.1, 0.05)
+	_leg(p, 1.0, 0.25, 0.15, -0.15)
+	p["hips"] = Vector3(0, -0.05 - 0.04 * strike, 0.04 * strike)
+	return p
+
+
+## Shield raised in front, knees bent, sword held low and back.
+func _block(x: float) -> Dictionary:
+	var p := _base()
+	var breath := _s(x)
+	_arm(p, 1.0, -1.3, 0.12, -1.45, 0.35)
+	p[B.LEFT_HAND] = Vector3(0, 0.4, 0)
+	_arm(p, -1.0, -0.45, 0.3, -0.9)
+	for side in [1.0, -1.0]:
+		_leg(p, side, -0.5, 0.85, -0.32)
+	p[B.SPINE] = Vector3(0.16 + 0.01 * breath, 0, 0)
+	p[B.CHEST] = Vector3(0.06, -0.2, 0)
+	p[B.HEAD] = Vector3(-0.08, 0.15, 0)
+	p["hips"] = Vector3(0, -0.13, 0)
+	return p
+
+
+## A low, quick sidestep dash: duck, arms tucked, legs coiled.
+func _dodge(x: float) -> Dictionary:
+	var p := _base()
+	var duck := sin(PI * clampf(x, 0.0, 1.0))
+	for side in [1.0, -1.0]:
+		_arm(p, side, -0.9 * duck, 0.25, -1.6 * duck)
+		_leg(p, side, -1.1 * duck, 1.6 * duck, -0.5 * duck)
+	p[B.SPINE] = Vector3(0.7 * duck, 0, 0)
+	p[B.CHEST] = Vector3(0.3 * duck, 0, 0)
+	p[B.HEAD] = Vector3(-0.3 * duck, 0, 0)
+	p["hips"] = Vector3(0, -0.42 * duck, 0.05 * duck)
+	return p
+
+
+## Knocked back by a blow.
+func _hurt(x: float) -> Dictionary:
+	var p := _base()
+	var jolt := sin(PI * clampf(x, 0.0, 1.0))
+	for side in [1.0, -1.0]:
+		_arm(p, side, -0.4 * jolt, 0.2 + 0.5 * jolt, -0.6 * jolt)
+		_leg(p, side, 0.15 * jolt * side, 0.25 * jolt, 0.0)
+	p[B.SPINE] = Vector3(-0.25 * jolt, 0, 0)
+	p[B.HEAD] = Vector3(-0.3 * jolt, 0.1 * jolt, 0)
+	p["hips"] = Vector3(0, -0.04 * jolt, -0.05 * jolt)
+	return p
+

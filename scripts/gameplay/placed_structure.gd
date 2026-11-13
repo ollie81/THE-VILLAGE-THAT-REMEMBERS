@@ -235,7 +235,7 @@ func get_interaction_verb() -> String:
 		&"well":
 			return "Water"
 		&"house":
-			return "Sleep"
+			return "Enter"
 		&"cottage":
 			return "Visit"
 		&"bench":
@@ -268,7 +268,7 @@ func get_interaction_prompt() -> String:
 		&"well":
 			return "Draw water for the crops"
 		&"house":
-			return "Sleep until morning" if _is_night() else "Your house  (sleep here at night)"
+			return "Enter your house" + ("  (bed's inside)" if _is_night() else "")
 		&"bench":
 			return "Sit and rest"
 		&"fruit_tree":
@@ -349,13 +349,16 @@ func use(actor: Node = null) -> String:
 			_notify("You watered %d farm plot%s." % [watered, "" if watered == 1 else "s"] if watered > 0 else "Fresh, cold water. Plant some crops and it will help them grow.")
 			return "watered"
 		&"house":
+			if Interiors.instance and actor == GameManager.player:
+				var front := global_transform.basis * Vector3(0, 0, 1)
+				var info := get_info()
+				var doorstep := global_position + front.normalized() * (float(info["footprint"].y) * 0.5 + 1.2)
+				Interiors.instance.enter("player", doorstep, rotation.y)
+				return "entered"
 			if _is_night():
-				if actor and actor.has_method("sleep_until_morning"):
-					actor.sleep_until_morning(true)
-				else:
-					WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0
-					WorldClock.set_time(6.5)
-					_notify("You slept until morning. Day %d." % WorldClock.day)
+				WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0
+				WorldClock.set_time(6.5)
+				_notify("You slept until morning. Day %d." % WorldClock.day)
 				return "slept"
 			_notify("Your own home in the village. Come back at night to sleep.")
 			return "home"

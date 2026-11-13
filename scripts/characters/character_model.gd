@@ -25,7 +25,7 @@ const WORK_ANIMATIONS: Array[StringName] = [&"work", &"gather"]
 const LOCOMOTION: Array[StringName] = [&"idle", &"walk", &"run"]
 ## Full-body actions, cross-faded over locomotion.
 const ACTIONS: Array[StringName] = [&"jump", &"work", &"gather", &"talk", &"wave",
-	&"sit", &"sit_ground", &"sleep", &"cheer", &"dance", &"bow"]
+	&"sit", &"sit_ground", &"sleep", &"cheer", &"dance", &"bow", &"slash", &"block", &"dodge", &"hurt"]
 ## How fast the movement blend follows changes in speed (per second).
 const SPEED_SMOOTHING := 8.0
 

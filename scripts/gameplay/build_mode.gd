@@ -224,6 +224,8 @@ static func placement_reason(structure_type: StringName, at: Vector3, yaw: float
 		return missing
 	var radius := StructureCatalog.radius(structure_type)
 	var blocked := VillageLayout.blocking_reason(at.x, at.z, radius, 0.6)
+	if blocked == "":
+		blocked = VillageDecor.blocking_reason(at, radius)
 	if blocked != "":
 		return blocked
 	if instance and instance.get_tree():

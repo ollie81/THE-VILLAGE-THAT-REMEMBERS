@@ -64,6 +64,33 @@ func _interact_center() -> Vector2:
 	return _screen() - Vector2(270, 110)
 
 
+func _block_center() -> Vector2:
+	return _screen() - Vector2(120, 290)
+
+
+func _dodge_center() -> Vector2:
+	return _screen() - Vector2(270, 270)
+
+
+func _eat_center() -> Vector2:
+	return _screen() - Vector2(410, 95)
+
+
+## True while armed with something hostile near: the fight buttons show.
+var fighting: bool = false
+var _can_eat: bool = false
+
+
+func _process(_delta: float) -> void:
+	var combat = GameManager.player.combat if GameManager.player and GameManager.player.get("combat") else null
+	var now: bool = combat != null and combat.in_fight()
+	var eat: bool = now and PlayerCombat.stews() > 0 and combat.health < PlayerCombat.MAX_HEALTH
+	if now != fighting or eat != _can_eat:
+		fighting = now
+		_can_eat = eat
+		queue_redraw()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -79,6 +106,19 @@ func _handle_touch(touch: InputEventScreenTouch) -> void:
 			if touch.position.distance_to(_jump_center()) < BUTTON_RADIUS * 1.15:
 				_press_button(touch.index, "jump")
 				return
+			if fighting:
+				if touch.position.distance_to(_interact_center()) < BUTTON_RADIUS * 1.15:
+					_press_button(touch.index, "attack")
+					return
+				if touch.position.distance_to(_block_center()) < BUTTON_RADIUS * 1.1:
+					_press_button(touch.index, "block")
+					return
+				if touch.position.distance_to(_dodge_center()) < BUTTON_RADIUS * 1.1:
+					_press_button(touch.index, "dodge")
+					return
+				if _can_eat and touch.position.distance_to(_eat_center()) < BUTTON_RADIUS:
+					_press_button(touch.index, "eat")
+					return
 			if interact_available and touch.position.distance_to(_interact_center()) < BUTTON_RADIUS * 1.15:
 				_press_button(touch.index, "interact")
 				return
@@ -170,7 +210,13 @@ func _draw() -> void:
 	draw_circle(knob, 36, Color(1, 0.95, 0.85, 0.7))
 
 	_draw_button(_jump_center(), "Jump", _button_touches.values().has("jump"))
-	if interact_available:
+	if fighting:
+		_draw_button(_interact_center(), "Attack", _button_touches.values().has("attack"))
+		_draw_button(_block_center(), "Block", _button_touches.values().has("block"))
+		_draw_button(_dodge_center(), "Dodge", _button_touches.values().has("dodge"))
+		if _can_eat:
+			_draw_button(_eat_center(), "Eat (%d)" % PlayerCombat.stews(), _button_touches.values().has("eat"))
+	elif interact_available:
 		var verb := "Use"
 		if _interact_target and is_instance_valid(_interact_target):
 			verb = _interact_target.get_verb()

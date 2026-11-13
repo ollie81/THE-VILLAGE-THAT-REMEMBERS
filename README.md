@@ -587,6 +587,37 @@ The current objective always says what to do next, and shows where:
 Tests: `godot --headless --path . res://tests/guide_test.tscn` (17 checks). Screenshots:
 `tools/guide_screenshots.tscn`.
 
+## Adventure, milestone 1: homes, a livelier village, the first fight
+
+The plan for turning the village into a village-life adventure (audit, what's missing, the technical plan,
+the order of work) is in [docs/ADVENTURE_PLAN.md](docs/ADVENTURE_PLAN.md). Milestone 1:
+
+- **Walk into homes.** Every founder's home has a front door ("Enter Mara's house"; at night you can only
+  knock). Inside is a furnished room with its owner's colours and belongings: Mara's drawing table and
+  plans, Elias's seed sacks and vegetables, Nia's drying herbs and potted plants, Tomas's workbench, Sera's
+  crates and cloth. Sit at their table. Your own house has your bed (sleep the night, or nap and heal) and a
+  hearth where you cook **stew** (2 food, 1 herb) that heals you in a fight. Rooms are built when you go in
+  and freed when you leave: a short fade, no loading. Saving indoors saves the doorstep.
+- **A livelier village.** Flower planters by every front door, an herb bed beside every home, and a market
+  corner with two stalls by the meeting circle. Trees that come between the camera and you are hidden
+  while they're in the way.
+- **The first fight.** Forge a **sword and shield** at the workshop bench (8 wood, 6 stone, after the tools).
+  Tomas then asks you to chase the **thornlings** out of the west woods: bramble-red, thorny little creatures
+  that wander, notice you, give chase, clearly wind up (crouch, bristle, squeak) and lunge, then need a
+  moment to recover. Swing (F, or **Attack**), hold the shield up (Q, or **Block**: 80% less damage when facing
+  the blow), **Dodge** (C) past a lunge, and **Eat** a stew (H) to heal. Three hits beat a thornling; it pops and
+  leaves herbs. Clearing the woods pays 12 wood, 8 stone and 3 food, and Tomas remembers it. They come back two
+  days later for a smaller reward. Afterwards the bench can put a **steel edge** on the sword (hits twice as
+  hard). Health comes back on its own out of a fight. Being knocked out sends you home a couple of hours
+  later with nothing lost. On a phone, the fight buttons appear only when you're armed and something hostile
+  is near. Violence is stylised: no blood, creatures pop.
+
+Not in this milestone (see the plan): other enemy kinds, bosses, caves, areas beyond the village, raids,
+a quest log, shops, weather, location music. None of it has been tried on a real phone yet.
+
+Tests: `godot --headless --path . res://tests/adventure_test.tscn`. Screenshots:
+`tools/adventure_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):
@@ -614,7 +645,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **17/17**, the retention test **59/59**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **59/59**, the adventure test **48/48**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

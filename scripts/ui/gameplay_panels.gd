@@ -55,7 +55,7 @@ func _process(_delta: float) -> void:
 	# The guide's next step replaces the general hint, and the Build button
 	# glows when the next step is to build something.
 	var guide := Guide.instance
-	if guide and guide.step != "" and not GameState.is_week_complete():
+	if guide and guide.step != "":
 		_objective_hint.text = guide.step
 	var glow := guide != null and guide.wanted_build != &"" and not _build_menu.visible
 	_build_button.modulate = Color(1.0, 0.9 + 0.1 * sin(Time.get_ticks_msec() * 0.006), 0.55 + 0.45 * absf(sin(Time.get_ticks_msec() * 0.003))) if glow else Color.WHITE

@@ -16,6 +16,9 @@ const CROSSFADE := 6.0
 const MAX_PLAYERS := 12
 
 var volumes := {BUS_MUSIC: 0.55, BUS_EFFECTS: 0.8, BUS_AMBIENCE: 0.6}
+## True inside a home (the outdoor ambience is muffled).
+var indoor: bool = false
+const INDOOR_AMBIENCE_DB := -12.0
 ## Tests switch this off so they don't overwrite the player's volume settings.
 var persist: bool = true
 ## The last few effects that actually played (for tests and debugging).
@@ -94,7 +97,14 @@ func _apply_volume(bus: String) -> void:
 		return
 	var value := float(volumes.get(bus, 1.0))
 	AudioServer.set_bus_mute(index, value <= 0.001)
-	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(value, 0.001)))
+	var muffle := INDOOR_AMBIENCE_DB if indoor and bus == BUS_AMBIENCE else 0.0
+	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(value, 0.001)) + muffle)
+
+
+## Indoors the wind and birds are muffled.
+func set_indoor(value: bool) -> void:
+	indoor = value
+	_apply_volume(BUS_AMBIENCE)
 
 
 func _load_settings() -> void:

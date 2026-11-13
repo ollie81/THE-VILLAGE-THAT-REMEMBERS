@@ -84,7 +84,10 @@ func refresh() -> void:
 	wanted_build = &""
 	step = ""
 	var player = GameManager.player
-	if player == null or GameState.is_week_complete():
+	if player == null:
+		return
+	if GameState.is_week_complete():
+		_adventure(player.global_position)
 		return
 	var from: Vector3 = player.global_position
 	match String(GameState.current_objective()["id"]):
@@ -115,6 +118,18 @@ func refresh() -> void:
 		"meeting":
 			var hour := WorldClock.time_of_day
 			_aim(Vector3.ZERO, "Village fire", "Call a meeting at the fire%s." % ("" if hour >= 17.0 and hour < 21.5 else " between 17:00 and 21:30"))
+
+
+## After the first week: forge a sword, then chase the thornlings off.
+func _adventure(_from: Vector3) -> void:
+	if not PlayerCombat.is_armed():
+		var bench := get_tree().current_scene.find_child("WorkshopBench", true, false) as Node3D
+		if bench:
+			_aim(bench.global_position, "Workshop", "Forge a sword and shield at the workshop (%s)." % GameState.cost_text(WorldObjects.SWORD_COST))
+		return
+	var woods := Thornwood.instance
+	if woods and woods.mission_active():
+		_aim(woods.center, "Thornlings", "Chase the thornlings out of the west woods.")
 
 
 func _aim(at: Vector3, label: String, next_step: String) -> void:

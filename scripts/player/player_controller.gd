@@ -17,6 +17,8 @@ const MASK_SOLID := 1 | 4 | 16
 var camera_rig: CameraRig
 var model: CharacterModel
 var detector: InteractionDetector
+## Health, sword, shield and dodging (see PlayerCombat).
+var combat: PlayerCombat
 var spawn_point: Vector3 = Vector3.ZERO
 
 var _action_time: float = 0.0
@@ -62,6 +64,8 @@ func _ready() -> void:
 
 	detector = InteractionDetector.new()
 	add_child(detector)
+	combat = PlayerCombat.new()
+	add_child(combat)
 	GameManager.register_player(self)
 
 
@@ -85,6 +89,13 @@ static func create_default_appearance() -> CharacterAppearance:
 func can_control() -> bool:
 	return GameManager.camera_mode == GameManager.CameraMode.EXPLORATION and not GameManager.is_in_conversation() \
 		and _action_time <= 0.0
+
+
+## A combat move's animation (slash, dodge, hurt) for `duration` seconds.
+func play_combat_animation(animation: StringName, duration: float) -> void:
+	_action_time = duration
+	_action_animation = animation
+	model.set_animation(animation)
 
 
 ## Plays an emote (wave, bow, cheer, dance). Nearby villagers react.
@@ -200,10 +211,16 @@ func _physics_process(delta: float) -> void:
 
 	var running := InputRouter.is_run_requested(move)
 	var target_speed := (run_speed if running else walk_speed) * minf(move.length() * 1.15, 1.0)
+	if combat:
+		target_speed *= combat.speed_factor()
 	var target_velocity := direction.normalized() * target_speed if direction.length() > 0.01 else Vector3.ZERO
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var rate := acceleration if target_velocity.length() > 0.01 else deceleration
 	horizontal = horizontal.move_toward(target_velocity, rate * delta)
+	# A dodge or a knock-back moves the player whatever the stick says.
+	var forced: Variant = combat.movement_override() if combat else null
+	if forced is Vector3:
+		horizontal = forced
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 
@@ -215,7 +232,7 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	if horizontal.length() > 0.2:
+	if horizontal.length() > 0.2 and not (combat and (combat.blocking or combat.is_dodging() or combat.is_attacking())):
 		var target_yaw := atan2(horizontal.x, horizontal.z)
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clampf(turn_speed * delta, 0.0, 1.0))
 
@@ -247,6 +264,8 @@ func _footsteps(speed: float, delta: float) -> void:
 func _update_animation(speed: float) -> void:
 	if _action_time > 0.0:
 		model.set_animation(_action_animation)
+	elif combat and combat.blocking:
+		model.set_animation(&"block")
 	elif not is_on_floor():
 		model.set_animation(&"jump")
 	elif speed > walk_speed + 0.6:
@@ -265,8 +284,11 @@ func face_towards(point: Vector3) -> void:
 
 
 func get_save_data() -> Dictionary:
+	var at := global_position
+	if Interiors.instance and Interiors.instance.is_inside():
+		at = Interiors.instance.exit_position()  # rooms aren't saved; the doorstep is
 	return {
-		"position": [global_position.x, global_position.y, global_position.z],
+		"position": [at.x, at.y, at.z],
 		"yaw": model.rotation.y,
 	}
 

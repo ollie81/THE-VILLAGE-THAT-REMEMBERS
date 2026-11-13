@@ -243,6 +243,54 @@ static func _set_shown(entry: Dictionary, shown: bool) -> void:
 		shape.set_deferred("disabled", not shown)
 
 
+# --- Keeping the player in view -------------------------------------------------------
+
+## Trees hidden because they stood between the camera and the player.
+static var _view_hidden: Array = []
+
+
+## Hides trees whose crowns block the view from `camera` to `target` (and
+## brings back the ones that no longer do). Cheap: only trees near the camera.
+static func update_view(camera: Vector3, target: Vector3) -> int:
+	var segment := target - camera
+	var length := segment.length()
+	var still: Array = []
+	for entry: Dictionary in _view_hidden:
+		if _blocks_view(entry, camera, target, segment, length):
+			still.append(entry)
+		else:
+			entry.erase("view_hidden")
+			if not entry.get("gone", false) and not entry.get("felled", false):
+				_set_shown(entry, true)
+	_view_hidden = still
+	for entry: Dictionary in _clearable:
+		if entry.get("view_hidden", false) or entry.get("gone", false) or entry.get("felled", false):
+			continue
+		var kind: String = entry["kind"]
+		if kind != "tree" and kind != "pine":
+			continue
+		var pos: Vector3 = entry["pos"]
+		if absf(pos.x - camera.x) > length + 4.0 or absf(pos.z - camera.z) > length + 4.0:
+			continue
+		if _blocks_view(entry, camera, target, segment, length):
+			entry["view_hidden"] = true
+			_set_shown(entry, false)
+			_view_hidden.append(entry)
+	return _view_hidden.size()
+
+
+static func _blocks_view(entry: Dictionary, camera: Vector3, target: Vector3, segment: Vector3, length: float) -> bool:
+	if length < 0.1:
+		return false
+	var scale := float(entry["scale"])
+	var crown: Vector3 = entry["pos"] + Vector3(0, 3.0 * scale, 0)
+	var t := clampf((crown - camera).dot(segment) / (length * length), 0.0, 1.0)
+	if t > 0.97:
+		return false  # behind the player
+	var closest := camera + segment * t
+	return closest.distance_to(crown) < 2.1 * scale and Vector2(crown.x - target.x, crown.z - target.z).length() > 1.0
+
+
 # --- Wild trees and rocks the player can work ------------------------------------------
 
 ## Whether a tree or rock out in the world can be chopped or mined: trees and

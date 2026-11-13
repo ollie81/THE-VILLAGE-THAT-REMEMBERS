@@ -183,7 +183,14 @@ func _run() -> void:
 	_check(GameState.completed_structures(&"house") == 1, "the house is finished")
 	WorldClock.set_time(22.0)
 	await _use(house, Vector3(0, 0, 4.0))
+	# The house opens its door; the bed is inside.
+	await get_tree().create_timer(Interiors.FADE_TIME * 2.0 + 0.3).timeout
+	_check(Interiors.instance.is_inside() and Interiors.instance.current == "player", "the house's door takes you inside")
+	var bed: UsableObject = Interiors.instance._room.find_child("Bed", true, false)
+	bed.use.call(GameManager.player)
 	_check(WorldClock.time_of_day > 6.0 and WorldClock.time_of_day < 7.0, "sleeping in the house skips to morning")
+	Interiors.instance.leave()
+	await get_tree().create_timer(Interiors.FADE_TIME * 2.0 + 0.3).timeout
 
 	# --- Meeting and objectives -----------------------------------------------------
 	for v in GameManager.villagers:

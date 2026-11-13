@@ -23,6 +23,10 @@ var mode: int = GameManager.CameraMode.EXPLORATION
 var yaw: float = 0.0
 var pitch: float = -0.3
 var distance: float = 5.5
+## Inside a home: a closer camera that stays under the ceiling.
+var indoor: bool = false
+var _view_timer: float = 0.0
+const INDOOR_DISTANCE := 3.0
 var manage_focus: Vector3 = Vector3.ZERO
 var manage_yaw: float = deg_to_rad(45.0)
 var manage_pitch: float = deg_to_rad(-52.0)
@@ -111,6 +115,12 @@ func _process(delta: float) -> void:
 	var wanted := lerpf(0.3, 1.0, night) if talking else 0.0
 	face_light.visible = talking or face_light.light_energy > 0.01
 	face_light.light_energy = move_toward(face_light.light_energy, wanted, delta * 2.5)
+	_view_timer -= delta
+	if _view_timer <= 0.0 and target != null:
+		_view_timer = 0.15
+		var exploring := mode == GameManager.CameraMode.EXPLORATION and not indoor
+		NatureSpawner.update_view(camera.global_position if exploring else Vector3(0, -1000, 0),
+			target.global_position + Vector3(0, 1.4, 0) if exploring else Vector3(0, -1000, 0))
 	if _transition < 1.0:
 		_transition = minf(_transition + delta / TRANSITION_TIME, 1.0)
 		var t := smoothstep(0.0, 1.0, _transition)
@@ -153,8 +163,10 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	if target == null:
 		return camera.global_transform
 	var pivot := target.global_position + Vector3(0.0, 1.55, 0.0)
+	if indoor:
+		pitch = clampf(pitch, -0.7, -0.15)
 	var offset := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch) * Vector3(0.0, 0.0, 1.0)
-	var wanted := distance
+	var wanted := minf(distance, INDOOR_DISTANCE) if indoor else distance
 	# Pull the camera in front of walls and trees between it and the player.
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(pivot, pivot + offset * (distance + 0.3), 1)

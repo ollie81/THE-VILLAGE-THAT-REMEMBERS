@@ -95,6 +95,9 @@ static func is_on_bridge(x: float, z: float) -> bool:
 ## Ground height including walkable structures. Used by villagers, who move
 ## along paths without physics, and by decoration placement.
 static func get_walk_height(x: float, z: float) -> float:
+	var room_floor := Interiors.floor_at(x, z)
+	if not is_nan(room_floor):
+		return room_floor
 	var ground := TerrainGenerator.get_height(x, z)
 	if is_on_bridge(x, z):
 		return maxf(ground, bridge_deck_height(x))
