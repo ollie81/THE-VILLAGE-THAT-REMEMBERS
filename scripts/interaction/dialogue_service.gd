@@ -120,21 +120,24 @@ static func fit_menu(menu: Array) -> Array:
 	if menu.size() <= DialoguePanel.MAX_CHOICES:
 		return menu
 	var folded := ["ask", "kind", "unkind"]
-	var out: Array = []
-	var inserted := false
+	var errands: Array = []
+	var news: Array = []
+	var bye: Array = []
+	var has_more := false
 	for choice: Dictionary in menu:
-		if String(choice.get("action", "")) in folded:
-			if not inserted:
-				out.append({"text": "Something else...", "action": "more"})
-				inserted = true
-			continue
-		out.append(choice)
-	# Still too many (a lot of errands at once): keep the first ones, and Goodbye.
-	if out.size() > DialoguePanel.MAX_CHOICES:
-		var bye: Dictionary = out[-1]
-		out = out.slice(0, DialoguePanel.MAX_CHOICES - 1)
-		out.append(bye)
-	return out
+		var action := String(choice.get("action", ""))
+		if action in folded or action == "more":
+			has_more = true
+		elif action == "news":
+			news.append(choice)
+		elif action == "bye":
+			bye.append(choice)
+		else:
+			errands.append(choice)
+	var tail: Array = news + ([{"text": "Something else...", "action": "more"}] if has_more else []) + bye
+	# A lot of errands at once: the first ones show (the rest next time).
+	errands = errands.slice(0, DialoguePanel.MAX_CHOICES - tail.size())
+	return errands + tail
 
 
 ## What "Something else..." opens.

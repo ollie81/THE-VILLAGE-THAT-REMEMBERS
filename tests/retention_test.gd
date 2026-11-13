@@ -288,6 +288,12 @@ func _stories() -> void:
 	var fitted := DialogueService.fit_menu(crowded)
 	_check(fitted.size() <= DialoguePanel.MAX_CHOICES and String(fitted[-1]["action"]) == "bye" and fitted.any(func(c): return c["action"] == "more"),
 		"with many errands the menu still fits: kind, unkind and help fold into \"Something else...\" (%d answers)" % fitted.size())
+	var swamped: Array = []
+	for i in 9:
+		swamped.append({"text": "errand %d" % i, "action": "request"})
+	var full := DialogueService.fit_menu(swamped + DialogueService.closing_menu())
+	_check(full.size() == DialoguePanel.MAX_CHOICES and full.slice(-3).map(func(c): return c["action"]) == ["news", "more", "bye"],
+		"even with nine errands: %s" % str(full.map(func(c): return c["action"])))
 	var more := Conversation.new(tomas, player)
 	more.choices = fitted
 	more.choose(fitted.find(fitted.filter(func(c): return c["action"] == "more")[0]))
