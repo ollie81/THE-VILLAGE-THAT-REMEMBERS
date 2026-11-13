@@ -110,7 +110,36 @@ static func menu_for(villager) -> Array:
 		menu = VillageStories.instance.choices_for(villager) + menu
 	if villager and not Chatter.has_news(villager):
 		menu = menu.filter(func(c): return String(c.get("action", "")) != "news")
-	return menu
+	return fit_menu(menu)
+
+
+## Keeps a menu within what fits on screen: when there are too many answers,
+## asking for help and being kind or unkind fold into "Something else...",
+## so requests, stories, news and Goodbye always stay visible.
+static func fit_menu(menu: Array) -> Array:
+	if menu.size() <= DialoguePanel.MAX_CHOICES:
+		return menu
+	var folded := ["ask", "kind", "unkind"]
+	var out: Array = []
+	var inserted := false
+	for choice: Dictionary in menu:
+		if String(choice.get("action", "")) in folded:
+			if not inserted:
+				out.append({"text": "Something else...", "action": "more"})
+				inserted = true
+			continue
+		out.append(choice)
+	# Still too many (a lot of errands at once): keep the first ones, and Goodbye.
+	if out.size() > DialoguePanel.MAX_CHOICES:
+		var bye: Dictionary = out[-1]
+		out = out.slice(0, DialoguePanel.MAX_CHOICES - 1)
+		out.append(bye)
+	return out
+
+
+## What "Something else..." opens.
+static func more_menu() -> Array:
+	return closing_menu().filter(func(c): return String(c["action"]) in ["ask", "kind", "unkind"]) + [{"text": "Never mind.", "action": "back"}]
 
 
 static func closing_menu() -> Array:

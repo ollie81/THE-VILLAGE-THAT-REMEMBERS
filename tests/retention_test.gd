@@ -283,6 +283,15 @@ func _stories() -> void:
 	_check(lines.size() == 2 and String(lines[1]).contains("make peace"), "she asks you to carry a peace offer: %s" % (lines[1] if lines.size() > 1 else ""))
 	var menu: Array = DialogueService.menu_for(tomas)
 	_check(menu.size() <= DialoguePanel.MAX_CHOICES and String(menu[0]["text"]).contains("Sera would like to make peace"), "talking to Tomas, you can pass it on (%d answers, all on screen)" % menu.size())
+	# However many errands there are, the menu fits and Goodbye stays.
+	var crowded: Array = [{"text": "a", "action": "request"}, {"text": "b", "action": "request"}, {"text": "c", "action": "request"}] + menu
+	var fitted := DialogueService.fit_menu(crowded)
+	_check(fitted.size() <= DialoguePanel.MAX_CHOICES and String(fitted[-1]["action"]) == "bye" and fitted.any(func(c): return c["action"] == "more"),
+		"with many errands the menu still fits: kind, unkind and help fold into \"Something else...\" (%d answers)" % fitted.size())
+	var more := Conversation.new(tomas, player)
+	more.choices = fitted
+	more.choose(fitted.find(fitted.filter(func(c): return c["action"] == "more")[0]))
+	_check(more.choice_texts().has("Be kind...") and more.choice_texts().has("Never mind."), "and \"Something else...\" opens them")
 	var talk := Conversation.new(tomas, player)
 	talk.choices = menu
 	talk.choose(0)

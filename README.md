@@ -569,7 +569,7 @@ Release builds use test ads until a real unit ID is put in `PRODUCTION_REWARDED_
 isn't in the project yet (see the release checklist below). Without it, release builds show no ads and debug
 builds show a simulated ad.
 
-Tests: `godot --headless --path . res://tests/retention_test.tscn` (59 checks). Screenshots:
+Tests: `godot --headless --path . res://tests/retention_test.tscn` (61 checks). Screenshots:
 `tools/festival_screenshots.tscn`.
 
 ## The guide
@@ -645,7 +645,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **59/59**, the adventure test **49/49**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **61/61**, the adventure test **49/49**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
