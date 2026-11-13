@@ -54,9 +54,12 @@ func _ready() -> void:
 	name = "%s_%d" % [String(record["type"]).to_pascal_case(), int(record["uid"])]
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.font_size = 48
+	_label.font_size = 40
 	_label.outline_size = 12
-	_label.pixel_size = 0.005
+	# Same size on screen at any distance, so it's readable on a phone.
+	_label.fixed_size = true
+	_label.pixel_size = 0.0011
+	_label.no_depth_test = true
 	_label.position = Vector3(0, 2.6 if get_type() == &"house" else 1.6, 0)
 	add_child(_label)
 	interactable = Interactable.new()
@@ -81,11 +84,71 @@ func _rebuild() -> void:
 	else:
 		_visual = StructureCatalog.create_construction(get_type(), work_fraction())
 		_label.visible = true
-		_label.text = "%s  %d / %d" % [get_info()["name"], int(record["work"]), int(get_info()["work"])]
+		_label.text = construction_text()
+	_update_progress_bar()
 	add_child(_visual)
 	_crop_stage = -1
 	_update_crops()
 	interactable.enabled = true
+
+
+## e.g. "Cottage: 2 of 6 done\nNext: upper walls (tap Build)".
+func construction_text() -> String:
+	var done := int(record["work"])
+	var total := int(get_info()["work"])
+	return "%s: %d of %d done\nNext: %s (tap Build)" % [get_info()["name"], done, total, StructureCatalog.stage_name(get_type(), done + 1)]
+
+
+## A bar over a building site that fills as it's built (turned to the camera).
+var _bar: Node3D
+var _bar_fill: MeshInstance3D
+
+
+func _update_progress_bar() -> void:
+	if is_complete():
+		if _bar:
+			_bar.queue_free()
+			_bar = null
+		return
+	if _bar == null:
+		_bar = Node3D.new()
+		_bar.name = "ProgressBar"
+		_bar.position = _label.position + Vector3(0, 0.95, 0)
+		add_child(_bar)
+		var back := MeshInstance3D.new()
+		var back_mesh := BoxMesh.new()
+		back_mesh.size = Vector3(2.4, 0.28, 0.02)
+		back.mesh = back_mesh
+		back.material_override = _flat(Color(0.12, 0.09, 0.06))
+		_bar.add_child(back)
+		_bar_fill = MeshInstance3D.new()
+		var fill_mesh := BoxMesh.new()
+		fill_mesh.size = Vector3(2.25, 0.18, 0.02)
+		_bar_fill.mesh = fill_mesh
+		_bar_fill.material_override = _flat(Color(0.45, 0.85, 0.35))
+		_bar_fill.position = Vector3(0, 0, 0.015)
+		_bar.add_child(_bar_fill)
+	var fraction := maxf(work_fraction(), 0.02)
+	_bar_fill.scale = Vector3(fraction, 1, 1)
+	_bar_fill.position.x = -1.125 * (1.0 - fraction)
+
+
+func _process(_delta: float) -> void:
+	if _bar == null:
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera:
+		var to := camera.global_position - _bar.global_position
+		to.y = 0.0
+		if to.length() > 0.1:
+			_bar.global_rotation = Vector3(0, atan2(to.x, to.z), 0)
+
+
+static func _flat(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return material
 
 
 func work_fraction() -> float:
@@ -237,7 +300,7 @@ func get_interaction_verb() -> String:
 		&"house":
 			return "Enter"
 		&"cottage":
-			return "Visit"
+			return "Enter"
 		&"bench":
 			return "Sit"
 		&"fruit_tree":
@@ -257,7 +320,7 @@ func get_interaction_prompt() -> String:
 		"remove":
 			return "Remove this %s (get half back)" % String(info["name"]).to_lower()
 	if not is_complete():
-		return "Build %s  (%d / %d)" % [String(info["name"]).to_lower(), int(record["work"]), int(info["work"])]
+		return "Build %s: next, %s  (%d / %d)" % [String(info["name"]).to_lower(), StructureCatalog.stage_name(get_type(), int(record["work"]) + 1), int(record["work"]), int(info["work"])]
 	match get_type():
 		&"farm_plot":
 			if is_ripe():
@@ -278,8 +341,26 @@ func get_interaction_prompt() -> String:
 		&"chicken_coop":
 			return "Chicken coop  (+%d food every morning)" % EGGS_FOOD
 		&"cottage":
-			return "Cottage  (%d / %d living here)" % [Population.residents_of(home_id()).size(), Population.COTTAGE_CAPACITY]
+			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
+			if names.is_empty():
+				return "Enter the cottage  (nobody lives here yet; room for %d)" % Population.COTTAGE_CAPACITY
+			return "Enter the cottage  (home of %s)" % ", ".join(names)
 	return String(info["name"])
+
+
+## The room behind this home's door ("player", or "cottage_<uid>": every
+## cottage keeps its own layout, saved through its uid).
+func interior_id() -> String:
+	return "player" if get_type() == &"house" else "cottage_%d" % int(record["uid"])
+
+
+## Just outside the front door (where you come back out), wherever the home
+## has been moved to.
+func doorstep() -> Vector3:
+	var front := (global_transform.basis * Vector3(0, 0, 1)).normalized()
+	var at := global_position + front * (float(get_info()["footprint"].y) * 0.5 + 1.2)
+	at.y = VillageLayout.get_walk_height(at.x, at.z)
+	return at
 
 
 ## The home location id of a finished cottage.
@@ -350,10 +431,7 @@ func use(actor: Node = null) -> String:
 			return "watered"
 		&"house":
 			if Interiors.instance and actor == GameManager.player:
-				var front := global_transform.basis * Vector3(0, 0, 1)
-				var info := get_info()
-				var doorstep := global_position + front.normalized() * (float(info["footprint"].y) * 0.5 + 1.2)
-				Interiors.instance.enter("player", doorstep, rotation.y)
+				Interiors.instance.enter("player", doorstep(), rotation.y)
 				return "entered"
 			if _is_night():
 				WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0
@@ -387,6 +465,9 @@ func use(actor: Node = null) -> String:
 			_notify("The village looks lovelier for it. (Village beauty: %d)" % int(GameState.beauty()))
 			return "admired"
 		&"cottage":
+			if Interiors.instance and actor == GameManager.player:
+				Interiors.instance.enter(interior_id(), doorstep(), rotation.y)
+				return "entered"
 			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
 			_notify("Nobody lives here yet." if names.is_empty() else "Home of %s." % ", ".join(names))
 			return "visited"

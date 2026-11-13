@@ -117,7 +117,11 @@ func confirm() -> String:
 		return ""
 	GameState.spend(info["cost"])
 	GameState.add_structure(type, _position, current_yaw())
-	GameManager.notify("%s placed. Work on it to finish building." % info["name"])
+	var work := int(info["work"])
+	if work > 1:
+		GameManager.notify("%s site placed! Walk up to it and tap Build: each tap adds a stage (%d in all, starting with %s). Villagers can help if you ask them." % [info["name"], work, StructureCatalog.stage_name(type, 1)])
+	else:
+		GameManager.notify("%s placed. Walk up to it and tap Build once to finish it." % info["name"])
 	cancel()
 	return ""
 

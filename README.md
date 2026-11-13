@@ -618,6 +618,30 @@ a quest log, shops, weather, location music. None of it has been tried on a real
 Tests: `godot --headless --path . res://tests/adventure_test.tscn`. Screenshots:
 `tools/adventure_screenshots.tscn`.
 
+## Homes, building and a growing village (fixes after the first phone test)
+
+- **Cottages you build have a door.** A finished cottage says "Enter the cottage (home of ...)". Each cottage
+  gets its own room, always the same for that cottage (its layout, colours and belongings come from its
+  number and the trade of who lives there). Moving a cottage takes its door with it; removing it removes both.
+  Building sites have no door.
+- **Rooms are proper homes:** a kitchen corner (hearth with fire and pot, worktop with bread and vegetables,
+  shelves of jars, hanging pans, a barrel), a bedroom corner (bed with blanket and pillow, side table and
+  candle, chest, rug), a dining table with chairs, a dresser or bookcase with a picture above, plants, coat
+  pegs, curtained windows that show the sky, and warm light from the hearth and a lamp. The entrance is always
+  clear, with room to walk between the furniture.
+- **You come in standing**, just inside the door, whatever you were doing before. In your own house, Sleep
+  (the bed, or Actions → Sleep) lies you down on the mattress and you wake up standing beside the bed. In
+  someone else's home you can't lie down on their floor.
+- **The village grows.** A traveller arrives every day while the village is small (fewer than 12 people), from
+  the first day. If you don't get round to welcoming them, a founder offers them a place the next morning
+  instead of them leaving (you can still turn someone away yourself).
+- **Building is clearer.** Every item in the Build menu has a picture of its model, what it needs, and how many
+  taps of Build finish it. While placing, the bar says "Good spot! Tap Place." or why not, and what it costs.
+  A building site shows "Cottage: 3 of 6 done / Next: roof beams (tap Build)" and a progress bar, and each tap
+  adds a named stage (corner posts, lower walls, upper walls, roof beams, thatched roof, door and windows).
+
+Tests: `godot --headless --path . res://tests/home_test.tscn`. Screenshots: `tools/home_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):
@@ -645,7 +669,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **62/62**, the adventure test **49/49**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **62/62**, the adventure test **49/49**, the home test **41/41**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

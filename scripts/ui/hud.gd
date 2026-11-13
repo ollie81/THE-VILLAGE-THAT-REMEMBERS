@@ -38,6 +38,7 @@ func _ready() -> void:
 	_build_hint()
 	_build_notice()
 
+	_root.add_child(StructureIcons.new())
 	_root.add_child(GameplayPanels.new())
 	_root.add_child(GuideArrow.new())
 	_root.add_child(PopulationPanel.new())

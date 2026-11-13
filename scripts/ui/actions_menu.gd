@@ -66,6 +66,9 @@ func do(action: StringName) -> void:
 		&"sit":
 			player.sit()
 		&"sleep":
+			if Interiors.instance and Interiors.instance.is_inside():
+				Interiors.instance.lie_down_indoors(player)
+				return
 			player.lie_down()
 			if PlayerController.is_night():
 				GameManager.notify("You lie down under the stars and close your eyes...")

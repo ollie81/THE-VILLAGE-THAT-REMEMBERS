@@ -13,7 +13,9 @@ static var instance: PopulationDirector
 ## Off the map to the east, past the camp: where travellers come from.
 const ENTRY_POINT := Vector3(60.0, 0.0, 1.0)
 ## First traveller arrives on this day; later ones by chance.
-const FIRST_ARRIVAL_DAY := 2
+const FIRST_ARRIVAL_DAY := 1
+## Below this many residents a traveller is sure to come each day.
+const SMALL_VILLAGE := 12
 ## Hours of the day when a traveller may turn up.
 const ARRIVAL_HOURS := Vector2i(9, 15)
 ## A traveller nobody speaks to moves on after waiting this many days.
@@ -172,8 +174,8 @@ func _on_day_changed(_day: int) -> void:
 	update_bodies()
 	_plan_arrival()
 	for person: Person in Population.visitors():
-		if WorldClock.day - person.arrived_day >= VISITOR_PATIENCE_DAYS:
-			_visitor_moves_on(person)
+		if WorldClock.day > person.arrived_day:
+			_welcomed_by_neighbour(person)
 
 
 func _on_hour_changed(hour: int) -> void:
@@ -197,6 +199,9 @@ func arrival_chance() -> float:
 	if WorldClock.day == FIRST_ARRIVAL_DAY:
 		return 1.0
 	var housing := Population.housing_summary()
+	var camp_room := Population.CAMP_CAPACITY - int(housing["camping"])
+	if Population.count() < SMALL_VILLAGE and (int(housing["free"]) > 0 or camp_room > 0):
+		return 1.0 if int(housing["free"]) > 0 else 0.4
 	var camp_free := Population.CAMP_CAPACITY - int(housing["camping"])
 	if int(housing["free"]) <= 0 and camp_free <= 0:
 		return 0.0
@@ -344,6 +349,31 @@ func _neighbours_react(newcomer: Person, welcomed: bool) -> void:
 		villager.mind.adjust_opinion(GameManager.PLAYER_ID, delta, delta * 0.5)
 		villager.mind.memory.add("deed", GameManager.PLAYER_ID, WorldClock.day, WorldClock.time_of_day,
 			DialogueService.pack_deed(("welcomed %s into the village" if welcomed else "turned %s away") % newcomer.first_name, delta))
+
+
+## A traveller the player didn't get round to talking to: a founder offers
+## them a place (the village grows even if you're busy). If there's no room
+## at all, they move on.
+func _welcomed_by_neighbour(person: Person) -> void:
+	if not Population.has_room_for_more():
+		_visitor_moves_on(person)
+		return
+	# Their body may still be on its way (built in the background); it will
+	# arrive with a resident's routine then.
+	var villager = get_villager(person)
+	var host := ""
+	var best := -1.0
+	for other in GameManager.villagers:
+		if other.person and other.person.founder and other.person.is_present():
+			var warmth: float = other.person.trait_weight("agreeableness")
+			if warmth > best:
+				best = warmth
+				host = other.data.display_name
+	Population.make_resident(person)
+	if villager:
+		villager.become_resident(PersonGenerator.make_data(person))
+	Population.log_event("stayed", "%s welcomed %s into the village." % [host if host != "" else "A neighbour", person.full_name()], [person.id])
+	GameManager.notify("%s offered %s a place in the village. Population: %d." % [host if host != "" else "A neighbour", person.first_name, Population.count()])
 
 
 func _visitor_moves_on(person: Person) -> void:

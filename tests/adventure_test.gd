@@ -118,6 +118,7 @@ func _homes() -> void:
 	WorldClock.set_time(22.0)
 	var day := WorldClock.day
 	bed.use.call(player)
+	await get_tree().create_timer(1.0 + Interiors.FADE_TIME * 2.0 + 0.4).timeout
 	_check(WorldClock.day == day + 1 and WorldClock.time_of_day < 8.0, "sleeping in your bed until morning")
 	interiors.leave()
 	await _seconds(Interiors.FADE_TIME * 2.0 + 0.3)

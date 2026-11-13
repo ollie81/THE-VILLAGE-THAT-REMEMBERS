@@ -13,6 +13,7 @@ var _build_list: VBoxContainer
 var _placement_bar: PanelContainer
 var _placement_reason: Label
 var _place_button: Button
+var _placement_hint: Label
 var _build_button: Button
 var _category: String = "Homes"
 var _tab_buttons: Dictionary = {}
@@ -47,7 +48,9 @@ func _process(_delta: float) -> void:
 		_edit_label.text = "Walk up to something you built and tap %s." % ("Move" if build.edit_mode == "move" else "Remove (you get half back)")
 	if _placement_bar.visible:
 		var info := StructureCatalog.info(build.type)
-		_placement_reason.text = "%s  ·  %s" % [info["name"], "Ready to place" if build.reason == "" else build.reason]
+		_placement_reason.text = ("Placing: %s  ·  Good spot! Tap Place." % info["name"]) if build.reason == "" \
+			else ("Placing: %s  ·  Can't build here: %s" % [info["name"], build.reason])
+		_placement_hint.text = "Green means it fits. Walk to move it, Rotate to turn it. Costs %s." % GameState.cost_text(info["cost"])
 		_placement_reason.add_theme_color_override("font_color", Color(0.6, 0.95, 0.6) if build.reason == "" else Color(1.0, 0.6, 0.5))
 		_place_button.disabled = build.reason != ""
 	var exploring := GameManager.camera_mode == GameManager.CameraMode.EXPLORATION
@@ -141,7 +144,7 @@ func _build_build_menu() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	for tab in StructureCatalog.CATEGORIES:
-		var tab_button := UiTheme.button(String(tab), 120)
+		var tab_button := UiTheme.button(String(tab), 150)
 		tab_button.toggle_mode = true
 		tab_button.pressed.connect(func():
 			_category = String(tab)
@@ -195,20 +198,37 @@ func _refresh_build_list() -> void:
 		var wanted: bool = Guide.instance != null and Guide.instance.wanted_build == type
 		if wanted:
 			name_text = "★ " + name_text + "  (your next step)"
-		var button := UiTheme.button("%s  —  %s\n%s" % [name_text, price, info["description"]], 680)
+		var work := int(info["work"])
+		var how := "Then tap Build %d time%s at the site%s." % [work, "" if work == 1 else "s", " (villagers can help)" if work > 1 else ""]
+		var button := UiTheme.button("%s\nNeeds %s\n%s  %s" % [name_text, price, info["description"], how], 680)
 		if wanted:
 			button.add_theme_color_override("font_color", UiTheme.ACCENT)
-		button.custom_minimum_size = Vector2(680, 64)
+		button.custom_minimum_size = Vector2(680, 92)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 19)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.add_theme_font_size_override("font_size", 18)
+		if StructureIcons.instance:
+			button.icon = StructureIcons.instance.icon(type)
+			button.expand_icon = false
+			button.add_theme_constant_override("icon_max_width", 76)
 		if not affordable:
 			button.add_theme_color_override("font_color", UiTheme.MUTED)
 		button.pressed.connect(_choose_structure.bind(type))
 		_build_list.add_child(button)
 
 
+## Pictures on the tabs: a cottage for Homes, a farm plot for Food, a lantern
+## for the village.
+const TAB_ICONS := {"Homes": &"cottage", "Food": &"farm_plot", "Village": &"lantern"}
+
+
 func _toggle_build_menu() -> void:
 	_build_menu.visible = not _build_menu.visible
+	if _build_menu.visible and StructureIcons.instance:
+		for tab in _tab_buttons:
+			if _tab_buttons[tab].icon == null:
+				_tab_buttons[tab].icon = StructureIcons.instance.icon(TAB_ICONS.get(tab, &"bench"))
+				_tab_buttons[tab].add_theme_constant_override("icon_max_width", 34)
 	if _build_menu.visible:
 		_show_menu_message("")
 		var guide := Guide.instance
@@ -304,7 +324,9 @@ func _build_placement_bar() -> void:
 	_placement_reason = UiTheme.label("", 21)
 	_placement_reason.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_placement_reason)
-	box.add_child(UiTheme.label("Walk to move the preview", 16, UiTheme.MUTED))
+	_placement_hint = UiTheme.label("", 16, UiTheme.MUTED)
+	_placement_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(_placement_hint)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)

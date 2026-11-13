@@ -185,6 +185,17 @@ static func create_fruit_tree(growth: float, has_fruit: bool) -> Node3D:
 
 ## A foundation and frame sized to the footprint; more of it appears as work
 ## progresses (0..1).
+## What each tap of Build adds to a home (6 stages), shown on the site.
+const HOME_STAGES: Array[String] = ["corner posts", "lower walls", "upper walls", "roof beams", "thatched roof", "door and windows"]
+
+
+## The name of construction stage `step` (1-based) of `type`.
+static func stage_name(type: StringName, step: int) -> String:
+	if type == &"house" or type == &"cottage":
+		return HOME_STAGES[clampi(step - 1, 0, HOME_STAGES.size() - 1)]
+	return "stage %d" % step
+
+
 static func create_construction(type: StringName, progress: float) -> Node3D:
 	var node := Node3D.new()
 	var footprint: Vector2 = info(type).get("footprint", Vector2.ONE)
