@@ -17,6 +17,13 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 	var recollection := _recollection(villager, actor_id)
 	if recollection != "":
 		conversation.lines.append(recollection)
+	# Festival talk, then a story from what's happened between you.
+	if Festival.instance and not mind.is_hostile(actor_id) and mind.memory.count("conversation", actor_id) > 0:
+		var festive := Festival.instance.greeting_for(villager)
+		if festive != "":
+			conversation.lines.append(festive)
+	if VillageStories.instance and actor_id == GameManager.PLAYER_ID and mind.memory.count("conversation", actor_id) > 0:
+		conversation.lines.append_array(VillageStories.instance.story_lines(villager))
 
 	var topic: Dictionary = {}
 	if mind.is_hostile(actor_id):
@@ -99,6 +106,8 @@ static func menu_for(villager) -> Array:
 	var menu := closing_menu()
 	if RequestBoard.instance and villager:
 		menu = RequestBoard.instance.choices_for(villager) + menu
+	if VillageStories.instance and villager:
+		menu = VillageStories.instance.choices_for(villager) + menu
 	if villager and not Chatter.has_news(villager):
 		menu = menu.filter(func(c): return String(c.get("action", "")) != "news")
 	return menu

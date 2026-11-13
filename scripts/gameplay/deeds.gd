@@ -72,6 +72,8 @@ static func perform(villager, deed: String, thing: String = "") -> Array[String]
 			remembered = "gave me %s" % GIFT_NAMES[resource]
 			lines.append(LineBank.pick(villager, "gift_love" if loved else "gift_ok", {"thing": GIFT_NAMES[resource]}))
 			GameState.increment(&"gifts")
+			if Festival.instance:
+				Festival.instance.note_gift()
 		"compliment":
 			var repeats := mind.memory.count("compliment", player)
 			mind.memory.add("compliment", player, WorldClock.day, WorldClock.time_of_day)

@@ -127,6 +127,9 @@ func save_game() -> void:
 		"game_state": GameState.to_dict(),
 		"population": Population.to_dict(),
 		"requests": RequestBoard.instance.to_dict() if RequestBoard.instance else {},
+		"daily_gift": DailyGift.instance.to_dict() if DailyGift.instance else (_data.get("daily_gift", {}) if _data.get("daily_gift", {}) is Dictionary else {}),
+		"festival": Festival.instance.to_dict() if Festival.instance else {},
+		"stories": VillageStories.instance.to_dict() if VillageStories.instance else {},
 		"saved_unix": Time.get_unix_time_from_system(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)

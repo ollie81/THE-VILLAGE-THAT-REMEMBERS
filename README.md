@@ -533,6 +533,45 @@ alright.").
 Tests: `godot --headless --path . res://tests/hooks_test.tscn` (31 checks). Screenshots:
 `tools/hooks_screenshots.tscn`.
 
+**A welcome gift each day** (`DailyGift`). The first visit of each real day brings a small gift from a
+villager ("Mara left a loaf of warm bread at your door."): food, wood, stone or herbs in turn, and every
+seventh visit a bigger basket from the whole village. Missing days costs nothing: gifts follow your number
+of visits, not a streak. Days are UTC days (in Rwanda a new day starts at 02:00), so changing the time zone
+doesn't make a new day. A clock set back is noticed and gives nothing until real time catches up. Pushing the
+clock ahead only takes tomorrow's gift early. The record is signed inside the save, and a signed copy outside
+it means "Forget everything" doesn't give a second gift the same day.
+
+**A festival every week** (`Festival`). From the second week on, days 5 and 6 of each village week are a
+festival, announced the day before, in turn: the **Harvest Festival** (bring in food, give gifts), **Lantern
+Night** (build a lantern, join everyone at the fire after dark), the **Builders' Fair** (chop wood, finish a
+building) and **Story Night** (talk with four villagers, hear the stories at the fire). Bunting goes up around
+the meeting circle, villagers greet you with festival talk in their own manner, everyone dances at the fire in
+the evening, and a card on the right shows the optional goals. Each goal pays a reward. Doing them all gives a
+bonus and makes everyone happier. Afterwards the village talks about it. Progress is saved. A village week
+is about two hours of play.
+
+**Stories from what really happened** (`VillageStories`). Built on the villagers' memories and relationships:
+- *The day you met*: a week after your first talk, someone who has come to like you remembers it.
+- *Repaying a kindness*: a villager who likes you, and remembers a particular kind thing you did ("you helped
+  me fix the barn roof"), thanks you properly with a gift from their trade.
+- *Making peace*: a friend of yours who has fallen out with someone asks you to carry a peace offer. If the
+  other person trusts you, they make up, thank you, and the village talks about it. If not, they refuse, and
+  your friend thanks you for trying.
+
+Each story happens once per person or pair. It is checked against the present (nobody who has left, no
+warm stories from someone hostile to you) and saved.
+
+**Rewarded ads, always optional** (`AdRewards`, Gifts button). Watching an ad gives the village a gift: a
+merchant's caravan, a blessed harvest, a feast or a traveller. There are never forced, banner or pop-up ads.
+At most 6 a day, 2 minutes apart. A gift is given only when the ad network confirms the ad was watched
+(including when that confirmation comes just after the ad closes). Debug builds always use Google's test ads.
+Release builds use test ads until a real unit ID is put in `PRODUCTION_REWARDED_UNIT_ID`. The AdMob plugin
+isn't in the project yet (see the release checklist below). Without it, release builds show no ads and debug
+builds show a simulated ad.
+
+Tests: `godot --headless --path . res://tests/retention_test.tscn` (59 checks). Screenshots:
+`tools/festival_screenshots.tscn`.
+
 ## The guide
 
 The current objective always says what to do next, and shows where:
@@ -575,7 +614,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **17/17**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **17/17**, the retention test **59/59**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
@@ -599,7 +638,18 @@ Tested with **Godot 4.3-stable** (official Linux build):
 - Villagers do not avoid each other. They wait briefly if the player blocks their way, then carry on.
 - Villagers sleep indoors (hidden). Houses have no interiors yet.
 
+### Before a Play Store release
+
+- **AdMob:** add the Poing Studios AdMob plugin (`addons/admob`, Android plugin enabled in the export preset),
+  create an AdMob account, put the AdMob App ID in the plugin's Android settings, and put the rewarded unit
+  ID in `PRODUCTION_REWARDED_UNIT_ID` (`scripts/core/ad_rewards.gd`). Until then no real ads are shown.
+- **Release signing:** CI builds a *debug* APK signed with a throwaway key. The Play Store needs a release
+  build (AAB) signed with your own upload key. Keep that key safe: it can't be replaced.
+- **Play Console:** a developer account, store listing, privacy policy (needed with ads), the Data safety
+  form (AdMob collects device data), content rating, and ads declared in the listing.
+- **Testing on real phones:** performance, touch controls and the Vulkan renderer haven't been measured on
+  a device yet (only the OpenGL fallback headless and under a virtual display).
+
 ### Next milestones (not started)
 
-Needs and emotions, personality-driven decisions, relationships between villagers, families and
-generations, a fuller economy, and expanding the settlement.
+Needs and emotions, a fuller economy, and expanding the settlement.

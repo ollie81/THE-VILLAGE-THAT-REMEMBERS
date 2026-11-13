@@ -37,6 +37,9 @@ func _ready() -> void:
 	world.add_child(Guide.new())
 	world.add_child(StructureManager.new())
 	world.add_child(WorldObjects.new())
+	var festival := Festival.new()
+	world.add_child(festival)
+	festival.from_dict(SaveService.section("festival"))
 
 	day_night = DayNightCycle.new()
 	add_child(day_night)
@@ -55,6 +58,12 @@ func _ready() -> void:
 	var requests := RequestBoard.new()
 	add_child(requests)
 	requests.from_dict(SaveService.section("requests"))
+	var stories := VillageStories.new()
+	add_child(stories)
+	stories.from_dict(SaveService.section("stories"))
+	var gift := DailyGift.new()
+	add_child(gift)
+	gift.from_dict(SaveService.section("daily_gift"))
 	add_child(AwayTime.new())
 
 	add_child(GossipSystem.new())
@@ -120,3 +129,7 @@ func _welcome_back() -> void:
 		AwayTime.instance.catch_up(AwayTime.seconds_to_hours(away))
 	if RequestBoard.instance:
 		RequestBoard.instance.start()
+	# A welcome gift on the first visit of the day (a saved game only, so the
+	# very first start isn't cluttered; the starter kit covers that).
+	if DailyGift.instance and SaveService.enabled and SaveService.has_save():
+		DailyGift.instance.try_claim()

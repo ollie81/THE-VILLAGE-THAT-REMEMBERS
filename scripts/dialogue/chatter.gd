@@ -88,8 +88,24 @@ static func _topics(villager) -> Array:
 				line = "[laughing]%s is expecting! Don't tell anyone I told you." % who
 			"adoption":
 				line = "[happy]%s has a new family now. That's a happy ending." % who
+			"reconciled":
+				var other := Population.get_person(String(ids[1])) if ids.size() > 1 else null
+				line = "[happy]%s and %s are talking again! I heard you had a hand in that." % [who, other.first_name if other else "someone"]
 		if line != "":
 			topics.append(_topic(key, line, 3.0))
+
+	# --- Festivals: the one on now, or the one just gone ---
+	if Festival.instance:
+		var festival := Festival.instance.current()
+		if not festival.is_empty():
+			var pool: Array = festival["lines"]
+			topics.append(_topic("festival_now:%d" % Festival.instance.week, String(pool[(day + hash(String(villager.get_villager_id()))) % pool.size()]), 2.5))
+		var memory := Festival.instance.recent_memory()
+		if not memory.is_empty():
+			var line := String(memory["line"])
+			if bool(memory["all_done"]):
+				line += " And you made it special."
+			topics.append(_topic("festival_past:%d" % int(memory["week"]), line, 2.0))
 
 	# --- Something built recently ---
 	for record: Dictionary in GameState.structures:

@@ -13,14 +13,23 @@ signal reward_granted(reward_id: StringName)
 signal ad_failed(reason: String)
 signal availability_changed
 
-## Replace with your own rewarded ad unit ID (AdMob → Apps → Ad units).
-## Also put your AdMob App ID in addons/admob/android/config.gd.
-const REWARDED_UNIT_ID_ANDROID := "ca-app-pub-3940256099942544/5224354917"  # Google's test unit
+## Google's official TEST rewarded unit: always used in debug builds, and in
+## release builds until a real unit ID is filled in below.
+const TEST_REWARDED_UNIT_ID := "ca-app-pub-3940256099942544/5224354917"
+## Your real rewarded ad unit ID from https://admob.google.com (Apps → Ad
+## units), e.g. "ca-app-pub-1234567890123456/1234567890". Leave empty until
+## you have one. Only release builds use it. The AdMob App ID goes in the
+## plugin's Android settings when the plugin is installed.
+const PRODUCTION_REWARDED_UNIT_ID := ""
+## Kept for older code and tests.
+const REWARDED_UNIT_ID_ANDROID := TEST_REWARDED_UNIT_ID
 const MAX_PER_DAY := 6
 ## Seconds between two ads.
 const COOLDOWN := 120.0
 const SAVE_PATH := "user://ad_rewards.cfg"
 const SIMULATED_AD_SECONDS := 3.0
+## How long to wait after an ad closes for the SDK's late "earned" message.
+const LATE_REWARD_WAIT := 1.5
 
 ## Gifts the player can earn. Each is something the village story explains:
 ## a caravan, a blessing, a feast, a traveller.
@@ -45,6 +54,8 @@ var _loaded_ad = null  # RewardedAd (AdMob)
 var _loading: bool = false
 var _pending_reward: StringName = &""
 var _earned: bool = false
+## The ad was closed but the SDK hadn't confirmed the reward yet.
+var _dismissed_unearned: bool = false
 var _overlay: CanvasLayer
 ## Tests set this so the daily count isn't written to the player's files.
 var persist: bool = true
@@ -77,6 +88,13 @@ func unavailable_reason() -> String:
 			_request_ad()
 		return "Finding an ad... (check your internet connection)"
 	return ""
+
+
+## The ad unit to load: test ads in debug builds and until a real ID is set.
+static func rewarded_unit_id(debug_build: bool = OS.is_debug_build()) -> String:
+	if debug_build or PRODUCTION_REWARDED_UNIT_ID.strip_edges() == "":
+		return TEST_REWARDED_UNIT_ID
+	return PRODUCTION_REWARDED_UNIT_ID.strip_edges()
 
 
 func is_available() -> bool:
@@ -140,7 +158,7 @@ func _request_ad() -> void:
 		push_warning("Rewarded ad failed to load: %s" % (error.message if error else "unknown"))
 		# Try again in a minute.
 		get_tree().create_timer(60.0, true).timeout.connect(_request_ad)
-	_api("RewardedAdLoader").new().load(REWARDED_UNIT_ID_ANDROID, _api("core/AdRequest").new(), callback)
+	_api("RewardedAdLoader").new().load(rewarded_unit_id(), _api("core/AdRequest").new(), callback)
 
 
 func _show_admob() -> void:
@@ -149,7 +167,7 @@ func _show_admob() -> void:
 	var content = _api("listeners/FullScreenContentCallback").new()
 	content.on_ad_dismissed_full_screen_content = func():
 		ad.destroy()
-		_finish(_earned)
+		on_ad_dismissed()
 		_request_ad()
 	content.on_ad_failed_to_show_full_screen_content = func(_error):
 		ad.destroy()
@@ -161,9 +179,30 @@ func _show_admob() -> void:
 	ad.full_screen_content_callback = content
 	var listener = _api("listeners/OnUserEarnedRewardListener").new()
 	listener.on_user_earned_reward = func(_item):
-		_earned = true
+		on_user_earned_reward()
 	get_tree().paused = true
 	ad.show(listener)
+
+
+## The ad SDK confirmed the ad was watched (AdMob's OnUserEarnedReward).
+func on_user_earned_reward() -> void:
+	_earned = true
+	if _dismissed_unearned:
+		_dismissed_unearned = false
+		_finish(true)
+
+
+## The ad was closed. Rewards only if the SDK confirmed it was watched;
+## some devices confirm a moment after closing, so wait briefly for that.
+func on_ad_dismissed() -> void:
+	if _earned:
+		_finish(true)
+		return
+	_dismissed_unearned = true
+	get_tree().create_timer(LATE_REWARD_WAIT, true, false, true).timeout.connect(func():
+		if _dismissed_unearned:
+			_dismissed_unearned = false
+			_finish(false))
 
 
 static func _api(script_name: String) -> Script:
@@ -196,7 +235,7 @@ func _show_simulated() -> void:
 # --- Daily count -----------------------------------------------------------------
 
 func _roll_day() -> void:
-	var today := Time.get_date_string_from_system()
+	var today := Time.get_date_string_from_system(true)
 	if today != _day_key:
 		_day_key = today
 		watched_today = 0
@@ -204,7 +243,7 @@ func _roll_day() -> void:
 
 func _load_counts() -> void:
 	var config := ConfigFile.new()
-	_day_key = Time.get_date_string_from_system()
+	_day_key = Time.get_date_string_from_system(true)
 	if config.load(SAVE_PATH) == OK and String(config.get_value("ads", "day", "")) == _day_key:
 		watched_today = int(config.get_value("ads", "watched", 0))
 

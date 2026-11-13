@@ -84,6 +84,11 @@ func _do_action(choice: Dictionary) -> void:
 				for line in RequestBoard.instance.fulfil(int(choice["request"]), _villager):
 					lines.append(line)
 			choices = DialogueService.menu_for(_villager)
+		"story_peace":
+			if VillageStories.instance:
+				for line in VillageStories.instance.carry_peace(_villager):
+					lines.append(line)
+			choices = DialogueService.menu_for(_villager)
 		"news":
 			for line in Chatter.lines_for(_villager, 2):
 				lines.append(line)

@@ -5,6 +5,8 @@ extends PanelContainer
 ## answers are buttons (or keys 1-3).
 
 const CHARACTERS_PER_SECOND := 55.0
+## Answers that fit on a landscape phone (more than 5 are drawn smaller).
+const MAX_CHOICES := 7
 
 var _name_label: Label
 var _subtitle_label: Label
@@ -53,7 +55,7 @@ func _ready() -> void:
 	_choice_box.add_theme_constant_override("separation", 8)
 	_choice_box.visible = false
 	box.add_child(_choice_box)
-	for i in 5:
+	for i in MAX_CHOICES:
 		var choice := UiTheme.button("", 0)
 		choice.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		choice.custom_minimum_size = Vector2(720, 52)
@@ -170,8 +172,13 @@ func advance() -> void:
 func _show_choices() -> void:
 	_show_choices_after_typing = false
 	var texts := _conversation.choice_texts()
+	if texts.size() > MAX_CHOICES:
+		push_warning("%d answers offered, only %d fit" % [texts.size(), MAX_CHOICES])
+	var compact := texts.size() > 5
 	for i in _choice_buttons.size():
 		_choice_buttons[i].visible = i < texts.size()
+		_choice_buttons[i].custom_minimum_size.y = 42 if compact else 52
+		_choice_buttons[i].add_theme_font_size_override("font_size", 19 if compact else 22)
 		if i < texts.size():
 			_choice_buttons[i].text = "%d.  %s" % [i + 1, texts[i]]
 	_choice_box.visible = true
@@ -228,7 +235,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key := event as InputEventKey
 	if _choice_box.visible and key and key.pressed and not key.echo \
-			and key.physical_keycode >= KEY_1 and key.physical_keycode <= KEY_5:
+			and key.physical_keycode >= KEY_1 and key.physical_keycode < KEY_1 + MAX_CHOICES:
 		_choose(key.physical_keycode - KEY_1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("jump"):
