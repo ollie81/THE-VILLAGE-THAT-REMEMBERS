@@ -276,7 +276,17 @@ static func update_view(camera: Vector3, target: Vector3) -> int:
 			entry["view_hidden"] = true
 			_set_shown(entry, false)
 			_view_hidden.append(entry)
-	return _view_hidden.size()
+	# The marked trees you can chop are their own nodes: same rule.
+	var hidden_nodes := 0
+	for node in ResourceSpawner.nodes:
+		if not is_instance_valid(node) or node.kind != &"tree":
+			continue
+		var probe := {"pos": node.global_position, "scale": 1.15}
+		var blocks := _blocks_view(probe, camera, target, segment, length)
+		node.set_view_hidden(blocks)
+		if blocks:
+			hidden_nodes += 1
+	return _view_hidden.size() + hidden_nodes
 
 
 static func _blocks_view(entry: Dictionary, camera: Vector3, target: Vector3, segment: Vector3, length: float) -> bool:

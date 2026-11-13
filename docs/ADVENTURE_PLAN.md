@@ -101,5 +101,5 @@ shield, and wins (or loses and retries) a real fight that pays off.
   wakes you at home with nothing lost.
 - Tests for all of it in CI.
 
-Status: milestone 1 is implemented and covered by `tests/adventure_test.gd` (48 checks, in CI). It has not been
+Status: milestone 1 is implemented and covered by `tests/adventure_test.gd` (49 checks, in CI). It has not been
 tried on a real phone yet; that is step 2 of the order above.

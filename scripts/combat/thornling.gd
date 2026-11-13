@@ -22,10 +22,14 @@ const LUNGE_TIME := 0.28
 const LUNGE_SPEED := 8.5
 const RECOVER_TIME := 1.1
 const HURT_TIME := 0.35
-const DAMAGE := 12.0
+const DAMAGE := 10.0
 const BITE_RANGE := 1.25
 
 var radius: float = 0.5
+## Only one thornling attacks at a time; the others circle and wait their
+## turn, so a fight stays readable on a phone.
+static var _attacker: Thornling = null
+const WAIT_DISTANCE := 3.4
 var health: int = MAX_HEALTH
 var state: int = State.WANDER
 var home := Vector3.ZERO
@@ -134,10 +138,16 @@ func _physics_process(delta: float) -> void:
 			if player_distance > NOTICE_RANGE * 1.6 or global_position.distance_to(home) > GIVE_UP_RANGE:
 				state = State.WANDER
 				_wander_target = home
-			elif player_distance < ATTACK_RANGE:
+			elif player_distance < ATTACK_RANGE and _may_attack():
+				_attacker = self
 				state = State.WINDUP
 				_timer = WINDUP_TIME
 				Sounds.play("squeak", global_position, -2.0)
+			elif not _may_attack() and player_distance < WAIT_DISTANCE + 1.0:
+				# Someone else's turn: circle round at a distance.
+				var side := Vector3(-to_player.z, 0, to_player.x).normalized()
+				var keep := (player_distance - WAIT_DISTANCE) * 1.5
+				desired = side * 1.2 + to_player.normalized() * keep
 			else:
 				desired = to_player.normalized() * CHASE_SPEED
 		State.WINDUP:
@@ -156,6 +166,8 @@ func _physics_process(delta: float) -> void:
 				state = State.RECOVER
 				_timer = RECOVER_TIME
 		State.RECOVER:
+			if _attacker == self:
+				_attacker = null
 			if _timer <= 0.0:
 				state = State.CHASE
 		State.HURT:
@@ -170,6 +182,16 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -20.0:
 		reset_to_home()
 	_animate(delta, horizontal, to_player)
+
+
+func _may_attack() -> bool:
+	return _attacker == null or _attacker == self or not is_instance_valid(_attacker) \
+		or not (_attacker.state in [State.WINDUP, State.LUNGE])
+
+
+func _exit_tree() -> void:
+	if _attacker == self:
+		_attacker = null
 
 
 func _facing() -> Vector3:
@@ -220,6 +242,8 @@ func take_hit(amount: int, from: Vector3) -> bool:
 	if health <= 0:
 		_defeat()
 		return true
+	if _attacker == self:
+		_attacker = null  # a hit interrupts the attack
 	state = State.HURT
 	_timer = HURT_TIME
 	return false

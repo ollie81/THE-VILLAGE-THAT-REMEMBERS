@@ -604,7 +604,7 @@ the order of work) is in [docs/ADVENTURE_PLAN.md](docs/ADVENTURE_PLAN.md). Miles
 - **The first fight.** Forge a **sword and shield** at the workshop bench (8 wood, 6 stone, after the tools).
   Tomas then asks you to chase the **thornlings** out of the west woods: bramble-red, thorny little creatures
   that wander, notice you, give chase, clearly wind up (crouch, bristle, squeak) and lunge, then need a
-  moment to recover. Swing (F, or **Attack**), hold the shield up (Q, or **Block**: 80% less damage when facing
+  moment to recover. They take turns: one attacks while the others circle. Swing (F, or **Attack**), hold the shield up (Q, or **Block**: 80% less damage when facing
   the blow), **Dodge** (C) past a lunge, and **Eat** a stew (H) to heal. Three hits beat a thornling; it pops and
   leaves herbs. Clearing the woods pays 12 wood, 8 stone and 3 food, and Tomas remembers it. They come back two
   days later for a smaller reward. Afterwards the bench can put a **steel edge** on the sword (hits twice as
@@ -645,7 +645,7 @@ Everything listed under [Milestone 1 contents](#milestone-1-contents).
 
 Tested with **Godot 4.3-stable** (official Linux build):
 
-- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **59/59**, the adventure test **48/48**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
+- The headless smoke test passes **96/96 checks**, the gameplay test **46/46** and the population test **93/93**, the life test **56/56**, the hooks test **31/31**, the build test **52/52**, the sound test **25/25**, the guide test **19/19**, the retention test **59/59**, the adventure test **49/49**, including the skeleton, skinning, triangle budget, animations and facial blend shapes of every villager (`godot --headless --path . res://tests/smoke_test.tscn`, exit code 0).
 - A soak run through **two full in-game days at ×100 speed** produced no script or runtime errors.
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.

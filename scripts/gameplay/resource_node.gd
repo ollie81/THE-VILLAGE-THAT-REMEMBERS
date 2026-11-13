@@ -102,10 +102,23 @@ func _on_hour_changed(_hour: int) -> void:
 		_set_spent(false)
 
 
+## Hidden while it stands between the camera and the player (see
+## NatureSpawner.update_view). Only the full tree hides; a stump stays.
+var _view_hidden: bool = false
+
+
+func set_view_hidden(hidden: bool) -> void:
+	if hidden == _view_hidden:
+		return
+	_view_hidden = hidden
+	if _full:
+		_full.visible = not hidden and uses_left > 0
+
+
 func _set_spent(spent: bool) -> void:
 	if spent:
 		uses_left = 0
-	_full.visible = not spent
+	_full.visible = not spent and not _view_hidden
 	_spent.visible = spent
 	if _collision:
 		_collision.set_deferred("disabled", spent and kind != &"tree")

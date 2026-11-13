@@ -251,6 +251,27 @@ func _combat() -> void:
 	copy.from_dict(JSON.parse_string(JSON.stringify(woods.to_dict())))
 	_check(copy.mission_done and copy.times_cleared == 1 and copy.last_cleared_day == woods.last_cleared_day, "the mission is saved")
 	copy.free()
+	# Thornlings take turns: never two attacking at once.
+	player.global_position = woods.center + Vector3(5.0, 0.8, 0.0)
+	await _frames(3)
+	var pack: Array = []
+	for i in 3:
+		var t := Thornling.new()
+		t.home = player.global_position + Vector3(cos(i * 2.1), 0, sin(i * 2.1)) * 2.0
+		t.position = t.home + Vector3(0, 0.3, 0)
+		get_tree().current_scene.add_child(t)
+		t.state = Thornling.State.CHASE
+		pack.append(t)
+	combat._grace = 10.0  # don't get knocked out while counting
+	var most := 0
+	for f in 90:
+		await get_tree().physics_frame
+		most = maxi(most, pack.filter(func(t): return t.state in [Thornling.State.WINDUP, Thornling.State.LUNGE]).size())
+	_check(most == 1, "thornlings take turns: one attacks while the others circle (at most %d at once)" % most)
+	for t in pack:
+		t.queue_free()
+	combat._grace = 0.0
+	await _frames(2)
 	# Knocked out: home again, nothing lost.
 	await _seconds(0.6)
 	var stores := GameState.count(&"wood")
