@@ -5,6 +5,9 @@ extends RefCounted
 ## river valley is carved down the east side.
 
 const CELL_SIZE := 2.0
+## Visible ground is split into chunks of this many cells a side.
+const CHUNK_CELLS := 25
+const CHUNK_VIEW_DISTANCE := 230.0
 const SEED := 1337
 
 const COLOR_GRASS := Color(0.42, 0.62, 0.3)
@@ -39,16 +42,56 @@ static func get_height(x: float, z: float) -> float:
 	var distance := Vector2(x, z).length()
 	var hills := smoothstep(30.0, 66.0, distance)
 	var height := noise.get_noise_2d(x, z) * (0.35 + 6.0 * hills) + hills * 3.0
+	# The wider world. Nothing here touches the original village square, so
+	# its ground (and everything built on it) stays exactly as it was.
+	var square := maxf(absf(x), absf(z))
+	if square > VillageLayout.CORE_HALF_SIZE + 2.0:
+		height = _outer_height(x, z, height, square)
 	var river_distance := absf(x - VillageLayout.river_center_x(z))
 	var carve := 1.0 - smoothstep(VillageLayout.RIVER_HALF_WIDTH - 1.0, VillageLayout.RIVER_HALF_WIDTH + 2.6, river_distance)
 	return lerpf(height, VillageLayout.RIVER_BED_HEIGHT, carve)
 
 
+static var _mountain_noise: FastNoiseLite
+
+## Farmland and the south street flattened, a lake and a pond dug out, and
+## mountains rising toward the edge of the world.
+static func _outer_height(x: float, z: float, height: float, square: float) -> float:
+	var blend := smoothstep(VillageLayout.CORE_HALF_SIZE + 2.0, VillageLayout.CORE_HALF_SIZE + 16.0, square)
+	var p := Vector2(x, z)
+	for area: Rect2 in [VillageLayout.FARMLAND, VillageLayout.SOUTH_STREET]:
+		var inside := _rect_weight(area, p, 12.0)
+		if inside > 0.0:
+			height = lerpf(height, 2.4 + _noise.get_noise_2d(x, z) * 0.4, inside * blend)
+	for water in [[VillageLayout.LAKE_CENTER, VillageLayout.LAKE_RADIUS, -2.9], [VillageLayout.POND_CENTER, VillageLayout.POND_RADIUS, -2.3]]:
+		var center: Vector3 = water[0]
+		var d := p.distance_to(Vector2(center.x, center.z))
+		var r: float = water[1]
+		# A sloping beach into deep water in the middle.
+		var shore := 1.0 - smoothstep(r - 1.0, r + 7.0, d)
+		height = lerpf(height, minf(height, 0.4), shore * blend)
+		var bowl := 1.0 - smoothstep(r * 0.25, r + 0.5, d)
+		height = lerpf(height, float(water[2]), bowl * blend)
+	if _mountain_noise == null:
+		_mountain_noise = FastNoiseLite.new()
+		_mountain_noise.seed = SEED + 7
+		_mountain_noise.frequency = 0.011
+		_mountain_noise.fractal_octaves = 4
+	var rise := smoothstep(VillageLayout.MOUNTAINS_FROM - 10.0, VillageLayout.WORLD_HALF_SIZE, square)
+	height += rise * rise * (26.0 + _mountain_noise.get_noise_2d(x, z) * 22.0)
+	return height
+
+
+## 1 inside the rectangle, fading to 0 over `fade` metres outside it.
+static func _rect_weight(area: Rect2, p: Vector2, fade: float) -> float:
+	var dx := maxf(maxf(area.position.x - p.x, p.x - area.end.x), 0.0)
+	var dz := maxf(maxf(area.position.y - p.y, p.y - area.end.y), 0.0)
+	return 1.0 - smoothstep(0.0, fade, Vector2(dx, dz).length())
+
+
 ## Builds the terrain mesh + collision under `parent`.
 static func build(parent: Node3D) -> void:
 	var path_segments := _get_path_segments()
-	var builder := MeshBuilder.new(SEED)
-	builder.color_jitter = 0.0
 	var half := VillageLayout.WORLD_HALF_SIZE
 	var cells := int(half * 2.0 / CELL_SIZE)
 	var heights: Array[PackedFloat32Array] = []
@@ -58,8 +101,27 @@ static func build(parent: Node3D) -> void:
 		for xi in cells + 1:
 			row[xi] = get_height(-half + xi * CELL_SIZE, -half + zi * CELL_SIZE)
 		heights.append(row)
-
 	_get_noise()
+
+	# What you see: the ground in chunks, so the camera only draws the near
+	# ones and far chunks fade out behind the fog.
+	var ground := Node3D.new()
+	ground.name = "TerrainMesh"
+	parent.add_child(ground)
+	var chunk := CHUNK_CELLS
+	for cz in range(0, cells, chunk):
+		for cx in range(0, cells, chunk):
+			var mi := MeshInstance3D.new()
+			mi.name = "Chunk_%d_%d" % [cx / chunk, cz / chunk]
+			mi.mesh = build_textured_mesh(heights, cells, path_segments, cx, cz, mini(chunk, cells - cx), mini(chunk, cells - cz))
+			mi.visibility_range_end = CHUNK_VIEW_DISTANCE
+			mi.visibility_range_end_margin = 10.0
+			ground.add_child(mi)
+
+	# Collision over the same grid (same triangle layout as always).
+	var faces := PackedVector3Array()
+	faces.resize(cells * cells * 6)
+	var f := 0
 	for zi in cells:
 		for xi in cells:
 			var x0 := -half + xi * CELL_SIZE
@@ -68,41 +130,36 @@ static func build(parent: Node3D) -> void:
 			var p10 := Vector3(x0 + CELL_SIZE, heights[zi][xi + 1], z0)
 			var p01 := Vector3(x0, heights[zi + 1][xi], z0 + CELL_SIZE)
 			var p11 := Vector3(x0 + CELL_SIZE, heights[zi + 1][xi + 1], z0 + CELL_SIZE)
-			# Alternate the diagonal for a less grid-like look.
-			if (xi + zi) % 2 == 0:
-				_add_terrain_triangle(builder, p00, p10, p11, path_segments)
-				_add_terrain_triangle(builder, p00, p11, p01, path_segments)
-			else:
-				_add_terrain_triangle(builder, p00, p10, p01, path_segments)
-				_add_terrain_triangle(builder, p10, p11, p01, path_segments)
-
-	# The flat-coloured mesh is kept for collision (same shape as always); what
-	# you see is a smooth, textured mesh over the same heights.
-	var mesh := builder.build(Materials.vertex_color())
-	var mesh_instance := MeshInstance3D.new()
-	mesh_instance.name = "TerrainMesh"
-	mesh_instance.mesh = build_textured_mesh(heights, cells, path_segments)
-	parent.add_child(mesh_instance)
-
+			var tris: Array = [p00, p11, p10, p00, p01, p11] if (xi + zi) % 2 == 0 else [p00, p01, p10, p10, p01, p11]
+			for v in tris:
+				faces[f] = v
+				f += 1
 	var body := StaticBody3D.new()
 	body.name = "TerrainBody"
 	body.collision_layer = 1
 	body.collision_mask = 0
 	var shape := CollisionShape3D.new()
-	shape.shape = mesh.create_trimesh_shape()
+	var concave := ConcavePolygonShape3D.new()
+	concave.backface_collision = true
+	concave.set_faces(faces)
+	shape.shape = concave
 	body.add_child(shape)
 	parent.add_child(body)
-
 
 ## The ground you see: shared, smooth-shaded vertices on the same 2 m grid,
 ## each carrying the old tint (COLOR) and how much path dirt and cobblestone
 ## it has (UV2), for the textured ground shader.
-static func build_textured_mesh(heights: Array[PackedFloat32Array], cells: int, path_segments: Array) -> ArrayMesh:
+static func build_textured_mesh(heights: Array[PackedFloat32Array], cells: int, path_segments: Array,
+		from_x: int = 0, from_z: int = 0, width: int = -1, depth: int = -1) -> ArrayMesh:
 	var half := VillageLayout.WORLD_HALF_SIZE
+	if width < 0:
+		width = cells
+	if depth < 0:
+		depth = cells
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for zi in cells + 1:
-		for xi in cells + 1:
+	for zi in range(from_z, from_z + depth + 1):
+		for xi in range(from_x, from_x + width + 1):
 			var x := -half + xi * CELL_SIZE
 			var z := -half + zi * CELL_SIZE
 			var h: float = heights[zi][xi]
@@ -117,7 +174,7 @@ static func build_textured_mesh(heights: Array[PackedFloat32Array], cells: int, 
 			var cobble := 1.0 - smoothstep(VillageLayout.PLAZA_RADIUS + 0.4, VillageLayout.PLAZA_RADIUS + 2.4, plaza_distance)
 			var dirt := 1.0 - smoothstep(0.6, 1.9, _distance_to_segments(Vector2(x, z), path_segments))
 			var river_distance := absf(x - VillageLayout.river_center_x(z))
-			if h < VillageLayout.WATER_LEVEL + 0.45 and river_distance < 8.0:
+			if h < VillageLayout.WATER_LEVEL + 0.6 and (river_distance < 8.0 or VillageLayout.is_water_area(x, z, 8.0)):
 				dirt = maxf(dirt, 0.85)
 			if normal.y < 0.82:
 				dirt = maxf(dirt, 0.7)
@@ -126,14 +183,15 @@ static func build_textured_mesh(heights: Array[PackedFloat32Array], cells: int, 
 			st.set_uv2(Vector2(cobble, dirt))
 			st.set_normal(normal)
 			st.add_vertex(p)
-	var row := cells + 1
-	for zi in cells:
-		for xi in cells:
+	var row := width + 1
+	for zi in depth:
+		for xi in width:
 			var i00 := zi * row + xi
 			var i10 := i00 + 1
 			var i01 := i00 + row
 			var i11 := i01 + 1
-			for i in [i00, i10, i11, i00, i11, i01]:
+			var order: Array = [i00, i10, i11, i00, i11, i01] if (xi + from_x + zi + from_z) % 2 == 0 else [i00, i10, i01, i10, i11, i01]
+			for i in order:
 				st.add_index(i)
 	st.generate_tangents()
 	var mesh := st.commit()

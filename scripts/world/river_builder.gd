@@ -1,7 +1,7 @@
 class_name RiverBuilder
 extends RefCounted
-## The river, its bridge and the invisible walls that keep everyone out of the
-## water and inside the world.
+## The river, the forest lake and the pond (all swimmable: no walls along the
+## banks), the bridge, and the invisible walls at the edge of the world.
 
 const WATER_HALF_WIDTH := 6.5
 const BOUNDARY_LAYER := 16 # physics layer 5 "boundaries"
@@ -12,9 +12,30 @@ static func build(parent: Node3D) -> void:
 	root.name = "River"
 	parent.add_child(root)
 	_build_water(root)
-	_build_bank_walls(root)
+	_build_still_water(root, "Lake", VillageLayout.LAKE_CENTER, VillageLayout.LAKE_RADIUS + 6.0)
+	_build_still_water(root, "Pond", VillageLayout.POND_CENTER, VillageLayout.POND_RADIUS + 6.0)
 	_build_world_bounds(root)
 	root.add_child(_build_bridge())
+
+
+## A round sheet of water at the shared water level (the shore rises above it).
+static func _build_still_water(root: Node3D, water_name: String, center: Vector3, radius: float) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segments := 32
+	for i in segments:
+		var a0 := TAU * i / segments
+		var a1 := TAU * (i + 1) / segments
+		for v in [Vector3.ZERO, Vector3(cos(a0), 0, sin(a0)) * radius, Vector3(cos(a1), 0, sin(a1)) * radius]:
+			st.set_normal(Vector3.UP)
+			st.set_uv(Vector2(v.x, v.z) * 0.1)
+			st.add_vertex(Vector3(center.x, VillageLayout.WATER_LEVEL, center.z) + v)
+	var instance := MeshInstance3D.new()
+	instance.name = water_name
+	instance.mesh = st.commit()
+	instance.material_override = Materials.water()
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(instance)
 
 
 static func _build_water(root: Node3D) -> void:

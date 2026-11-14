@@ -144,7 +144,10 @@ func _inside(cottage: PlacedStructure) -> void:
 	var chair: UsableObject = room.find_child("Chair", true, false)
 	var reached := await _walk_to(chair.global_position)
 	_check(reached, "you can walk to the table")
-	reached = await _walk_to(room.find_child("ExitDoor", true, false).global_position + Vector3(0, 0, -0.6))
+	# Back round the table through the middle of the room, as a player would steer.
+	var door_at: Vector3 = room.find_child("ExitDoor", true, false).global_position
+	await _walk_to(Vector3(door_at.x + 0.6, door_at.y, door_at.z - 2.6))
+	reached = await _walk_to(door_at + Vector3(0, 0, -0.6))
 	_check(reached, "and back to the door")
 	# Lying down here isn't allowed (not your home).
 	var actions: ActionsMenu = _main.find_child("ActionsMenu", true, false)

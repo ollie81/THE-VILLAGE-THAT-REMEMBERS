@@ -100,7 +100,7 @@ func _pick_target() -> void:
 
 ## No wall, coop or tree between here and there (at hen height), and not water.
 func _path_clear(from: Vector3, to: Vector3) -> bool:
-	if absf(to.x - VillageLayout.river_center_x(to.z)) < VillageLayout.RIVER_HALF_WIDTH + 0.6:
+	if VillageLayout.is_water_area(to.x, to.z, 0.6):
 		return false
 	if not is_inside_tree():
 		return true

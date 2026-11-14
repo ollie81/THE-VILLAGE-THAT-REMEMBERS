@@ -45,8 +45,9 @@ func _run() -> void:
 	add_child(_main)
 	await _frames(40)
 	# Ground.
-	var terrain := _main.find_child("TerrainMesh", true, false) as MeshInstance3D
-	_check(terrain != null and terrain.mesh.surface_get_material(0) == Materials.ground(), "the ground uses the textured grass, path and cobblestone material")
+	var terrain: Node = _main.find_child("TerrainMesh", true, false)
+	var chunk := terrain.get_child(0) as MeshInstance3D if terrain and terrain.get_child_count() > 0 else null
+	_check(chunk != null and chunk.mesh.surface_get_material(0) == Materials.ground(), "the ground uses the textured grass, path and cobblestone material")
 	_check(_main.find_child("PlazaCobbles", true, false) != null, "the meeting circle is paved with cobblestones")
 	# Cottage.
 	var cottage := KitCottage.instance

@@ -189,6 +189,8 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	# Never dip under the ground (looking up from below shows the village
 	# from underneath).
 	var ground := VillageLayout.get_walk_height(position.x, position.z) + 0.35
+	if VillageLayout.is_water_area(position.x, position.z):
+		ground = maxf(ground, VillageLayout.WATER_LEVEL + 0.4)  # stay above the water
 	if position.y < ground:
 		position.y = ground
 	return Transform3D(Basis.looking_at(pivot - position, Vector3.UP), position)

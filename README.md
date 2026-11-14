@@ -725,6 +725,25 @@ A first test of the new semi-realistic direction, using free CC0 assets (see [CR
 
 Tests: `godot --headless --path . res://tests/pilot_test.tscn`. Screenshots: `tools/pilot_screenshots.tscn`.
 
+## Living world, stage 1: a bigger world and real water
+
+The plan for the whole living-world expansion is in the "Living World Expansion Plan" doc. Stage 1:
+
+- **About six times the land.** The world is now 400 m square (350 m to walk), grown around the original
+  village, whose ground is unchanged (a test checks 400 points), so saves and buildings stay where they are.
+- **New areas, joined by roads** (new walkways for villagers too): farmland to the north with fenced crop fields
+  and a stone windmill with turning sails; a second street of three walk-in, furnished cottages to the south by
+  a pond; the forest lake in the deep western forest with a wooden dock; old ruins hiding a chest (supplies and
+  credits, once); a watchtower at the edge of the rocky eastern wilds; signposts where the roads fork;
+  mountains all round the edge.
+- **Real water.** The invisible walls along the river are gone. The river, the lake and the pond can be
+  entered: deeper than chest height you swim (swim and tread-water animations, slower, no tools), you float with
+  your head above water, and you wade out on the shallows. Nobody can build in the water; hens keep out of it.
+- **Phones:** the ground is drawn in 64 chunks that fade with distance, distant trees are simple shapes and stop
+  being drawn beyond 170 m, landmarks and the new cottages stop drawing beyond 140–200 m.
+
+Tests: `godot --headless --path . res://tests/world_test.tscn` (37 checks). Screenshots: `tools/world_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

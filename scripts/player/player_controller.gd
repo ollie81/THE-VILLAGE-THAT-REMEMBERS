@@ -44,6 +44,16 @@ var _seat: Dictionary = {}
 var _slept: bool = false
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
+## Swimming: deeper than this and you swim; shallower than SWIM_EXIT and
+## your feet are back on the bottom.
+const SWIM_ENTER := 1.15
+const SWIM_EXIT := 0.95
+const SWIM_SPEED := 2.3
+## How far below the surface the feet hang while swimming (head and
+## shoulders above the water).
+const SWIM_FLOAT := 1.3
+var swimming: bool = false
+
 
 func _ready() -> void:
 	name = "Player"
@@ -248,8 +258,11 @@ func _physics_process(delta: float) -> void:
 	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
 	var direction := (right * move.x - forward * move.y).limit_length(1.0)
 
-	var running := InputRouter.is_run_requested(move)
+	_update_swimming()
+	var running := InputRouter.is_run_requested(move) and not swimming
 	var target_speed := (run_speed if running else walk_speed) * minf(move.length() * 1.15, 1.0)
+	if swimming:
+		target_speed = SWIM_SPEED * minf(move.length() * 1.15, 1.0)
 	if combat:
 		target_speed *= combat.speed_factor()
 	var target_velocity := direction.normalized() * target_speed if direction.length() > 0.01 else Vector3.ZERO
@@ -263,7 +276,11 @@ func _physics_process(delta: float) -> void:
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 
-	if is_on_floor():
+	if swimming:
+		# Float: ease toward swimming height at the surface.
+		var float_y := VillageLayout.WATER_LEVEL - SWIM_FLOAT
+		velocity.y = clampf((float_y - global_position.y) * 5.0, -3.0, 3.0)
+	elif is_on_floor():
 		if can_control() and Input.is_action_just_pressed("jump"):
 			velocity.y = jump_velocity
 	else:
@@ -276,7 +293,7 @@ func _physics_process(delta: float) -> void:
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clampf(turn_speed * delta, 0.0, 1.0))
 
 	var placing := BuildMode.instance != null and BuildMode.instance.active
-	if can_control() and not placing and Input.is_action_just_pressed("interact") and GameManager.can_start_interaction():
+	if can_control() and not placing and not swimming and Input.is_action_just_pressed("interact") and GameManager.can_start_interaction():
 		detector.try_interact(self)
 
 	_update_animation(horizontal.length())
@@ -290,6 +307,8 @@ func _physics_process(delta: float) -> void:
 
 ## A step sound each half stride while walking or running on the ground.
 func _footsteps(speed: float, delta: float) -> void:
+	if swimming:
+		return
 	if not is_on_floor() or speed < 0.4:
 		_step_distance = 0.0
 		return
@@ -300,7 +319,23 @@ func _footsteps(speed: float, delta: float) -> void:
 		Sounds.play("step", null, -15.0 if speed <= walk_speed + 0.6 else -11.0)
 
 
+## Into the water when it's deeper than chest height, out again in the shallows.
+func _update_swimming() -> void:
+	var depth := VillageLayout.water_depth(global_position.x, global_position.z)
+	if not swimming and depth > SWIM_ENTER and global_position.y < VillageLayout.WATER_LEVEL - SWIM_FLOAT + 0.4:
+		swimming = true
+		stand_up()
+		if tools:
+			tools.hold(&"", 0.0)
+		Sounds.play("splash", global_position, -4.0)
+	elif swimming and depth < SWIM_EXIT:
+		swimming = false
+
+
 func _update_animation(speed: float) -> void:
+	if swimming:
+		model.set_animation(&"swim" if speed > 0.25 else &"swim_idle")
+		return
 	if _action_time > 0.0:
 		model.set_animation(_action_animation)
 	elif combat and combat.blocking:

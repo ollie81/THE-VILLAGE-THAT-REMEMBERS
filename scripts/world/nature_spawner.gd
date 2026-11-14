@@ -29,6 +29,8 @@ const KIT_MODELS := {
 	"rock_0": ["Rock_Medium_2", 0.35], "rock_1": ["Rock_Medium_1", 0.32],
 }
 const KIT_RANGE := 38.0
+## The simple stand-ins aren't drawn beyond this (fog hides the edge).
+const FAR_RANGE := 170.0
 
 
 func spawn(parent: Node3D) -> void:
@@ -51,6 +53,7 @@ func spawn(parent: Node3D) -> void:
 	_scatter_village_trees()
 	_scatter_rocks()
 	_scatter_river_details()
+	_scatter_expansion()
 	_flush(root, CLEARABLE)
 	# Land already cleared for things the player built.
 	for record in GameState.structures:
@@ -436,8 +439,8 @@ func _add_tree(x: float, z: float, prefer_pine: bool) -> void:
 func _scatter_forest() -> void:
 	var forest_node: Vector3 = VillageLayout.get_nav_nodes()["forest_edge"]
 	for i in 1400:
-		var z := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
-		var x := rng.randf_range(VillageLayout.river_center_x(z) + 7.0, VillageLayout.WORLD_HALF_SIZE)
+		var z := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
+		var x := rng.randf_range(VillageLayout.river_center_x(z) + 7.0, VillageLayout.CORE_HALF_SIZE)
 		if Vector2(x - forest_node.x, z - forest_node.z).length() < 6.5:
 			continue
 		if not _is_clear(x, z, 2.2, 1.0) or _has_neighbor(x, z, 2.6):
@@ -454,8 +457,8 @@ func _scatter_forest() -> void:
 
 func _scatter_outskirts() -> void:
 	for i in 1600:
-		var x := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
-		var z := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
+		var x := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
+		var z := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
 		if x > VillageLayout.river_center_x(z):
 			continue
 		var distance := Vector2(x, z).length()
@@ -492,8 +495,8 @@ func _scatter_village_trees() -> void:
 
 func _scatter_rocks() -> void:
 	for i in 160:
-		var x := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
-		var z := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
+		var x := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
+		var z := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
 		if Vector2(x, z).length() < 22.0 or not _is_clear(x, z, 2.0, 1.5) or _has_neighbor(x, z, 1.5):
 			continue
 		var big := rng.randf() < 0.3
@@ -509,9 +512,53 @@ func _scatter_rocks() -> void:
 			rock["shape"] = shape
 
 
+## The wider world around the original square: the deep western forest
+## round the lake and the ruins, woods on the outer ring, a few trees on the
+## farmland and the south street, pines climbing the mountains, rocks in the
+## eastern wilds. (A separate pass, so the village's own trees keep their
+## places and saved felled trees stay felled.)
+func _scatter_expansion() -> void:
+	var core := VillageLayout.CORE_HALF_SIZE
+	var half := VillageLayout.WORLD_HALF_SIZE
+	for i in 5200:
+		var x := rng.randf_range(-half, half)
+		var z := rng.randf_range(-half, half)
+		var square := maxf(absf(x), absf(z))
+		if square < core + 1.0:
+			continue
+		var p := Vector2(x, z)
+		var density := 0.3
+		if x < -88.0:
+			density = 0.95  # the western forest
+		elif x > VillageLayout.river_center_x(z) + 8.0:
+			density = 0.55  # woods and wilds east of the river
+		if VillageLayout.FARMLAND.grow(4.0).has_point(p) or VillageLayout.SOUTH_STREET.grow(4.0).has_point(p):
+			density = 0.05
+		if square > VillageLayout.MOUNTAINS_FROM:
+			density = 0.4
+		if rng.randf() > density:
+			continue
+		if VillageLayout.is_water_area(x, z, 3.0) or not _is_clear(x, z, 2.4, 1.5) or _has_neighbor(x, z, 2.8):
+			continue
+		var wilds := x > 95.0 and absf(z) < 90.0
+		if wilds and rng.randf() < 0.6:
+			_add_instance("rock", rng.randi_range(0, 1), _random_xform(x, z, 0.7, 1.8, 0.2))
+			continue
+		_add_tree(x, z, square > VillageLayout.MOUNTAINS_FROM - 8.0 or wilds or rng.randf() < 0.35)
+		if rng.randf() < 0.2:
+			_add_instance("bush", 0, _random_xform(x + rng.randf_range(-1.5, 1.5), z + rng.randf_range(-1.5, 1.5), 0.8, 1.3))
+	# Reeds and stones round the lake and the pond.
+	for water in [[VillageLayout.LAKE_CENTER, VillageLayout.LAKE_RADIUS], [VillageLayout.POND_CENTER, VillageLayout.POND_RADIUS]]:
+		var center: Vector3 = water[0]
+		for i in 40:
+			var a := rng.randf() * TAU
+			var r: float = water[1] + rng.randf_range(0.5, 3.0)
+			_add_instance("rock", rng.randi_range(0, 1), _random_xform(center.x + cos(a) * r, center.z + sin(a) * r, 0.3, 0.8, 0.15))
+
+
 func _scatter_river_details() -> void:
 	for i in 120:
-		var z := rng.randf_range(-VillageLayout.WORLD_HALF_SIZE, VillageLayout.WORLD_HALF_SIZE)
+		var z := rng.randf_range(-VillageLayout.CORE_HALF_SIZE, VillageLayout.CORE_HALF_SIZE)
 		if absf(z - VillageLayout.BRIDGE_Z) < 3.0:
 			continue
 		var side := -1.0 if rng.randf() < 0.5 else 1.0
@@ -621,6 +668,8 @@ func _flush(parent: Node3D, kinds: Array) -> void:
 			parent.add_child(kit_instance)
 			instance.visibility_range_begin = KIT_RANGE
 			instance.visibility_range_begin_margin = 4.0
+			instance.visibility_range_end = FAR_RANGE
+			instance.visibility_range_end_margin = 10.0
 		match String(batch["kind"]):
 			"grass", "flower", "mushroom", "pebble":
 				instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

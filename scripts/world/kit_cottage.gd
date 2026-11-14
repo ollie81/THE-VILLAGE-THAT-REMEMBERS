@@ -27,6 +27,16 @@ const DOOR_X := 1.0
 static var spot := Vector3.INF
 static var yaw: float = 0.0
 static var floor_y: float = 0.0
+## Every cottage plot in the world: {spot, yaw, floor_y}. The first is the
+## one by the meeting circle (spot/yaw/floor_y above); more stand on the
+## south street.
+static var plots: Array[Dictionary] = []
+static var _all: Array[KitCottage] = []
+
+## This cottage's own plot.
+var plot: Dictionary = {}
+var _floor: float = 0.0
+var _yaw: float = 0.0
 
 var roof: Node3D
 var door_leaf: Node3D
@@ -60,46 +70,87 @@ static func find_spot() -> Vector3:
 			spot = p
 			yaw = facing
 			floor_y = heights.max() + 0.18
+			plots.insert(0, {"spot": spot, "yaw": yaw, "floor_y": floor_y})
 			return spot
 	return spot
+
+
+## Reserves another cottage plot at `at`, its door facing `facing`.
+static func add_plot(at: Vector3, facing: float) -> Dictionary:
+	var top := -INF
+	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1), Vector2.ZERO]:
+		var c := at + Basis(Vector3.UP, facing) * Vector3(corner.x * WIDTH * 0.5, 0, corner.y * DEPTH * 0.5)
+		top = maxf(top, TerrainGenerator.get_height(c.x, c.z))
+	var new_plot := {"spot": Vector3(at.x, 0, at.z), "yaw": facing, "floor_y": top + 0.18}
+	plots.append(new_plot)
+	return new_plot
+
+
+## Forgets every plot (a new world is being built).
+static func reset_plots() -> void:
+	plots.clear()
+	spot = Vector3.INF
 
 
 ## True if (x, z) is on the cottage's plot (plus `margin`). Works before the
 ## cottage is built, so the forest, grass, market and resources keep off it.
 static func reserves(x: float, z: float, margin: float = 0.0) -> bool:
-	if spot == Vector3.INF:
-		return false
-	var local := Basis(Vector3.UP, -yaw) * Vector3(x - spot.x, 0, z - spot.z)
-	return absf(local.x) < WIDTH * 0.5 + 0.6 + margin and absf(local.z) < DEPTH * 0.5 + 2.4 + margin
+	for p: Dictionary in plots:
+		var at: Vector3 = p["spot"]
+		var local := Basis(Vector3.UP, -float(p["yaw"])) * Vector3(x - at.x, 0, z - at.z)
+		if absf(local.x) < WIDTH * 0.5 + 0.6 + margin and absf(local.z) < DEPTH * 0.5 + 2.4 + margin:
+			return true
+	return false
 
 
 ## Height of the cottage floor at (x, z), or NAN outside it.
 static func floor_at(x: float, z: float) -> float:
-	if instance == null or spot == Vector3.INF:
+	for cottage in _all:
+		var h := cottage.floor_here(x, z)
+		if not is_nan(h):
+			return h
+	return NAN
+
+
+## This cottage's floor height at (x, z), or NAN outside it.
+func floor_here(x: float, z: float) -> float:
+	if plot.is_empty():
 		return NAN
-	var local := Basis(Vector3.UP, -yaw) * Vector3(x - spot.x, 0, z - spot.z)
+	var at: Vector3 = plot["spot"]
+	var local := Basis(Vector3.UP, -_yaw) * Vector3(x - at.x, 0, z - at.z)
 	if absf(local.x) < WIDTH * 0.5 - 0.15 and absf(local.z) < DEPTH * 0.5 - 0.15:
-		return floor_y
+		return _floor
 	return NAN
 
 
 ## Why `at` is taken by the cottage (for building), or "".
 static func blocking_reason(at: Vector3, radius: float) -> String:
-	if instance == null or spot == Vector3.INF:
-		return ""
-	if Vector2(at.x - spot.x, at.z - spot.z).length() < radius + RADIUS:
-		return "Too close to the cottage"
+	for p: Dictionary in plots:
+		var s: Vector3 = p["spot"]
+		if Vector2(at.x - s.x, at.z - s.z).length() < radius + RADIUS:
+			return "Too close to the cottage"
 	return ""
 
 
+func _init(cottage_plot: Dictionary = {}) -> void:
+	plot = cottage_plot
+
+
 func _ready() -> void:
-	name = "KitCottage"
-	instance = self
-	if find_spot() == Vector3.INF:
-		push_warning("KitCottage: no free spot for the cottage.")
-		return
-	position = Vector3(spot.x, floor_y, spot.z)
-	rotation.y = yaw
+	if plot.is_empty():
+		# The cottage by the meeting circle.
+		name = "KitCottage"
+		instance = self
+		if find_spot() == Vector3.INF:
+			push_warning("KitCottage: no free spot for the cottage.")
+			return
+		plot = plots[0]
+	_all.append(self)
+	_floor = float(plot["floor_y"])
+	_yaw = float(plot["yaw"])
+	var at: Vector3 = plot["spot"]
+	position = Vector3(at.x, _floor, at.z)
+	rotation.y = _yaw
 	NatureSpawner.clear_area(global_position, RADIUS + 1.0)
 	_body = StaticBody3D.new()
 	_body.name = "CottageBody"
@@ -118,6 +169,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if instance == self:
 		instance = null
+	_all.erase(self)
 
 
 func _process(_delta: float) -> void:
@@ -125,7 +177,7 @@ func _process(_delta: float) -> void:
 	if player == null or roof == null:
 		return
 	var p: Vector3 = player.global_position
-	var inside := not is_nan(floor_at(p.x, p.z)) and absf(p.y - floor_y) < 1.5
+	var inside := not is_nan(floor_here(p.x, p.z)) and absf(p.y - _floor) < 1.5
 	if inside != _inside:
 		_inside = inside
 		roof.visible = not inside
@@ -146,7 +198,7 @@ func door_outside() -> Vector3:
 ## Where to stand and look from to see a room (for screenshots and tests).
 func room_view(room: String) -> Dictionary:
 	var r: Dictionary = _rooms.get(room, {})
-	return {"player": to_global(r.get("stand", Vector3.ZERO)) + Vector3(0, 0.1, 0), "yaw": yaw + float(r.get("look", 0.0)),
+	return {"player": to_global(r.get("stand", Vector3.ZERO)) + Vector3(0, 0.1, 0), "yaw": _yaw + float(r.get("look", 0.0)),
 		"center": to_global(r.get("center", Vector3.ZERO))}
 
 
@@ -225,11 +277,11 @@ func _build_foundation() -> void:
 	var plinth := MeshInstance3D.new()
 	plinth.name = "Foundation"
 	var box := BoxMesh.new()
-	var lowest := floor_y
+	var lowest := _floor
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
 		var c := to_global(Vector3(corner.x * WIDTH * 0.5, 0, corner.y * DEPTH * 0.5))
 		lowest = minf(lowest, TerrainGenerator.get_height(c.x, c.z))
-	var height := floor_y - lowest + 0.6
+	var height := _floor - lowest + 0.6
 	box.size = Vector3(WIDTH + 0.5, height, DEPTH + 0.5)
 	plinth.mesh = box
 	plinth.material_override = _stone_material()
@@ -244,7 +296,7 @@ func _build_foundation() -> void:
 		for zi in 5:
 			_piece(floor_root, "Floor_WoodDark", Vector3(-3.0 + xi * 2.0, 0.01, -4.0 + zi * 2.0))
 	# Two stone steps up to the door, with a gentle ramp for walking.
-	var step_rise := floor_y - TerrainGenerator.get_height(door_outside().x, door_outside().z)
+	var step_rise := _floor - TerrainGenerator.get_height(door_outside().x, door_outside().z)
 	if step_rise > 0.05:
 		for i in 2:
 			# The step by the door is level with the floor, the outer one halfway.
@@ -422,7 +474,7 @@ func _seat(prompt_text: String, at: Vector3, facing: float) -> void:
 	_usable("Seat", at, 1.0, func(): return prompt_text, func(): return "Sit",
 		func(actor):
 			if actor and actor.has_method("sit"):
-				actor.sit({"position": to_global(at), "yaw": yaw + facing, "height": 0.48}))
+				actor.sit({"position": to_global(at), "yaw": _yaw + facing, "height": 0.48}))
 
 
 func _usable(object_name: String, at: Vector3, radius: float, prompt: Callable, verb: Callable, use: Callable) -> void:

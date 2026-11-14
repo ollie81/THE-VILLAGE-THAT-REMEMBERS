@@ -39,10 +39,15 @@ func _nearest(kind: StringName) -> ResourceNode:
 ## Walks the player up to something and presses the action button.
 func _use(target: Node3D, offset: Vector3 = Vector3(1.0, 0.0, 0.8)) -> bool:
 	var player = GameManager.player
-	player.global_position = target.global_position + offset + Vector3(0, 0.4, 0)
-	player.velocity = Vector3.ZERO
-	player.face_towards(target.global_position)
-	await _frames(12)
+	# Stand where the target is what you're facing (not a tree beside it).
+	for side in [offset, Vector3(-offset.x, 0, offset.z), Vector3(offset.x, 0, -offset.z), Vector3(-offset.x, 0, -offset.z)]:
+		player.global_position = target.global_position + side + Vector3(0, 0.4, 0)
+		player.velocity = Vector3.ZERO
+		player.face_towards(target.global_position)
+		await _frames(12)
+		var focused = player.detector.focused
+		if focused and is_instance_valid(focused) and (focused.get_parent() == target or focused.handler == target or target.is_ancestor_of(focused)):
+			break
 	var ok: bool = player.detector.try_interact(player)
 	await _frames(70)
 	return ok

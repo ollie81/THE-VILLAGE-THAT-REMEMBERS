@@ -21,9 +21,10 @@ const CLIPS := {
 	&"gather": "PickUp_Table", &"talk": "Idle_Talking", &"wave": "Interact", &"sit": "Sitting_Idle",
 	&"sit_ground": "Crouch_Idle", &"sleep": "Death01", &"cheer": "Spell_Simple_Shoot", &"dance": "Dance",
 	&"bow": "Interact", &"slash": "Sword_Attack", &"block": "Sword_Idle", &"dodge": "Roll", &"hurt": "Hit_Chest",
+	&"swim": "Swim_Fwd", &"swim_idle": "Swim_Idle",
 }
 const LOOPING := ["Idle", "Walk", "Jog_Fwd", "Jump", "Idle_Talking", "Sitting_Idle", "Crouch_Idle", "Dance",
-	"Sword_Idle", "Sword_Attack", "PickUp_Table"]
+	"Sword_Idle", "Sword_Attack", "PickUp_Table", "Swim_Fwd", "Swim_Idle"]
 ## The animation clips' own ground speeds (m/s at speed 1).
 const WALK_CLIP_SPEED := 1.45
 const RUN_CLIP_SPEED := 3.6

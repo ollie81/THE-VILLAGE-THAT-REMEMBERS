@@ -6,8 +6,24 @@ extends RefCounted
 ##
 ## Coordinates: +X east, +Z south, Y up. The meeting circle is at the origin.
 
-const WORLD_HALF_SIZE := 80.0
-const PLAYABLE_HALF_SIZE := 62.0
+const WORLD_HALF_SIZE := 200.0
+const PLAYABLE_HALF_SIZE := 175.0
+## The original village square: its terrain never changes, so saves and
+## buildings keep their ground. The world grows around it.
+const CORE_HALF_SIZE := 80.0
+
+# --- The wider world (outside the core) ---
+## A lake in the western forest, for swimming.
+const LAKE_CENTER := Vector3(-128.0, 0.0, 18.0)
+const LAKE_RADIUS := 20.0
+## A pond by the south street.
+const POND_CENTER := Vector3(-34.0, 0.0, 122.0)
+const POND_RADIUS := 8.5
+## Farmland to the north and a second street of homes to the south.
+const FARMLAND := Rect2(-95.0, -170.0, 110.0, 70.0)
+const SOUTH_STREET := Rect2(-70.0, 98.0, 95.0, 52.0)
+## Mountains rise beyond this distance from the centre (square measure).
+const MOUNTAINS_FROM := 142.0
 
 const PLAZA_RADIUS := 7.5
 const PLAZA_RING_RADIUS := 6.2
@@ -51,6 +67,12 @@ const LOCATION_LABELS := {
 	"home_nia": "Nia's house",
 	"home_tomas": "Tomas's house",
 	"home_sera": "Sera's house",
+	"lake_shore": "the forest lake",
+	"farmland": "the farmland",
+	"windmill": "the windmill",
+	"ruins": "the old ruins",
+	"watchtower": "the watchtower",
+	"pond": "the pond",
 }
 
 const DEFAULT_WANDER_LOCATIONS: Array[String] = [
@@ -71,6 +93,23 @@ static var _buildings: Array[Dictionary] = []
 
 static func river_center_x(z: float) -> float:
 	return RIVER_BASE_X + 4.0 * sin(z * 0.045) + 1.5 * sin(z * 0.11 + 1.3)
+
+
+## How deep the water is at (x, z): 0 on dry land. The river, the lake and
+## the pond all share the same water level.
+static func water_depth(x: float, z: float) -> float:
+	if not is_water_area(x, z):
+		return 0.0
+	return maxf(WATER_LEVEL - TerrainGenerator.get_height(x, z), 0.0)
+
+
+## True inside the river, lake or pond (plus `margin` metres of shore).
+static func is_water_area(x: float, z: float, margin: float = 0.0) -> bool:
+	if absf(x - river_center_x(z)) < RIVER_HALF_WIDTH + 1.6 + margin:
+		return true
+	if Vector2(x - LAKE_CENTER.x, z - LAKE_CENTER.z).length() < LAKE_RADIUS + margin:
+		return true
+	return Vector2(x - POND_CENTER.x, z - POND_CENTER.z).length() < POND_RADIUS + margin
 
 
 static func bridge_x_range() -> Vector2:
@@ -132,6 +171,12 @@ static func blocking_reason(x: float, z: float, radius: float, path_margin: floa
 		return "Too close to the edge of the world"
 	if absf(x - river_center_x(z)) < RIVER_WALL_OFFSET + radius + 0.5:
 		return "Too close to the river"
+	if is_water_area(x, z, radius + 1.0):
+		return "Too close to the water"
+	if WorldExpansion.reserves(x, z, radius):
+		return "There's already something here"
+	if maxf(absf(x), absf(z)) > MOUNTAINS_FROM - radius:
+		return "Too steep up in the hills"
 	if Vector2(x, z).length() < PLAZA_RADIUS + radius + 1.0:
 		return "That's the meeting circle"
 	if TerrainGenerator.distance_to_paths(x, z) < radius * 0.7 + path_margin:
@@ -198,6 +243,22 @@ static func get_nav_edges() -> Array:
 		["bridge_west", "bridge_east"],
 		["bridge_west", "riverbank"],
 		["bridge_east", "forest_edge"],
+		# Roads out to the wider world.
+		["plaza_4", "build_site_front"],
+		["build_site_front", "west_road"],
+		["west_road", "north_road"],
+		["north_road", "farm_road"],
+		["farm_road", "farmland_gate"],
+		["farmland_gate", "windmill"],
+		["west_road", "forest_road"],
+		["forest_road", "lake_shore"],
+		["forest_road", "ruins"],
+		["workshop_front", "south_road"],
+		["south_road", "south_street_west"],
+		["south_street_west", "south_street_east"],
+		["south_street_west", "pond"],
+		["forest_edge", "wilds_road"],
+		["wilds_road", "watchtower"],
 	])
 	return edges
 
@@ -399,6 +460,31 @@ static func _build_tables() -> void:
 		camp_spots.append(camp + Vector3(cos(a), 0, sin(a)) * 2.5)
 		camp_looks.append(camp)
 	_locations["camp"] = {"spots": camp_spots, "looks": camp_looks, "inside": true}
+
+	# Roads and places in the wider world.
+	_nav_nodes["west_road"] = Vector3(-46.0, 0.0, -2.0)
+	_nav_nodes["north_road"] = Vector3(-58.0, 0.0, -58.0)
+	_nav_nodes["farm_road"] = Vector3(-50.0, 0.0, -92.0)
+	_nav_nodes["farmland_gate"] = Vector3(-42.0, 0.0, -104.0)
+	_nav_nodes["windmill"] = Vector3(-22.0, 0.0, -128.0)
+	_nav_nodes["forest_road"] = Vector3(-92.0, 0.0, 4.0)
+	_nav_nodes["lake_shore"] = LAKE_CENTER + Vector3(LAKE_RADIUS + 4.0, 0.0, -2.0)
+	_nav_nodes["ruins"] = Vector3(-140.0, 0.0, -52.0)
+	_nav_nodes["south_road"] = Vector3(-16.0, 0.0, 52.0)
+	_nav_nodes["south_street_west"] = Vector3(-20.0, 0.0, 106.0)
+	_nav_nodes["south_street_east"] = Vector3(14.0, 0.0, 108.0)
+	_nav_nodes["pond"] = POND_CENTER + Vector3(POND_RADIUS + 3.0, 0.0, -4.0)
+	_nav_nodes["wilds_road"] = Vector3(88.0, 0.0, 6.0)
+	_nav_nodes["watchtower"] = Vector3(118.0, 0.0, -18.0)
+	var lake_spots: Array = []
+	var lake_looks: Array = []
+	for i in 4:
+		var a := 0.3 + i * 0.35
+		lake_spots.append(LAKE_CENTER + Vector3(cos(a), 0, sin(a)) * (LAKE_RADIUS + 3.0))
+		lake_looks.append(LAKE_CENTER)
+	_locations["lake_shore"] = {"spots": lake_spots, "looks": lake_looks}
+	_locations["farmland"] = {"spots": [Vector3(-36, 0, -112), Vector3(-30, 0, -120), Vector3(-44, 0, -124), Vector3(-26, 0, -112)],
+		"looks": [Vector3(-36, 0, -118), Vector3(-30, 0, -126), Vector3(-44, 0, -130), Vector3(-26, 0, -118)]}
 
 	var river_x := river_center_x(BRIDGE_Z)
 	_locations["bridge"] = {
