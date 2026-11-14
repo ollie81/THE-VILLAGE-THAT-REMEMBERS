@@ -10,6 +10,7 @@ var _button: Button
 var _panel: PanelContainer
 var _balance: Label
 var _list: VBoxContainer
+var _animals: GridContainer
 var _ad_button: Button
 var _status: Label
 var _refresh_timer: float = 0.0
@@ -62,10 +63,27 @@ func _ready() -> void:
 	_ad_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_ad_button.pressed.connect(func(): AdRewards.show_for(&"credits"))
 	top.add_child(_ad_button)
-	box.add_child(UiTheme.label("Supplies", 22))
+	# Supplies and animals scroll, so the panel fits a phone screen.
+	var scroll := ScrollContainer.new()
+	scroll.name = "ShopScroll"
+	scroll.custom_minimum_size = Vector2(740, 330)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 8)
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(inner)
+	inner.add_child(UiTheme.label("Animals  (each one is bought on its own; pens and stables are built empty)", 20))
+	_animals = GridContainer.new()
+	_animals.name = "Animals"
+	_animals.columns = 2
+	_animals.add_theme_constant_override("h_separation", 8)
+	_animals.add_theme_constant_override("v_separation", 6)
+	inner.add_child(_animals)
+	inner.add_child(UiTheme.label("Supplies", 20))
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 6)
-	box.add_child(_list)
+	inner.add_child(_list)
 	var earn := UiTheme.label("Earn credits by reaching goals (+%d), helping villagers (+%d), clearing the woods (+%d), finding chests (+%d), festival goals (+%d) and coming back each day (+%d)." % [
 		int(EconomyConfig.EARN["objective"]), int(EconomyConfig.EARN["request"]), int(EconomyConfig.EARN["woods"]),
 		int(EconomyConfig.EARN["chest"]), int(EconomyConfig.EARN["festival_goal"]), int(EconomyConfig.EARN["daily_gift"])], 16, UiTheme.MUTED)
@@ -133,7 +151,30 @@ func _refresh() -> void:
 				_status.text = "Bought %s." % String(item["name"]).to_lower()
 			_refresh())
 		_list.add_child(b)
+	_refresh_animals()
 	_refresh_ad()
+
+
+func _refresh_animals() -> void:
+	for child in _animals.get_children():
+		_animals.remove_child(child)
+		child.queue_free()
+	var manager := AnimalManager.instance
+	for species in AnimalSpecies.SHOP_ORDER:
+		var info := AnimalSpecies.info(species)
+		var reason := manager.cannot_buy(species) if manager else "Not available here"
+		var text := "%s  ·  %d credits" % [info["name"], int(info["price"])]
+		text += "\n" + (String(info["about"]) if reason == "" else reason)
+		var b := UiTheme.button(text, 360)
+		b.name = "BuyAnimal_" + String(species)
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		b.add_theme_font_size_override("font_size", 17)
+		b.disabled = reason != ""
+		b.pressed.connect(func():
+			if manager and not manager.buy(species).is_empty():
+				_status.text = "%s is on the way to their new home." % String(info["name"])
+			_refresh())
+		_animals.add_child(b)
 
 
 func _refresh_ad() -> void:

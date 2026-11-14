@@ -56,6 +56,13 @@ func _ready() -> void:
 	var festival := Festival.new()
 	world.add_child(festival)
 	festival.from_dict(SaveService.section("festival"))
+	var animals := AnimalManager.new()
+	world.add_child(animals)
+	animals.from_dict(SaveService.section("animals"))
+	world.add_child(BirdFlocks.new())
+	var weather := Weather.new()
+	world.add_child(weather)
+	weather.from_dict(SaveService.section("weather"))
 
 	day_night = DayNightCycle.new()
 	add_child(day_night)

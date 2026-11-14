@@ -18,6 +18,10 @@ const STRUCTURES := {
 		"description": "Lights the way at night.", "beauty": 1.0},
 	&"chicken_coop": {"name": "Chicken coop", "cost": {&"wood": 8}, "work": 2, "footprint": Vector2(5.0, 6.2),
 		"description": "Three hens and their run. Feed them and collect their eggs every morning."},
+	&"animal_pen": {"name": "Animal pen", "cost": {&"wood": 14, &"stone": 2}, "work": 3, "footprint": Vector2(8.0, 8.0),
+		"description": "A fenced pen with a trough for up to 4 cows, sheep or pigs. Empty when built: buy animals in the Shop."},
+	&"stable": {"name": "Stable", "cost": {&"wood": 20, &"stone": 6}, "work": 4, "footprint": Vector2(7.0, 8.0),
+		"description": "A stable and paddock for 2 horses. Empty when built: buy horses in the Shop."},
 	&"fruit_tree": {"name": "Fruit tree", "cost": {&"wood": 1, &"herbs": 1}, "work": 1, "footprint": Vector2(1.6, 1.6),
 		"description": "A sapling. In two days it bears fruit to pick every day.", "beauty": 1.0},
 	&"market_stall": {"name": "Market stall", "cost": {&"wood": 10, &"stone": 2}, "work": 3, "footprint": Vector2(3.0, 2.0),
@@ -34,11 +38,11 @@ const STRUCTURES := {
 ## Shown in the Build menu, by tab.
 const CATEGORIES := {
 	"Homes": [&"house", &"cottage"],
-	"Food": [&"farm_plot", &"chicken_coop", &"fruit_tree", &"well"],
+	"Food": [&"farm_plot", &"chicken_coop", &"animal_pen", &"stable", &"fruit_tree", &"well"],
 	"Village": [&"bench", &"lantern", &"flower_bed", &"fence", &"stone_path", &"market_stall", &"statue"],
 }
 const ORDER: Array[StringName] = [&"farm_plot", &"house", &"cottage", &"well", &"bench", &"lantern",
-	&"chicken_coop", &"fruit_tree", &"market_stall", &"flower_bed", &"fence", &"stone_path", &"statue"]
+	&"chicken_coop", &"animal_pen", &"stable", &"fruit_tree", &"market_stall", &"flower_bed", &"fence", &"stone_path", &"statue"]
 ## Homes rise wall by wall; everything else appears as a frame.
 const HOMES: Array[StringName] = [&"house", &"cottage"]
 
@@ -121,6 +125,34 @@ static func create_finished(type: StringName) -> Node3D:
 				m.add_box_at(mid + Vector3(0, 0.42, 0), Vector3(p.distance_to(q), 0.05, 0.04), BuildingFactory.WOOD, atan2(q.x - p.x, q.z - p.z) + PI * 0.5)
 			m.add_box_at(run + COOP_FEEDER + Vector3(0, 0.12, 0), Vector3(0.9, 0.2, 0.3), BuildingFactory.WOOD)
 			m.add_box_at(run + COOP_FEEDER + Vector3(0, 0.2, 0), Vector3(0.8, 0.04, 0.22), Color(0.85, 0.72, 0.35))
+		&"animal_pen":
+			# A ring of fence with a gate gap at the front, a water trough and
+			# a hay pile. Animals are bought separately (see AnimalManager).
+			_fence_square(m, kit, 3.8, 3.8, 1.2)
+			m.add_box_at(Vector3(-2.6, 0.25, -2.9), Vector3(1.8, 0.4, 0.5), BuildingFactory.WOOD)
+			m.add_box_at(Vector3(-2.6, 0.43, -2.9), Vector3(1.6, 0.04, 0.34), Color(0.3, 0.45, 0.55))
+			kit.box_collider(Vector3(-2.6, 0.25, -2.9), Vector3(1.8, 0.5, 0.5))
+			for i in 5:
+				m.add_blob_at(Vector3(2.5 + (i % 2) * 0.4, 0.25 + (i / 2) * 0.12, -2.6 + (i % 3) * 0.3), Vector3(0.45, 0.3, 0.45), Color(0.86, 0.74, 0.4), 6, 4, 0.1)
+		&"stable":
+			# A timber shed with a roof at the back, an open paddock in front.
+			var shed := Vector3(0, 0, -2.6)
+			m.add_box_at(shed + Vector3(0, 1.2, -1.2), Vector3(6.4, 2.4, 0.2), BuildingFactory.WOOD)
+			for sx: float in [-1.0, 1.0]:
+				m.add_box_at(shed + Vector3(sx * 3.1, 1.2, 0), Vector3(0.2, 2.4, 2.6), BuildingFactory.WOOD)
+			m.add_box_at(shed + Vector3(0, 1.2, 0), Vector3(0.14, 2.4, 2.4), BuildingFactory.WOOD_DARK)  # stall divider
+			for sx: float in [-1.0, 1.0]:
+				m.add_box_at(shed + Vector3(sx * 3.1, 1.2, 1.25), Vector3(0.22, 2.5, 0.22), BuildingFactory.WOOD_DARK)
+			m.add_prism(Transform3D(Basis.IDENTITY, shed + Vector3(0, 2.4, 0)), 7.0, 3.2, 1.0, Color(0.55, 0.3, 0.2))
+			m.add_box_at(shed + Vector3(0, 0.03, 0), Vector3(6.0, 0.06, 2.4), Color(0.86, 0.74, 0.4))  # straw floor
+			kit.box_collider(shed + Vector3(0, 1.2, -1.2), Vector3(6.4, 2.4, 0.3))
+			for sx: float in [-1.0, 1.0]:
+				kit.box_collider(shed + Vector3(sx * 3.1, 1.2, 0), Vector3(0.3, 2.4, 2.6))
+			# Paddock fence round the front.
+			for x: float in [-3.3, 3.3]:
+				_fence_run(m, kit, Vector3(x, 0, -1.3), Vector3(x, 0, 3.8))
+			_fence_run(m, kit, Vector3(-3.3, 0, 3.8), Vector3(-0.8, 0, 3.8))
+			_fence_run(m, kit, Vector3(0.8, 0, 3.8), Vector3(3.3, 0, 3.8))
 		&"fruit_tree":
 			pass  # grows: see create_fruit_tree()
 		&"market_stall":
@@ -173,6 +205,28 @@ static func create_finished(type: StringName) -> Node3D:
 			kit.box_collider(Vector3(0, 0.4, 0), Vector3(1.9, 0.8, 0.5))
 	kit.finish(node)
 	return node
+
+
+## A square fence of half-size hx×hz with a gate gap `gate` wide at +Z.
+static func _fence_square(m: MeshBuilder, kit: BuildingFactory.Kit, hx: float, hz: float, gate: float) -> void:
+	_fence_run(m, kit, Vector3(-hx, 0, -hz), Vector3(hx, 0, -hz))
+	_fence_run(m, kit, Vector3(-hx, 0, -hz), Vector3(-hx, 0, hz))
+	_fence_run(m, kit, Vector3(hx, 0, -hz), Vector3(hx, 0, hz))
+	_fence_run(m, kit, Vector3(-hx, 0, hz), Vector3(-gate * 0.5, 0, hz))
+	_fence_run(m, kit, Vector3(gate * 0.5, 0, hz), Vector3(hx, 0, hz))
+
+
+## A straight run of post-and-rail fence from a to b, with a collider.
+static func _fence_run(m: MeshBuilder, kit: BuildingFactory.Kit, a: Vector3, b: Vector3) -> void:
+	var length := a.distance_to(b)
+	var posts := maxi(1, ceili(length / 1.6))
+	for i in posts + 1:
+		m.add_box_at(a.lerp(b, float(i) / posts) + Vector3(0, 0.45, 0), Vector3(0.12, 0.9, 0.12), BuildingFactory.WOOD_DARK)
+	var yaw := atan2(b.x - a.x, b.z - a.z) + PI * 0.5
+	var mid := (a + b) * 0.5
+	for y: float in [0.38, 0.75]:
+		m.add_box_at(mid + Vector3(0, y, 0), Vector3(length, 0.08, 0.06), BuildingFactory.WOOD, yaw)
+	kit.box_collider(mid + Vector3(0, 0.5, 0), Vector3(length, 1.0, 0.2) if absf(b.z - a.z) < 0.01 else Vector3(0.2, 1.0, length))
 
 
 ## A fruit tree at `growth` (0 sapling .. 1 grown), with fruit when ripe.

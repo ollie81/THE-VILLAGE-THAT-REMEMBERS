@@ -15,6 +15,8 @@ uniform float grass_scale = 0.16;
 uniform float dirt_scale = 0.3;
 uniform float cobble_scale = 0.32;
 uniform float tint_strength = 0.32;
+// 0 dry, 1 soaked: rain darkens the ground and makes it shine.
+uniform float wetness = 0.0;
 
 varying vec3 world_pos;
 
@@ -42,6 +44,7 @@ void fragment() {
 	vec3 n_c = texture(cobble_normal, p * cobble_scale).rgb;
 	NORMAL_MAP = n_g * g + n_d * d + n_c * c;
 	NORMAL_MAP_DEPTH = 0.8;
-	ROUGHNESS = mix(0.95, 0.82, c);
+	ALBEDO *= 1.0 - wetness * 0.28;
+	ROUGHNESS = mix(mix(0.95, 0.82, c), 0.35, wetness);
 	SPECULAR = 0.25;
 }

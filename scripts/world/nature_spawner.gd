@@ -240,9 +240,9 @@ static func _kit_mesh(model: String) -> Mesh:
 		if material is BaseMaterial3D:
 			var m := (material as BaseMaterial3D).duplicate() as BaseMaterial3D
 			if m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or m.albedo_texture and m.albedo_texture.get_image() and m.albedo_texture.get_image().detect_alpha() != Image.ALPHA_NONE:
-				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-				m.alpha_scissor_threshold = 0.45
-				m.cull_mode = BaseMaterial3D.CULL_DISABLED
+				# Leaves: cut out, and swaying in the wind.
+				mesh.surface_set_material(i, Materials.foliage(m.albedo_texture, m.albedo_color))
+				continue
 			mesh.surface_set_material(i, m)
 	scene.free()
 	return mesh

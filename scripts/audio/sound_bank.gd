@@ -92,6 +92,33 @@ static func effects() -> Dictionary:
 		Synth.mix(cluck, Synth.envelope(Synth.sweep(520.0 - n * 60.0, 380.0, 0.09, 0.004), 0.004, 0.05), n * 0.13, 0.7)
 		Synth.mix(cluck, Synth.envelope(Synth.noise(0.06, 0.3, rng), 0.002, 0.03), n * 0.13, 0.25)
 	add.call("cluck", cluck)
+	# Farm animals and pets (stylised: tone sweeps with a little breath).
+	var moo := Synth.buffer(1.2)
+	Synth.mix(moo, Synth.envelope(Synth.sweep(150.0, 118.0, 1.0, 0.15), 0.15, 0.3), 0.0, 0.9)
+	Synth.mix(moo, Synth.envelope(Synth.sweep(300.0, 236.0, 1.0, 0.15), 0.15, 0.3), 0.0, 0.3)
+	add.call("moo", moo)
+	var baa := Synth.buffer(0.8)
+	for n in 6:
+		Synth.mix(baa, Synth.envelope(Synth.sweep(410.0 + (n % 2) * 40.0, 390.0, 0.12, 0.01), 0.01, 0.06), n * 0.1, 0.6)
+	add.call("baa", baa)
+	var oink := Synth.buffer(0.5)
+	for n in 2:
+		Synth.mix(oink, Synth.envelope(Synth.sweep(260.0, 180.0, 0.14, 0.005), 0.005, 0.07), n * 0.18, 0.7)
+		Synth.mix(oink, Synth.envelope(Synth.noise(0.1, 0.25, rng), 0.003, 0.05), n * 0.18, 0.3)
+	add.call("oink", oink)
+	var neigh := Synth.buffer(1.1)
+	for n in 8:
+		Synth.mix(neigh, Synth.envelope(Synth.sweep(900.0 - n * 70.0, 820.0 - n * 70.0, 0.12, 0.01), 0.01, 0.06), n * 0.11, 0.5)
+	add.call("neigh", neigh)
+	for v in 2:
+		var bark := Synth.buffer(0.3)
+		Synth.mix(bark, Synth.envelope(Synth.sweep(520.0 + v * 60.0, 300.0, 0.12, 0.003), 0.003, 0.05), 0.0, 0.8)
+		Synth.mix(bark, Synth.envelope(Synth.noise(0.1, 0.4, rng), 0.002, 0.04), 0.0, 0.4)
+		add.call("bark", bark)
+	var meow := Synth.buffer(0.7)
+	Synth.mix(meow, Synth.envelope(Synth.sweep(600.0, 900.0, 0.25, 0.02), 0.02, 0.1), 0.0, 0.6)
+	Synth.mix(meow, Synth.envelope(Synth.sweep(900.0, 520.0, 0.35, 0.01), 0.01, 0.15), 0.25, 0.6)
+	add.call("meow", meow)
 	var cricket := Synth.buffer(0.6)
 	for n in 6:
 		Synth.mix(cricket, Synth.envelope(Synth.sweep(4200.0, 4300.0, 0.03, 0.002), 0.001, 0.02), n * 0.05 + (0.25 if n >= 3 else 0.0), 0.5)
@@ -109,6 +136,20 @@ static func wind() -> PackedFloat32Array:
 		var t := float(i) / Synth.RATE
 		out[i] *= 0.6 + 0.4 * sin(TAU * t / seconds) * sin(TAU * t * 2.0 / seconds + 1.0)
 	return Synth.normalize(out, 0.5)
+
+
+## A seamless loop of rain (bright noise with a soft patter of drops).
+static func rain() -> AudioStreamWAV:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	var seconds := 8.0
+	var out := Synth.seamless(Synth.noise(seconds + 0.3, 0.3, rng), 0.3)
+	for i in out.size():
+		out[i] *= 0.4
+	for drop in 160:
+		var tap := Synth.envelope(Synth.noise(0.02, 0.9, rng), 0.0005, 0.006)
+		Synth.mix_wrapped(out, tap, rng.randf_range(0.0, seconds), rng.randf_range(0.2, 0.7))
+	return Synth.to_stream(Synth.normalize(out, 0.55), true)
 
 
 ## A crackling, looping fire for the meeting circle (3D, fades with distance).

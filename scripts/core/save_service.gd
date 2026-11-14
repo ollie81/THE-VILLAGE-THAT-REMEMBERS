@@ -132,6 +132,8 @@ func save_game() -> void:
 		"stories": VillageStories.instance.to_dict() if VillageStories.instance else {},
 		"thornwood": Thornwood.instance.to_dict() if Thornwood.instance else {},
 		"credits": VillageCredits.instance.to_dict() if VillageCredits.instance else (_data.get("credits", {}) if _data.get("credits", {}) is Dictionary else {}),
+		"animals": AnimalManager.instance.to_dict() if AnimalManager.instance else (_data.get("animals", {}) if _data.get("animals", {}) is Dictionary else {}),
+		"weather": Weather.instance.to_dict() if Weather.instance else {},
 		"saved_unix": Time.get_unix_time_from_system(),
 	}
 	if not write_safely(SAVE_PATH, JSON.stringify(_data, "\t")):

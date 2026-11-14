@@ -28,6 +28,8 @@ var sun: DirectionalLight3D
 ## lit by their hearth and lamp; phones without shadows would otherwise light
 ## a room straight through its roof).
 static var indoor: bool = false
+## 0 clear, 1 heavy overcast (set by Weather): a dimmer sun, a grey sky, more fog.
+static var overcast: float = 0.0
 var environment: Environment
 var sky_material: ShaderMaterial
 
@@ -125,6 +127,7 @@ func _update_light() -> void:
 		sun.light_energy = moon_strength * 0.3
 		# Moonlight is dim; skipping its shadows saves a full shadow pass.
 		_set_shadows(false)
+	sun.light_energy *= lerpf(1.0, 0.35, overcast)
 	if indoor:
 		sun.light_energy *= 0.12
 
@@ -138,8 +141,9 @@ func _update_environment() -> void:
 	var hour := WorldClock.time_of_day
 	var colors := _sample_keyframes(hour)
 	var sun_dir := sun_direction_for(hour)
-	sky_material.set_shader_parameter("top_color", colors[0])
-	sky_material.set_shader_parameter("horizon_color", colors[1])
+	var grey := Color(0.5, 0.53, 0.57).darkened(night_factor * 0.7)
+	sky_material.set_shader_parameter("top_color", (colors[0] as Color).lerp(grey, overcast * 0.85))
+	sky_material.set_shader_parameter("horizon_color", (colors[1] as Color).lerp(grey.lightened(0.15), overcast * 0.8))
 	sky_material.set_shader_parameter("ground_color", (colors[4] as Color).darkened(0.4))
 	sky_material.set_shader_parameter("sun_color", colors[2])
 	sky_material.set_shader_parameter("sun_direction", sun_dir)
@@ -149,7 +153,9 @@ func _update_environment() -> void:
 	environment.ambient_light_color = colors[3] if not indoor else Color(1.0, 0.82, 0.62)
 	environment.ambient_light_energy = lerpf(0.62, 0.5, night_factor) if not indoor else 0.42
 	environment.fog_light_color = colors[4]
-	environment.fog_density = lerpf(0.003, 0.008, night_factor)
+	environment.fog_density = lerpf(0.003, 0.008, night_factor) + overcast * 0.006
+	if not indoor:
+		environment.ambient_light_color = environment.ambient_light_color.lerp(Color(0.62, 0.66, 0.72), overcast * 0.6)
 
 	var glow := Materials.window_glow()
 	glow.emission_energy_multiplier = night_factor * 2.4 + smoothstep(16.5, 19.0, hour) * (1.0 - night_factor) * 0.4

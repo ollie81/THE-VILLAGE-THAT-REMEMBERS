@@ -744,6 +744,34 @@ The plan for the whole living-world expansion is in the "Living World Expansion 
 
 Tests: `godot --headless --path . res://tests/world_test.tscn` (37 checks). Screenshots: `tools/world_screenshots.tscn`.
 
+## Living world, stage 2: animals, birds and weather
+
+- **Real animals** (Quaternius CC0 models with their own animations): the village keeps cows on the
+  pasture, sheep by the north fields, pigs in a sty, two horses in a paddock by the windmill, and a dog and a
+  cat by Tomas's and Mara's homes and on the south street. They wander and graze in their home area, walk to
+  water now and then, lie down at night and when it rains, turn to look at you, and skittish ones (sheep,
+  cats) run off if you come running. Dogs trot over to say hello.
+- **Your own animals, one at a time.** Build an **Animal pen** (cows, sheep, pigs; 4 places) or a **Stable**
+  (horses; 2 places) from the Build menu: they are built **empty**. Buy each animal in the Shop's new Animals
+  section with Village Credits; pets (dog, small dog, cat; up to 3) live by your home. Every animal is a saved
+  record with its own id, so nothing spawns twice (a test saves and loads repeatedly and feeds in a save with
+  a duplicated animal). Milk your cow once a day (+2 food), feed animals a herb, pet them, and ask your dog to
+  follow you or go home.
+- **Birds:** two small flocks circle over wherever you are, now and then land nearby, and take off when you
+  walk up. They roost at night.
+- **Weather:** spells of clear, cloudy and rainy weather (saved). Rain falls round you (not indoors), with its
+  own sound; the sky greys and dims, the ground darkens and shines wet and dries slowly afterwards, and trees
+  and grass sway in the wind, harder in bad weather.
+- **Phones:** an animal's body only exists within 85 m of you (records are kept for the rest); within 28 m it
+  thinks and animates every frame, to 60 m a few times a second, beyond that it stands still. Birds have no
+  physics. Rain is 500 particles (220 on the Low setting).
+- **Not yet:** no goats or ducks (no free models found that match); sheep, pigs and the small dog walk with
+  a simple bob done in code because their models have no walking animation; villagers don't react to rain
+  yet (stage 4); riding horses is stage 3. The chicken coop still comes with its three hens, as before.
+
+Tests: `godot --headless --path . res://tests/animals_test.tscn`. Screenshots: `tools/animal_screenshots.tscn`
+(`--skip-farm` or `--weather-only` for a shorter run).
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

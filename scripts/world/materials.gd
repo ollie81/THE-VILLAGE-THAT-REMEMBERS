@@ -134,6 +134,30 @@ static func cobblestone() -> StandardMaterial3D:
 	return _cobble
 
 
+## Swaying, cut-out leaves for a tree texture (shared per texture, so the
+## weather can change the wind on all of them).
+static var foliage_materials: Dictionary = {}
+
+static func foliage(texture: Texture2D, tint: Color = Color.WHITE) -> ShaderMaterial:
+	var key := "%s|%s" % [texture.resource_path if texture else "", tint.to_html()]
+	if not foliage_materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/foliage.gdshader")
+		m.set_shader_parameter("albedo_tex", texture)
+		m.set_shader_parameter("albedo_color", tint)
+		foliage_materials[key] = m
+	return foliage_materials[key]
+
+
+## Sets the wind on grass and leaves (0 calm, 1 normal, 2+ stormy).
+static func set_wind(amount: float) -> void:
+	grass().set_shader_parameter("wind_strength", 0.12 * amount)
+	grass().set_shader_parameter("wind_speed", 1.6 + 0.6 * maxf(amount - 1.0, 0.0))
+	for m: ShaderMaterial in foliage_materials.values():
+		m.set_shader_parameter("wind_strength", 0.012 * amount)
+		m.set_shader_parameter("wind_speed", 1.3 + 0.5 * maxf(amount - 1.0, 0.0))
+
+
 static func grass() -> ShaderMaterial:
 	if not _cache.has("grass"):
 		var material := ShaderMaterial.new()
