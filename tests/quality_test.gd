@@ -186,7 +186,7 @@ func _activities() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	_check(fishing.stage == Fishing.Stage.BITE and fishing.get_interaction_verb() == "Reel", "a bite! Reel")
-	var touch := _main.find_children("*", "TouchControls", true, false)
+	var touch: Array = _main.find_children("*", "TouchControls", true, false)
 	await get_tree().process_frame
 	_check(not touch.is_empty() and player.detector.focused == fishing.interactable and touch[0]._shown_verb == "Reel",
 		"the action button changes to Reel too (it used to keep the old verb)")
