@@ -52,7 +52,7 @@ func _run() -> void:
 		v.mind.record_interaction(GameManager.PLAYER_ID, "conversation", 1, 9.0)
 
 	# --- Actions ---------------------------------------------------------------------
-	_check(actions != null and actions._buttons.size() == 6, "an Actions menu with six actions")
+	_check(actions != null and actions._buttons.size() == 7 and actions._buttons[6].text == "Wardrobe", "an Actions menu with six actions and the Wardrobe")
 	player.global_position = mara.global_position + Vector3(2.5, 0.4, 0)
 	await _frames(10)
 	var before: float = mara.mind.get_affection(GameManager.PLAYER_ID)

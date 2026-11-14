@@ -76,6 +76,16 @@ func _credits() -> void:
 	before = credits.balance
 	var board := RequestBoard.instance
 	var helped := false
+	# Today's requests are random: make sure there's one to bring something.
+	var asker0 = GameManager.villagers[0]
+	var made: Dictionary = board._fetch(asker0)
+	made["id"] = board._next_id
+	board._next_id += 1
+	made["kind"] = "fetch"
+	made["from"] = String(asker0.get_villager_id())
+	made["done"] = false
+	made["day"] = WorldClock.day
+	board.requests.insert(0, made)
 	for request: Dictionary in board.open_requests():
 		var asker = GameManager.get_villager(StringName(String(request["from"])))
 		if asker == null:
