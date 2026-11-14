@@ -100,7 +100,9 @@ func _run() -> void:
 	var hips_y := player.model.skeleton.global_transform * player.model.skeleton.get_bone_global_pose(hips_bone).origin
 	var ground := VillageLayout.get_walk_height(player.global_position.x, player.global_position.z)
 	var log_top := VillageLayout.plaza_floor_height() + VillageLayout.PLAZA_SEAT_HEIGHT
-	_check(absf(hips_y.y - log_top) < 0.06, "hips rest on the log top (hips %.2f m, log top %.2f m)" % [hips_y.y, log_top])
+	# The hip bone is above the seat by the thighs' thickness (none for the drawn bodies).
+	var expected_hips := log_top + player.model.hip_clearance()
+	_check(absf(hips_y.y - expected_hips) < 0.06, "sits on the log, not in it (hips %.2f m, log top %.2f m, hips expected %.2f m)" % [hips_y.y, log_top, expected_hips])
 	var sit_pos := player.global_position
 	Input.action_press("move_forward")
 	await _frames(20)

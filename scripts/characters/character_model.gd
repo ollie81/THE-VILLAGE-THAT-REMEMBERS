@@ -94,6 +94,12 @@ static func create(look: CharacterAppearance) -> CharacterModel:
 static var use_assets: bool = true
 
 
+## How far the hip bone sits above a seat when sitting (the drawn bodies'
+## hips are modelled at seat level).
+func hip_clearance() -> float:
+	return 0.0
+
+
 ## The skeleton's name for a generic bone (RightHand, LeftHand, Head).
 func bone_name(generic: StringName) -> StringName:
 	return generic

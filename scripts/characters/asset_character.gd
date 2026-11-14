@@ -340,8 +340,17 @@ func set_expression(expression: StringName, _weight: float = 1.0, _fade: float =
 	_expression = expression if FaceExpressions.EXPRESSIONS.has(expression) else &"neutral"
 
 
+## The hip bone sits this far above the seat (the thighs and bottom are
+## under it); without it a sitting person sinks into the chair.
+const SEAT_CLEARANCE := 0.12
+
+
+func hip_clearance() -> float:
+	return SEAT_CLEARANCE * scale.y
+
+
 func seat_offset(seat_height: float) -> float:
-	return seat_height - _sit_hips * scale.y
+	return seat_height + hip_clearance() - _sit_hips * scale.y
 
 
 func get_face_position() -> Vector3:
