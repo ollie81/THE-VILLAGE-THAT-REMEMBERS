@@ -254,6 +254,7 @@ func fulfil(request_id: int, villager) -> Array[String]:
 					asker.set_meta("pending_line", "[happy]%s told me what they said. Thank you for that." % villager.data.display_name)
 		request["done"] = true
 		completed_total += 1
+		VillageCredits.award("request", "request_%d" % int(request["id"]), "helping %s" % (asker.data.display_name if asker else "a villager"))
 		if asker:
 			asker.mind.adjust_opinion(GameManager.PLAYER_ID, 10.0, 7.0)
 			asker.mind.memory.add("deed", GameManager.PLAYER_ID, WorldClock.day, WorldClock.time_of_day,

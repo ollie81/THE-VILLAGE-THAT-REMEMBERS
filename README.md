@@ -675,6 +675,29 @@ Tests: `godot --headless --path . res://tests/home_test.tscn`. Screenshots: `too
 Tests: `godot --headless --path . res://tests/quality_test.tscn`. Screenshots: `tools/quality_screenshots.tscn`
 (hens, chopping, fishing, journal, tip, home) and `tools/style_lineup.tscn` (hair and accessories).
 
+## Village Credits, the Shop and the Wardrobe (gameplay upgrade, stage 1)
+
+The plan for the whole upgrade (bigger homes, village danger, villagers reacting) and its risks is in
+[docs/GAMEPLAY_UPGRADE_PLAN.md](docs/GAMEPLAY_UPGRADE_PLAN.md).
+
+- **Village Credits** (`scripts/economy/`): one currency, shown next to your resources. A new village (or an
+  older save) starts with 20. Earned by reaching goals, helping villagers, clearing the west woods, finding
+  chests, festival goals and coming back each day, and by an optional short ad (+15). Every reward has a
+  token, so nothing is ever paid twice, and ad credits are paid only after the ad SDK confirms the ad was
+  watched. The balance is saved with a checksum that catches a hand-edited save. All prices and rewards are in
+  `economy_config.gd`.
+- **Shop** (button under Actions): planks, stone, seeds and herbs, food, a builder's crate; the Wardrobe; the
+  optional ad. No subscriptions, no paid purchases, no gambling.
+- **Wardrobe** (Shop, or Actions → Wardrobe): outfits (shirt and trousers, short sleeves, tunics, blouse and
+  long skirt, long dress, summer dress), hairstyles and hair colours, hats, extras (cloak, bags, apron, braces,
+  scarf, glasses, earrings, necklace, tool belt, beards) and dyes for each part, with a turning 3D preview you
+  can drag. Try anything on; new items are bought with credits when you tap Wear, and some are earned by
+  play (flower crown: help 3 villagers; necklace: find a chest; tool belt: finish 3 buildings; gold dye: clear
+  the woods). The outfit is built onto the real character (same skeleton and animations, tools and sword
+  re-attached) and saved.
+
+Tests: `godot --headless --path . res://tests/economy_test.tscn`. Screenshots: `tools/wardrobe_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

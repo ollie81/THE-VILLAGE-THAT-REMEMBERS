@@ -7,6 +7,7 @@ extends Control
 const ENTRIES := [
 	["Wave", &"wave"], ["Bow", &"bow"], ["Cheer", &"cheer"],
 	["Dance", &"dance"], ["Sit down", &"sit"], ["Lie down", &"sleep"],
+	["Wardrobe", &"wardrobe"],
 ]
 
 var _button: Button
@@ -65,6 +66,9 @@ func do(action: StringName) -> void:
 	match action:
 		&"sit":
 			player.sit()
+		&"wardrobe":
+			if WardrobePanel.instance:
+				WardrobePanel.instance.open()
 		&"sleep":
 			if Interiors.instance and Interiors.instance.is_inside():
 				Interiors.instance.lie_down_indoors(player)

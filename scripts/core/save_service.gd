@@ -131,6 +131,7 @@ func save_game() -> void:
 		"festival": Festival.instance.to_dict() if Festival.instance else {},
 		"stories": VillageStories.instance.to_dict() if VillageStories.instance else {},
 		"thornwood": Thornwood.instance.to_dict() if Thornwood.instance else {},
+		"credits": VillageCredits.instance.to_dict() if VillageCredits.instance else (_data.get("credits", {}) if _data.get("credits", {}) is Dictionary else {}),
 		"saved_unix": Time.get_unix_time_from_system(),
 	}
 	if not write_safely(SAVE_PATH, JSON.stringify(_data, "\t")):

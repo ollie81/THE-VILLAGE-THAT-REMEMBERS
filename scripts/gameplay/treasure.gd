@@ -79,6 +79,7 @@ func _open(index: int, _holder) -> void:
 		GameManager.notify("Empty now. There are %d old chests in the woods; you've found %d." % [REWARDS.size(), found()])
 		return
 	GameState.set_flag(flag)
+	VillageCredits.award("chest", "chest_%d" % index, "finding an old chest")
 	var reward: Dictionary = REWARDS[index]
 	for resource in reward["items"]:
 		GameState.add(resource, int(reward["items"][resource]))

@@ -35,6 +35,7 @@ func _ready() -> void:
 	_build_placement_bar()
 	_build_edit_bar()
 	GameState.inventory_changed.connect(func(_r, _a, _t): _refresh())
+	_connect_credits.call_deferred()
 	GameState.objective_changed.connect(func(_i): _refresh())
 	GameState.objective_completed.connect(_on_objective_completed)
 	GameManager.camera_mode_changed.connect(func(_m): _refresh())
@@ -115,10 +116,22 @@ func _build_objective() -> void:
 	box.add_child(_objective_details)
 
 
+func _connect_credits() -> void:
+	if VillageCredits.instance and not VillageCredits.instance.changed.is_connected(_on_credits):
+		VillageCredits.instance.changed.connect(_on_credits)
+	_refresh()
+
+
+func _on_credits(_balance: int) -> void:
+	_refresh()
+
+
 func _refresh() -> void:
 	var parts := PackedStringArray()
 	for resource in GameState.RESOURCES:
 		parts.append("%s %d" % [GameState.RESOURCE_NAMES[resource], GameState.count(resource)])
+	if VillageCredits.instance:
+		parts.append("Credits %d" % VillageCredits.instance.balance)
 	_resource_label.text = "   ".join(parts)
 	if GameState.is_week_complete():
 		_objective_title.text = "Your first week is complete"

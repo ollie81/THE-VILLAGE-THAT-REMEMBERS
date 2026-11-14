@@ -60,7 +60,7 @@ func _ready() -> void:
 	shape.position = Vector3(0, 0.85, 0)
 	add_child(shape)
 
-	model = CharacterModel.new(create_default_appearance())
+	model = CharacterModel.new(saved_appearance())
 	model.name = "Model"
 	add_child(model)
 
@@ -71,6 +71,39 @@ func _ready() -> void:
 	tools = PlayerTools.new()
 	add_child(tools)
 	GameManager.register_player(self)
+
+
+## The look saved from the Wardrobe, or the traveller's starting look.
+static func saved_appearance() -> CharacterAppearance:
+	var saved: Variant = SaveService.section("player").get("appearance", {})
+	if saved is Dictionary and not (saved as Dictionary).is_empty():
+		return AppearanceCodec.from_dict(saved)
+	return create_default_appearance()
+
+
+## Dresses the character in `look`: rebuilds the model on a fresh skeleton
+## (same rig, so every animation still fits) and re-attaches the sword,
+## shield and tools to the new hands.
+func set_appearance(look: CharacterAppearance) -> void:
+	var old := model
+	var yaw := old.rotation.y if old else 0.0
+	var offset_y := old.position.y if old else 0.0
+	var animation: StringName = old._state if old and old._state != &"" else &"idle"
+	model = CharacterModel.new(look)
+	model.name = "Model"
+	if old:
+		remove_child(old)
+		old.queue_free()
+	add_child(model)
+	model.rotation.y = yaw
+	model.position.y = offset_y
+	model.set_animation(animation)
+	if combat:
+		combat._sword = null
+		combat._shield = null
+		combat.refresh_equipment()
+	if tools:
+		tools.reset()
 
 
 ## The traveller's look. Static so tools (character gallery) can reuse it.
@@ -296,6 +329,7 @@ func get_save_data() -> Dictionary:
 	return {
 		"position": [at.x, at.y, at.z],
 		"yaw": model.rotation.y,
+		"appearance": AppearanceCodec.to_dict(model.appearance),
 	}
 
 

@@ -38,6 +38,7 @@ const REWARDS := {
 	&"harvest": {"title": "Blessed harvest", "text": "Every planted crop ripens at once."},
 	&"feast": {"title": "Village feast", "text": "Everyone eats well tonight. All villagers are happier."},
 	&"traveller": {"title": "Word of the village", "text": "A traveller hears of the village and comes today."},
+	&"credits": {"title": "Village Credits", "text": "Village Credits to spend in the Shop and the Wardrobe."},
 }
 
 enum Provider { NONE, ADMOB, SIMULATED }
@@ -57,6 +58,10 @@ var _earned: bool = false
 ## The ad was closed but the SDK hadn't confirmed the reward yet.
 var _dismissed_unearned: bool = false
 var _overlay: CanvasLayer
+## A unique token for the reward being paid right now (set just before
+## reward_granted fires), so a reward can be recorded and never paid twice.
+var last_reward_token: String = ""
+var _shown_count: int = 0
 ## Tests set this so the daily count isn't written to the player's files.
 var persist: bool = true
 
@@ -134,7 +139,10 @@ func _finish(watched: bool) -> void:
 		_save_counts()
 		var reward := _pending_reward
 		_pending_reward = &""
+		_shown_count += 1
+		last_reward_token = "%d-%d-%d" % [int(Time.get_unix_time_from_system()), _shown_count, randi() % 1000000]
 		reward_granted.emit(reward)
+		last_reward_token = ""
 	else:
 		_pending_reward = &""
 		ad_failed.emit("The ad was closed early, so no gift this time.")
@@ -195,6 +203,8 @@ func on_user_earned_reward() -> void:
 ## The ad was closed. Rewards only if the SDK confirmed it was watched;
 ## some devices confirm a moment after closing, so wait briefly for that.
 func on_ad_dismissed() -> void:
+	if _pending_reward == &"":
+		return  # already finished (a repeated close message)
 	if _earned:
 		_finish(true)
 		return

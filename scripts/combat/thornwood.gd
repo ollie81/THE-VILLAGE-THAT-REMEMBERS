@@ -143,6 +143,7 @@ func _on_defeated(_enemy) -> void:
 		return
 	times_cleared += 1
 	last_cleared_day = WorldClock.day
+	VillageCredits.award("woods", "woods_%d" % times_cleared, "clearing the woods")
 	_spawned.clear()
 	var reward: Dictionary = REPEAT_REWARD if mission_done else FIRST_REWARD
 	for resource in reward:

@@ -84,6 +84,7 @@ func try_claim(now_unix: float = -1.0) -> Dictionary:
 		GameState.add(resource, int(gift["items"][resource]))
 	GameManager.notify("Welcome back! %s  (+%s)" % [gift["text"], GameState.cost_text(gift["items"])])
 	Sounds.play("built", null, -6.0)
+	VillageCredits.award("daily_gift", "daily_gift_%s" % Time.get_date_string_from_system(), "coming back today")
 	SaveService.save_game()
 	claimed.emit(gift)
 	return gift

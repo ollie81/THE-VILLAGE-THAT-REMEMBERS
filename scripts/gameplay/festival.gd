@@ -271,6 +271,7 @@ func _set_progress(kind: String, value: int) -> void:
 
 func _complete(goal: Dictionary) -> void:
 	done[String(goal["id"])] = true
+	VillageCredits.award("festival_goal", "festival_%d_%s" % [WorldClock.day / 7, String(goal["id"])], "a festival goal")
 	var reward: Dictionary = goal["reward"]
 	_grant(reward)
 	GameManager.notify("Festival goal done: %s  (+%s)" % [goal["text"], GameState.cost_text(reward)])

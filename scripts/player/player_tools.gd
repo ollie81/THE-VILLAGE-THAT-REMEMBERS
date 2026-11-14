@@ -26,6 +26,15 @@ func _hand() -> BoneAttachment3D:
 	return _attachment
 
 
+## Forgets the hand after the model is rebuilt (new outfit): the old
+## attachment went with the old skeleton.
+func reset() -> void:
+	_attachment = null
+	_meshes.clear()
+	current = &""
+	_timer = 0.0
+
+
 ## Shows `kind` in the hand for `seconds` ("" hides it).
 func hold(kind: StringName, seconds: float) -> void:
 	var hand := _hand()
