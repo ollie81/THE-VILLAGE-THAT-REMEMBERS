@@ -77,4 +77,37 @@ func _run() -> void:
 	rig.distance = 3.0
 	await _wait(20)
 	await _shot("4_walking")
+	# Accessories on the player.
+	var look := AppearanceCodec.from_dict(AppearanceCodec.to_dict(player.model.appearance))
+	WardrobeCatalog.apply(look, "straw_hat")
+	WardrobeCatalog.apply(look, "glasses")
+	WardrobeCatalog.apply(look, "scarf")
+	player.set_appearance(look)
+	player.global_position = VillageLayout.ground_point(0, 12) + Vector3(0, 0.3, 0)
+	player.model.set_animation(&"idle")
+	player.model.rotation.y = -0.3
+	rig.yaw = 0.0
+	rig.pitch = -0.05
+	rig.distance = 1.4
+	await _wait(40)
+	await _shot("5_accessories")
+	# A crowd of newcomers: many different looks.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var jobs: Array = Professions.ids()
+	var others: Array = []
+	for k in 8:
+		var person_look: CharacterAppearance = AppearanceGenerator.generate(rng, "female" if k % 2 == 0 else "male", 20 + k * 6, String(jobs[k % jobs.size()]), others)
+		others.append(person_look)
+		var m := CharacterModel.create(person_look)
+		_main.add_child(m)
+		m.global_position = VillageLayout.ground_point(-5.0 + k * 1.4, 30.0)
+		m.rotation.y = 0.0
+	player.global_position = VillageLayout.ground_point(0, 34.5) + Vector3(0, 0.3, 0)
+	player.model.rotation.y = PI
+	rig.yaw = 0.0
+	rig.pitch = -0.08
+	rig.distance = 2.5
+	await _wait(50)
+	await _shot("6_crowd")
 	get_tree().quit()

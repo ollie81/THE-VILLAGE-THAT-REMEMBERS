@@ -46,6 +46,8 @@ static var _texture_means: Dictionary = {}
 static var _sit_hips: float = 0.55
 
 var female: bool = false
+## Height of the hair above the head bone (0 without hair).
+var _hair_top: float = 0.0
 var outfit: String = ""
 var _playing_clip: String = ""
 var _meshes: Array[MeshInstance3D] = []
@@ -80,7 +82,10 @@ static func _scene(path: String) -> PackedScene:
 func _build_asset() -> void:
 	female = is_female(appearance)
 	outfit = outfit_for(appearance)
-	scale = Vector3.ONE * clampf(appearance.standing_height() / MODEL_HEIGHT, 0.55, 1.15)
+	var height_scale := clampf(appearance.standing_height() / MODEL_HEIGHT, 0.55, 1.15)
+	# Slimmer or sturdier: a little wider or narrower, never distorted.
+	var width := lerpf(0.93, 1.08, clampf((appearance.build_width - 0.8) / 0.5, 0.0, 1.0))
+	scale = Vector3(height_scale * width, height_scale, height_scale * lerpf(0.97, 1.05, clampf((appearance.build_width - 0.8) / 0.5, 0.0, 1.0)))
 	var rig := _scene(DIR + "outfits/%s.gltf" % outfit).instantiate() as Node3D
 	rig.name = "Rig"
 	add_child(rig)
@@ -120,8 +125,15 @@ func _build_asset() -> void:
 		var scene := _scene(DIR + "hair/%s.gltf" % part).instantiate()
 		var source: MeshInstance3D = scene.find_children("*", "MeshInstance3D", true, false)[0]
 		_attach(source.mesh, source.skin, part)
+		if part.begins_with("Hair_") and part != "Hair_Beard":
+			# Hair is modelled on a head 5 cm lower than the men's; measure it
+			# against its own head bone.
+			var hair_skeleton: Skeleton3D = scene.find_children("*", "Skeleton3D", true, false)[0]
+			var hair_head := hair_skeleton.get_bone_global_rest(hair_skeleton.find_bone("Head")).origin
+			_hair_top = source.mesh.get_aabb().end.y - hair_head.y
 		scene.free()
 	_tint()
+	_add_accessories()
 	# Animations.
 	animation_player = AnimationPlayer.new()
 	animation_player.name = "AnimationPlayer"
@@ -220,7 +232,18 @@ func _tint() -> void:
 					if ResourceLoader.exists(alt):
 						m.albedo_texture = load(alt)
 						base = _mean(m.albedo_texture)
-				m.albedo_color = _ratio(appearance.shirt_color.lightened(0.15), base, 0.45)
+				# Each part of the outfit takes its own colour: shirt and sleeves,
+				# trousers or skirt, shoes, and the trim pieces.
+				var part := String(mi.name)
+				var dye := appearance.shirt_color
+				if part.contains("Legs"):
+					dye = appearance.skirt_color if appearance.skirt_color.a > 0.0 else appearance.pants_color
+				elif part.contains("Feet") or part.contains("Boots"):
+					dye = appearance.shoe_color
+				elif part.contains("Acc_"):
+					dye = appearance.accent_color
+				var strength := 0.35 + 0.3 * float(absi(hash(appearance.pants_color)) % 100) / 100.0
+				m.albedo_color = _ratio(dye.lightened(0.15), base, strength)
 			elif mat_name.contains("eye"):
 				pass
 			mi.set_surface_override_material(s, m)
@@ -378,3 +401,136 @@ func set_detail(level: int, on_screen: bool = true) -> void:
 	for mi in _meshes:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if level == Detail.FAR \
 			else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+# --- Accessories --------------------------------------------------------------------------
+
+const STRAW := Color(0.86, 0.74, 0.45)
+const LEATHER := Color(0.42, 0.28, 0.16)
+const METAL := Color(0.75, 0.72, 0.6)
+
+## Where the head is, measured on this model (relative to the head bone,
+## in skeleton space): eye centre, top of the head, half its width.
+func _head_metrics() -> Dictionary:
+	var head_rest := skeleton.get_bone_global_rest(skeleton.find_bone("Head")).origin
+	var eye := Vector3(0, 0.1, 0.09)
+	for mi in _meshes:
+		if String(mi.name) == "Eyes":
+			eye = mi.mesh.get_aabb().get_center() - head_rest
+	var top := 0.215
+	if head:
+		top = head.mesh.get_aabb().end.y - head_rest.y
+	return {"eye": eye, "top": maxf(top, _hair_top - 0.02), "skull": top, "radius": 0.105 if not female else 0.1}
+
+
+## A mesh following bone `bone`, placed at skeleton-space `offset` from that
+## bone's rest position.
+func _on_bone(bone: String, offset: Vector3, mesh: Mesh, part_name: String) -> MeshInstance3D:
+	var index := skeleton.find_bone(bone)
+	if index < 0:
+		return null
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "Acc_" + part_name
+	attachment.bone_name = bone
+	skeleton.add_child(attachment)
+	var rest := skeleton.get_bone_global_rest(index)
+	var holder := Node3D.new()
+	holder.transform = rest.affine_inverse() * Transform3D(Basis(), rest.origin + offset)
+	attachment.add_child(holder)
+	var mi := MeshInstance3D.new()
+	mi.name = part_name
+	mi.mesh = mesh
+	holder.add_child(mi)
+	_meshes.append(mi)
+	return mi
+
+
+func _built(builder: MeshBuilder) -> ArrayMesh:
+	return builder.build(Materials.vertex_color())
+
+
+## Hats, glasses, flowers, earrings, scarves, necklaces, bags, aprons and
+## tool belts, made to fit these heads and bodies.
+func _add_accessories() -> void:
+	var h := _head_metrics()
+	var r: float = h["radius"]
+	var top: float = h["top"]
+	var eye: Vector3 = h["eye"]
+	var hat_color := appearance.hat_color if appearance.hat_color.a > 0.0 else Color(0, 0, 0, 0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(appearance.skin_color) ^ hash(appearance.accent_color)
+	for accessory in appearance.accessories:
+		var b := MeshBuilder.new(rng.randi())
+		b.color_jitter = 0.0
+		match String(accessory):
+			"straw_hat":
+				var c := hat_color if hat_color.a > 0.0 else STRAW
+				b.add_cylinder_at(Vector3(0, -0.01, 0), r * 2.3, r * 2.25, 0.02, 14, c)
+				b.add_cylinder_at(Vector3(0, 0.0, 0), r * 1.05, r * 0.95, 0.09, 12, c.darkened(0.05))
+				b.add_cylinder_at(Vector3(0, 0.0, 0), r * 1.07, r * 1.07, 0.025, 12, LEATHER)
+				_on_bone("Head", Vector3(0, top - 0.035, -0.01), _built(b), "Hat")
+			"wide_hat":
+				var c := hat_color if hat_color.a > 0.0 else Color(0.3, 0.24, 0.2)
+				b.add_cylinder_at(Vector3(0, -0.01, 0), r * 2.6, r * 2.5, 0.02, 16, c)
+				b.add_cylinder_at(Vector3(0, 0.0, 0), r * 1.05, r * 0.85, 0.13, 12, c.lightened(0.05))
+				b.add_cylinder_at(Vector3(0, 0.0, 0), r * 1.06, r * 1.02, 0.03, 12, appearance.accent_color)
+				_on_bone("Head", Vector3(0, top - 0.035, -0.01), _built(b), "Hat")
+			"cap":
+				var c := hat_color if hat_color.a > 0.0 else appearance.accent_color
+				b.add_blob_at(Vector3(0, 0.0, 0), Vector3(r * 1.08, r * 0.62, r * 1.1), c, 10, 5, 0.0)
+				b.add_box_at(Vector3(0, -0.02, r * 1.05), Vector3(r * 1.3, 0.012, r * 0.8), c.darkened(0.15))
+				_on_bone("Head", Vector3(0, top - 0.05, 0.0), _built(b), "Hat")
+			"headband":
+				b.add_cylinder_at(Vector3(0, 0, 0), r * 1.04, r * 1.04, 0.03, 14, appearance.accent_color)
+				_on_bone("Head", Vector3(0, eye.y + 0.06, -0.005), _built(b), "Headband")
+			"headwrap":
+				var c := hat_color if hat_color.a > 0.0 else appearance.accent_color
+				b.add_blob_at(Vector3(0, 0, 0), Vector3(r * 1.12, r * 0.85, r * 1.15), c, 10, 5, 0.06)
+				_on_bone("Head", Vector3(0, top - 0.06, -0.01), _built(b), "Headwrap")
+			"flower_crown":
+				var colors := [Color(0.95, 0.45, 0.55), Color(1.0, 0.85, 0.35), Color(0.75, 0.55, 0.95), Color(1, 1, 1)]
+				for i in 10:
+					var a := TAU * i / 10.0
+					var p := Vector3(cos(a) * r * 1.0, 0, sin(a) * r * 1.0)
+					b.add_blob_at(p, Vector3(0.022, 0.022, 0.022), colors[i % colors.size()], 6, 3, 0.0)
+					b.add_blob_at(p + Vector3(0, -0.012, 0), Vector3(0.018, 0.01, 0.018), Color(0.3, 0.55, 0.28), 5, 2, 0.0)
+				_on_bone("Head", Vector3(0, top - 0.045, -0.01), _built(b), "FlowerCrown")
+			"flower":
+				b.add_blob_at(Vector3.ZERO, Vector3(0.028, 0.028, 0.022), Color(0.95, 0.5, 0.6), 7, 3, 0.0)
+				b.add_blob_at(Vector3(0, 0, 0.012), Vector3(0.012, 0.012, 0.01), Color(1.0, 0.85, 0.3), 5, 2, 0.0)
+				_on_bone("Head", Vector3(r * 0.95, eye.y + 0.02, eye.z - 0.07), _built(b), "Flower")
+			"glasses":
+				for side in [-1.0, 1.0]:
+					b.add_cylinder(Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(side * 0.03, 0, 0)), 0.02, 0.02, 0.004, 10, Color(0.2, 0.15, 0.12))
+					b.add_box_at(Vector3(side * 0.06, 0.003, -0.04), Vector3(0.004, 0.004, 0.08), Color(0.2, 0.15, 0.12))
+				b.add_box_at(Vector3(0, 0.004, 0), Vector3(0.02, 0.004, 0.004), Color(0.2, 0.15, 0.12))
+				_on_bone("Head", Vector3(0, eye.y, eye.z + 0.025), _built(b), "Glasses")
+			"earrings":
+				for side in [-1.0, 1.0]:
+					b.add_blob_at(Vector3(side * r * 0.82, 0, 0), Vector3(0.008, 0.012, 0.008), Color(0.95, 0.8, 0.35), 6, 3, 0.0)
+				_on_bone("Head", Vector3(0, eye.y - 0.05, eye.z - 0.075), _built(b), "Earrings")
+			"scarf":
+				b.add_cylinder_at(Vector3(0, -0.03, 0), 0.085, 0.095, 0.08, 12, appearance.accent_color)
+				b.add_box_at(Vector3(0.03, -0.12, 0.08), Vector3(0.05, 0.14, 0.02), appearance.accent_color.darkened(0.08))
+				_on_bone("neck_01", Vector3(0, 0.0, 0.02), _built(b), "Scarf")
+			"necklace":
+				b.add_cylinder_at(Vector3(0, 0, 0), 0.075, 0.09, 0.006, 14, METAL)
+				b.add_blob_at(Vector3(0, -0.06, 0.09), Vector3(0.012, 0.016, 0.006), Color(0.6, 0.3, 0.7), 6, 3, 0.0)
+				_on_bone("neck_01", Vector3(0, -0.03, 0.02), _built(b), "Necklace")
+			"backpack":
+				b.add_box_at(Vector3.ZERO, Vector3(0.28, 0.34, 0.14), LEATHER.lightened(0.1))
+				b.add_box_at(Vector3(0, 0.12, 0.0), Vector3(0.3, 0.06, 0.16), LEATHER)
+				b.add_box_at(Vector3(0, -0.06, -0.075), Vector3(0.18, 0.12, 0.03), LEATHER.darkened(0.1))
+				_on_bone("spine_03", Vector3(0, -0.05, -0.2), _built(b), "Backpack")
+			"satchel":
+				b.add_box_at(Vector3.ZERO, Vector3(0.06, 0.18, 0.22), LEATHER.lightened(0.05))
+				_on_bone("pelvis", Vector3(0.2, 0.02, 0.02), _built(b), "Satchel")
+			"apron":
+				var c := appearance.apron_color if appearance.apron_color.a > 0.0 else Color(0.9, 0.88, 0.8)
+				b.add_box_at(Vector3(0, -0.12, 0), Vector3(0.3, 0.36, 0.012), c)
+				_on_bone("pelvis", Vector3(0, 0.05, 0.16), _built(b), "Apron")
+			"tool_belt":
+				b.add_cylinder_at(Vector3(0, 0, 0), 0.19, 0.19, 0.05, 14, LEATHER)
+				b.add_box_at(Vector3(0.15, -0.06, 0.08), Vector3(0.06, 0.1, 0.05), LEATHER.lightened(0.1))
+				b.add_box_at(Vector3(-0.15, -0.08, 0.06), Vector3(0.02, 0.16, 0.02), METAL)
+				_on_bone("pelvis", Vector3(0, 0.06, 0.0), _built(b), "ToolBelt")

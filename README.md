@@ -716,8 +716,10 @@ A first test of the new semi-realistic direction, using free CC0 assets (see [CR
   Animation Library; `AssetCharacter`): a real head, face, eyes and hair on a peasant or ranger outfit, chosen
   from each person's appearance (woman or man, hairstyle, beard, skin, hair and clothing colours, two weaves of
   each outfit), with walk, run, idle, talk, sit, work, sword, roll and other animations. Tools, the sword and
-  shield attach to the new hands. The Wardrobe's outfits, hair and colours carry over; hats and small extras
-  (glasses, scarves...) aren't drawn on the new models yet, and the new faces have no expressions yet.
+  shield attach to the new hands. The Wardrobe's outfits, hair, colours, hats and extras carry over (hats,
+  glasses, flowers, earrings, scarves, necklaces, bags, aprons and tool belts are fitted to the new heads and
+  bodies); each part of an outfit takes its own colour and people vary in width as well as height. The new
+  faces have no expressions yet.
   `CharacterModel.use_assets = false` brings the drawn characters back.
 - Not yet changed: the founders' houses, animals.
 
