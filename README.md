@@ -825,6 +825,13 @@ Tests: `godot --headless --path . res://tests/lives_test.tscn`. Screenshots: `to
 - Models: Quaternius Animated Monster Pack (slime, bat, skeleton, dragon) and the wolf from Animal Pack Vol.2
   (tinted grey), all CC0.
 
+**Eyes and coats (fix):** the free animal models have no eyes, and the dog, cat, wolf and hawk models
+came through plain white (their colours weren't in the files). Every animal now has eyes (a pale rim, a
+dark pupil and a glint, riding on the head bone so they move with the head; placed per species with
+`tools/animal_faces.tscn`), dogs and cats get a coat each (brown, grey, cream, black, red-brown; ginger,
+grey, tabby, black cats with white chests and pink ears; named ones like Ginger get the coat they're named
+for), wolves are grey and the hawks brown with white heads and yellow beaks.
+
 Tests: `godot --headless --path . res://tests/monsters_test.tscn` (32 checks). Screenshots: `tools/monster_screenshots.tscn`.
 
 ## Sound and music

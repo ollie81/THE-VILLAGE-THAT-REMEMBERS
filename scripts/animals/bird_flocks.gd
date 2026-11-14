@@ -36,6 +36,7 @@ func _ready() -> void:
 			model.scale = Vector3.ONE * SCALE * _rng.randf_range(0.85, 1.1)
 			bird.add_child(model)
 			add_child(bird)
+			AnimalSpecies.paint(model, AnimalSpecies.EAGLE_COLOURS)
 			var anim: AnimationPlayer = model.find_children("*", "AnimationPlayer", true, false)[0]
 			for clip in anim.get_animation_list():
 				anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR

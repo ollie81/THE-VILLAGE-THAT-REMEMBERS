@@ -29,7 +29,7 @@ const KINDS := {
 	&"wolf": {"name": "Wolf", "model": "animals/Wolf", "scale": 0.2, "yaw": -PI * 0.5, "health": 3, "damage": 9.0,
 		"speed": 2.0, "chase": 5.2, "notice": 12.0, "reach": 1.9, "windup": 0.55, "radius": 0.5, "flies": 0.0,
 		"clips": ["Idle", "Walking", "", "", ""], "sound": "bark",
-		"loot": {&"food": 2}, "tint": Color(0.5, 0.48, 0.46)},
+		"loot": {&"food": 2}, "tint": Color(0.5, 0.48, 0.46), "head_bone": "Bone.003", "eyes": [0.3, 0.14, 0.42, 0.075]},
 	&"skeleton": {"name": "Skeleton", "model": "monsters/Skeleton", "scale": 0.55, "yaw": 0.0, "health": 4, "damage": 12.0,
 		"speed": 1.4, "chase": 3.4, "notice": 11.0, "reach": 2.1, "windup": 0.75, "radius": 0.45, "flies": 0.0,
 		"clips": ["Skeleton_Idle", "Skeleton_Running", "Skeleton_Attack", "", "Skeleton_Death"], "sound": "hit",
@@ -104,6 +104,7 @@ func _ready() -> void:
 	holder.position.y = float(info["flies"])
 	if info.has("tint"):
 		_tint(info["tint"])
+	AnimalSpecies.add_eyes(info, model, holder)
 	var players := model.find_children("*", "AnimationPlayer", true, false)
 	if not players.is_empty():
 		anim = players[0]

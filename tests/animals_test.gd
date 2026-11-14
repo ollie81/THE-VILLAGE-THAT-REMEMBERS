@@ -165,6 +165,20 @@ func _homes_and_buying() -> void:
 			doubled = true
 		spawned_ids[String(a.record["id"])] = true
 	_check(not doubled, "no animal is spawned twice (%d bodies)" % spawned_ids.size())
+	# Every animal has two eyes, and none is left plain white by a model with
+	# no colours of its own (dogs and cats get coats).
+	var eyeless := []
+	var white := []
+	for a in get_tree().get_nodes_in_group("animals"):
+		if a.find_child("EyeL", true, false) == null or a.find_child("EyeR", true, false) == null:
+			eyeless.append(a.species)
+		if a.species in [&"dog", &"cat"]:
+			var coat_mesh: MeshInstance3D = a.model.find_children("*", "MeshInstance3D", true, false)[0]
+			var colour: Color = (coat_mesh.get_active_material(0) as BaseMaterial3D).albedo_color
+			if colour.is_equal_approx(Color(0.9063, 0.9063, 0.9063, 1.0)):
+				white.append(a.species)
+	_check(eyeless.is_empty(), "every animal has two eyes %s" % str(eyeless))
+	_check(white.is_empty(), "dogs and cats have coats, not plain white %s" % str(white))
 	_check(manager.spawned_count() < manager.records.size(), "only nearby animals are spawned (%d of %d)" % [manager.spawned_count(), manager.records.size()])
 
 

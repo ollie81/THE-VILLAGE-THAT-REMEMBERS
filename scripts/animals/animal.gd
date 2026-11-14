@@ -74,6 +74,8 @@ func _ready() -> void:
 	var skeletons := model.find_children("*", "Skeleton3D", true, false)
 	if not skeletons.is_empty():
 		_skeleton = skeletons[0]
+	AnimalSpecies.paint(model, AnimalSpecies.coat_for(info, String(record["id"]), String(record.get("name", ""))))
+	AnimalSpecies.add_eyes(info, model, holder)
 	if bool(info.get("rideable", false)) and is_players():
 		_add_saddle()
 	_add_interaction()
