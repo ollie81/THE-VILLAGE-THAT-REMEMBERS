@@ -21,7 +21,7 @@ func _hand() -> BoneAttachment3D:
 	if _attachment == null and player and player.model and player.model.skeleton:
 		_attachment = BoneAttachment3D.new()
 		_attachment.name = "ToolHand"
-		_attachment.bone_name = "RightHand"
+		_attachment.bone_name = player.model.bone_name(&"RightHand")
 		player.model.skeleton.add_child(_attachment)
 	return _attachment
 

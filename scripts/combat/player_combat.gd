@@ -312,7 +312,7 @@ func refresh_equipment() -> void:
 func _attach(mesh: Node3D, bone: String, offset: Vector3, rotation: Vector3) -> Node3D:
 	var attachment := BoneAttachment3D.new()
 	attachment.name = "Combat" + bone
-	attachment.bone_name = bone
+	attachment.bone_name = player.model.bone_name(StringName(bone))
 	player.model.skeleton.add_child(attachment)
 	mesh.position = offset
 	mesh.rotation = rotation

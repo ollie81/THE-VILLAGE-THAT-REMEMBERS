@@ -21,6 +21,10 @@ func _ready() -> void:
 
 ## Calls `done(meshes)` (a {body, head} dictionary) once the meshes are ready.
 func request(look: CharacterAppearance, done: Callable) -> void:
+	# Real character models need nothing built ahead.
+	if CharacterModel.use_assets and AssetCharacter.available():
+		done.call({})
+		return
 	if not threaded:
 		done.call(CharacterModel.build_meshes(look))
 		return

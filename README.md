@@ -712,8 +712,14 @@ A first test of the new semi-realistic direction, using free CC0 assets (see [CR
   hidden and the camera looks down over the walls.
 - **Trees, bushes and rocks** near the camera are real models (Stylized Nature MegaKit), switching to the
   simple shapes further away to keep phones fast; the trees you chop are real models too.
-- Not yet changed: the founders' houses, the player and villagers (the free character pack has to be
-  downloaded from itch.io in a browser), animals.
+- **Real characters** (Universal Base Characters + Modular Character Outfits, animated with the Universal
+  Animation Library; `AssetCharacter`): a real head, face, eyes and hair on a peasant or ranger outfit, chosen
+  from each person's appearance (woman or man, hairstyle, beard, skin, hair and clothing colours, two weaves of
+  each outfit), with walk, run, idle, talk, sit, work, sword, roll and other animations. Tools, the sword and
+  shield attach to the new hands. The Wardrobe's outfits, hair and colours carry over; hats and small extras
+  (glasses, scarves...) aren't drawn on the new models yet, and the new faces have no expressions yet.
+  `CharacterModel.use_assets = false` brings the drawn characters back.
+- Not yet changed: the founders' houses, animals.
 
 Tests: `godot --headless --path . res://tests/pilot_test.tscn`. Screenshots: `tools/pilot_screenshots.tscn`.
 

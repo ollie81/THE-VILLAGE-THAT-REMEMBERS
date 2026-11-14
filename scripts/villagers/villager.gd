@@ -104,7 +104,7 @@ func _ready() -> void:
 	_collision.position = Vector3(0, capsule.height * 0.5, 0)
 	add_child(_collision)
 
-	model = CharacterModel.new(data.appearance)
+	model = CharacterModel.create(data.appearance)
 	model.name = "Model"
 	model.prebuilt_meshes = prebuilt_meshes
 	prebuilt_meshes = {}
@@ -376,7 +376,7 @@ func replace_model(look: CharacterAppearance, meshes: Dictionary) -> void:
 	var old := model
 	var animation := old.get_animation()
 	data.appearance = look
-	model = CharacterModel.new(look)
+	model = CharacterModel.create(look)
 	model.name = "Model"
 	model.prebuilt_meshes = meshes
 	remove_child(old)

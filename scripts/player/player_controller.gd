@@ -60,7 +60,7 @@ func _ready() -> void:
 	shape.position = Vector3(0, 0.85, 0)
 	add_child(shape)
 
-	model = CharacterModel.new(saved_appearance())
+	model = CharacterModel.create(saved_appearance())
 	model.name = "Model"
 	add_child(model)
 
@@ -89,7 +89,7 @@ func set_appearance(look: CharacterAppearance) -> void:
 	var yaw := old.rotation.y if old else 0.0
 	var offset_y := old.position.y if old else 0.0
 	var animation: StringName = old._state if old and old._state != &"" else &"idle"
-	model = CharacterModel.new(look)
+	model = CharacterModel.create(look)
 	model.name = "Model"
 	if old:
 		remove_child(old)

@@ -186,7 +186,7 @@ func _on_preview_input(event: InputEvent) -> void:
 func _rebuild_preview() -> void:
 	if _preview:
 		_preview.queue_free()
-	_preview = CharacterModel.new(AppearanceCodec.from_dict(AppearanceCodec.to_dict(look)))
+	_preview = CharacterModel.create(AppearanceCodec.from_dict(AppearanceCodec.to_dict(look)))
 	_preview.name = "Preview"
 	_stage.add_child(_preview)
 	_preview.rotation.y = _spin

@@ -47,6 +47,9 @@ func _run() -> void:
 	# Characters are real skinned 3D meshes on a humanoid skeleton, within a mobile budget.
 	for villager in GameManager.villagers:
 		var model: CharacterModel = villager.model
+		if model is AssetCharacter:
+			_check_asset_character(model, villager.data.display_name)
+			continue
 		var body := model.skeleton.get_node_or_null("Body") as MeshInstance3D
 		var triangles: int = body.mesh.surface_get_array_len(0) / 3 if body else 0
 		_check(model.skeleton.get_bone_count() == 19 and body != null and body.skin != null,
@@ -249,10 +252,17 @@ func _run() -> void:
 	# 7b. Facial expressions drive the blend shapes.
 	var face_model: CharacterModel = mara.model
 	face_model.set_expression(&"laughing", 1.0, 0.0)
-	var laugh_index := face_model.head.find_blend_shape_by_name(&"laughing")
-	_check(laugh_index >= 0 and is_equal_approx(face_model.head.get_blend_shape_value(laugh_index), 1.0), "expressions set blend shape weights")
-	face_model.set_expression(&"neutral", 1.0, 0.0)
-	_check(is_zero_approx(face_model.head.get_blend_shape_value(laugh_index)), "neutral clears the expression")
+	if face_model is AssetCharacter:
+		# The real character models have no expression shapes yet: the
+		# expression is kept for the game (dialogue, portraits).
+		_check(face_model.get_expression() == &"laughing", "expressions are tracked on the character")
+		face_model.set_expression(&"neutral", 1.0, 0.0)
+		_check(face_model.get_expression() == &"neutral", "neutral clears the expression")
+	else:
+		var laugh_index := face_model.head.find_blend_shape_by_name(&"laughing")
+		_check(laugh_index >= 0 and is_equal_approx(face_model.head.get_blend_shape_value(laugh_index), 1.0), "expressions set blend shape weights")
+		face_model.set_expression(&"neutral", 1.0, 0.0)
+		_check(is_zero_approx(face_model.head.get_blend_shape_value(laugh_index)), "neutral clears the expression")
 	var parsed := DialoguePanel.split_expression("[angry]Stay back!")
 	_check(parsed[0] == &"angry" and parsed[1] == "Stay back!", "dialogue lines carry expression tags")
 
@@ -306,3 +316,42 @@ func _frames(count: int) -> void:
 func _physics_frames(count: int) -> void:
 	for i in count:
 		await get_tree().physics_frame
+
+
+## The real character models: a 65-bone skeleton, skinned outfit, head and
+## hair, a full animation set, symmetric arms, and a phone-sized budget.
+func _check_asset_character(model: AssetCharacter, who: String) -> void:
+	var meshes := model.skeleton.find_children("*", "MeshInstance3D", false, false)
+	var triangles := 0
+	var skinned := true
+	for mi in meshes:
+		triangles += (mi as MeshInstance3D).mesh.get_faces().size() / 3
+		skinned = skinned and (mi as MeshInstance3D).skin != null
+	_check(model.skeleton.get_bone_count() == 65 and model.body != null and skinned,
+		"%s is a real skinned model on a 65-bone skeleton (%s)" % [who, model.outfit])
+	_check(triangles > 8000 and triangles < 30000, "%s is %d triangles (budget 30000)" % [who, triangles])
+	_check(model.animation_player.get_animation_list().size() >= 10, "%s has skeletal animations" % who)
+	_check(model.head != null and model.head.mesh.get_faces().size() > 300, "%s has a head and face" % who)
+	var arms: MeshInstance3D = null
+	for mi in meshes:
+		if String(mi.name).ends_with("_Arms"):
+			arms = mi
+	if arms == null:
+		return
+	var arrays := arms.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var bone_ids: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var bone_weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var counts := {"l": 0, "r": 0}
+	var misbound := 0
+	var stride := bone_ids.size() / maxi(verts.size(), 1)
+	for v in verts.size():
+		var main := bone_ids[v * stride] if bone_weights[v * stride] >= bone_weights[v * stride + 1] else bone_ids[v * stride + 1]
+		var bone := model.skeleton.get_bone_name(main)
+		for side in ["l", "r"]:
+			if bone.ends_with("_" + side) and (bone.contains("arm") or bone.contains("hand")):
+				counts[side] += 1
+				if verts[v].x * (1.0 if side == "l" else -1.0) < 0.0:
+					misbound += 1
+	var balance := absf(counts["l"] - counts["r"]) / maxf(counts["l"] + counts["r"], 1.0)
+	_check(misbound == 0 and balance < 0.1, "%s arms are symmetric (%d/%d vertices, %d on the wrong side)" % [who, counts["l"], counts["r"], misbound])

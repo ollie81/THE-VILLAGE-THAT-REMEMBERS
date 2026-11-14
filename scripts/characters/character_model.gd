@@ -82,6 +82,23 @@ var _speed: float = 0.0
 var _move_amount: float = 0.0
 
 
+## A person for `look`: the real, artist-made character models when they're
+## installed (AssetCharacter), otherwise the drawn ones.
+static func create(look: CharacterAppearance) -> CharacterModel:
+	if use_assets and AssetCharacter.available():
+		return AssetCharacter.new(look)
+	return CharacterModel.new(look)
+
+
+## Tests and tools can switch back to the drawn characters.
+static var use_assets: bool = true
+
+
+## The skeleton's name for a generic bone (RightHand, LeftHand, Head).
+func bone_name(generic: StringName) -> StringName:
+	return generic
+
+
 func _init(look: CharacterAppearance = null) -> void:
 	appearance = look if look else CharacterAppearance.new()
 
