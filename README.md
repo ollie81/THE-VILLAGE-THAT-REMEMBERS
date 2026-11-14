@@ -767,10 +767,28 @@ Tests: `godot --headless --path . res://tests/world_test.tscn` (37 checks). Scre
   physics. Rain is 500 particles (220 on the Low setting).
 - **Not yet:** no goats or ducks (no free models found that match); sheep, pigs and the small dog walk with
   a simple bob done in code because their models have no walking animation; villagers don't react to rain
-  yet (stage 4); riding horses is stage 3. The chicken coop still comes with its three hens, as before.
+  yet (stage 4). The chicken coop still comes with its three hens, as before.
 
 Tests: `godot --headless --path . res://tests/animals_test.tscn`. Screenshots: `tools/animal_screenshots.tscn`
 (`--skip-farm` or `--weather-only` for a shorter run).
+
+## Living world, stage 3: riding horses
+
+- **Ride your own horse.** Buy a horse (it needs a stable) and it wears a saddle with a red blanket and
+  stirrups. Tap **Ride**: you swing up into the saddle and steer it with the joystick: a walk (3.4 m/s), or a
+  gallop (9.5 m/s, half as fast again as running) when you push the stick to the rim or hold run. Jump works
+  too. The village's own horses aren't yours to ride.
+- **Looks right:** the rider sits in the saddle with their hips over the seat, thighs down round the horse,
+  feet hanging by the stirrups outside its sides, and leather reins from their hands to the bit. They rise and
+  fall with the horse's stride, its legs walk or gallop to match your speed, hoof beats sound, and the camera
+  pulls back a little to show the whole horse.
+- **Rules:** the horse won't wade deeper than its knees (no swimming on horseback); while riding the only
+  button is **Get off** (no chopping, talking or doors from the saddle), and a fight puts you on the ground.
+  You get off beside the horse, which grazes there for a few hours before going back to its stable. Saving
+  while riding saves you standing beside it.
+
+Tests: `godot --headless --path . res://tests/riding_test.tscn` (27 checks). Screenshots: `tools/ride_screenshots.tscn`
+(`--close` for just the close-ups).
 
 ## Sound and music
 

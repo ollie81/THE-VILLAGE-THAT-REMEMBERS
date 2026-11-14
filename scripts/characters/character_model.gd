@@ -332,6 +332,11 @@ func seat_offset(seat_height: float) -> float:
 	return seat_height - (hips - 0.04) * appearance.height_scale
 
 
+## How far to raise the model so it sits in a saddle this high.
+func ride_offset(saddle_height: float) -> float:
+	return seat_offset(saddle_height)
+
+
 ## World position of the middle of the face, for cameras and portraits.
 func get_face_position() -> Vector3:
 	if skeleton == null:

@@ -40,6 +40,9 @@ var _follow_selected: bool = false
 
 var _transition: float = 1.0
 var _current_distance: float = 5.5
+## Extra distance while on horseback.
+const RIDE_EXTRA_DISTANCE := 1.5
+var _ride_extra: float = 0.0
 var _held_buttons: Dictionary = {}
 var _press_position: Vector2 = Vector2.ZERO
 
@@ -165,12 +168,18 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	if target == null:
 		return camera.global_transform
 	var pivot := target.global_position + Vector3(0.0, 1.55, 0.0)
+	if target.is_riding():
+		# Up with the rider, and further back to see the whole horse.
+		pivot.y += target.model.position.y
+		_ride_extra = lerpf(_ride_extra, RIDE_EXTRA_DISTANCE, clampf(delta * 2.0, 0.0, 1.0)) if delta > 0.0 else RIDE_EXTRA_DISTANCE
+	else:
+		_ride_extra = lerpf(_ride_extra, 0.0, clampf(delta * 2.0, 0.0, 1.0)) if delta > 0.0 else 0.0
 	if indoor:
 		pitch = clampf(pitch, -0.7, -0.15)
 	if overhead:
 		pitch = clampf(pitch, -1.1, -0.85)
 	var offset := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch) * Vector3(0.0, 0.0, 1.0)
-	var wanted := minf(distance, INDOOR_DISTANCE) if indoor else distance
+	var wanted := minf(distance, INDOOR_DISTANCE) if indoor else distance + _ride_extra
 	if overhead:
 		wanted = clampf(distance, 5.0, 7.0)
 	# Pull the camera in front of walls and trees between it and the player.

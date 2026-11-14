@@ -52,6 +52,8 @@ jobs:
         run: timeout 900 godot --headless --path . res://tests/world_test.tscn
       - name: Run animals test
         run: timeout 900 godot --headless --path . res://tests/animals_test.tscn
+      - name: Run riding test
+        run: timeout 900 godot --headless --path . res://tests/riding_test.tscn
 
   android:
     name: Android APK

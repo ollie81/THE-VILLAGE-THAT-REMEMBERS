@@ -34,6 +34,14 @@ var _moving: bool = false
 var _sound_cooldown: float = 0.0
 var _detail: int = 0  # 0 near, 1 mid, 2 far (frozen)
 var _anim_accum: float = 0.0
+## Who's riding (a horse), and how fast they're going.
+var rider: Node3D = null
+var ride_speed: float = 0.0
+var ride_airborne: bool = false
+var _saddle_bone: int = -1
+var _saddle_rest_y: float = 0.0
+var _skeleton: Skeleton3D
+var _reins: Array[MeshInstance3D] = []
 
 
 func setup(animal_record: Dictionary) -> void:
@@ -63,6 +71,11 @@ func _ready() -> void:
 			if short in ["Idle", "Walk", "WalkSlow", "Walking", "Run", "Flying"]:
 				anim.loop_mode = Animation.LOOP_LINEAR
 	_play(String(info["idle"]))
+	var skeletons := model.find_children("*", "Skeleton3D", true, false)
+	if not skeletons.is_empty():
+		_skeleton = skeletons[0]
+	if bool(info.get("rideable", false)) and is_players():
+		_add_saddle()
 	_add_interaction()
 	_choose_next()
 
@@ -81,9 +94,120 @@ func _add_interaction() -> void:
 	usable.add_child(interactable)
 
 
+# --- Riding -------------------------------------------------------------------------------
+
+## A leather saddle on a red blanket, with stirrups, riding on the horse's
+## back bone so it moves with the body.
+func _add_saddle() -> void:
+	var m := MeshBuilder.new()
+	var leather := Color(0.36, 0.2, 0.11)
+	var dark := Color(0.2, 0.12, 0.07)
+	var cloth := Color(0.5, 0.14, 0.13)
+	var trim := Color(0.85, 0.7, 0.35)
+	# Blanket: a thin pad over the back, its edges folding a little way down
+	# the flanks.
+	m.add_box_at(Vector3(0, -0.035, 0), Vector3(0.5, 0.025, 0.62), cloth)
+	for side: float in [-1.0, 1.0]:
+		var flank := Transform3D(Basis(Vector3.BACK, side * 0.5), Vector3(side * 0.29, -0.1, 0))
+		m.add_box(flank, Vector3(0.025, 0.16, 0.62), cloth)
+		m.add_box(flank.translated_local(Vector3(0, -0.085, 0)), Vector3(0.03, 0.02, 0.64), trim)
+		m.add_box_at(Vector3(side * 0.2, -0.01, 0), Vector3(0.14, 0.05, 0.42), leather)  # saddle panels
+		m.add_box_at(Vector3(side * 0.3, -0.27, 0.05), Vector3(0.02, 0.42, 0.03), dark)  # stirrup leather
+		m.add_box_at(Vector3(side * 0.31, -0.49, 0.05), Vector3(0.05, 0.025, 0.11), Color(0.55, 0.55, 0.58))  # stirrup
+	m.add_box_at(Vector3(0, 0.015, -0.02), Vector3(0.3, 0.05, 0.4), leather)  # seat
+	m.add_box_at(Vector3(0, 0.07, -0.2), Vector3(0.3, 0.1, 0.05), leather)  # cantle
+	m.add_box_at(Vector3(0, 0.065, 0.18), Vector3(0.18, 0.09, 0.07), leather)  # pommel
+	m.add_box_at(Vector3(0, 0.14, 0.2), Vector3(0.045, 0.06, 0.045), dark)  # horn
+	# Girth strap round the belly.
+	for side: float in [-1.0, 1.0]:
+		m.add_box_at(Vector3(side * 0.27, -0.3, 0.12), Vector3(0.02, 0.4, 0.06), dark)
+	var saddle := MeshInstance3D.new()
+	saddle.name = "Saddle"
+	saddle.mesh = m.build(Materials.vertex_color())
+	var holder := model.get_parent() as Node3D
+	var at: Vector3 = info.get("saddle", Vector3(0, 1.4, 0))
+	var bone_name := String(info.get("saddle_bone", ""))
+	if _skeleton and bone_name != "":
+		_saddle_bone = _skeleton.find_bone(bone_name)
+	if _saddle_bone >= 0:
+		var attach := BoneAttachment3D.new()
+		attach.bone_name = bone_name
+		_skeleton.add_child(attach)
+		# Place it in the horse's space at rest, then let the bone carry it.
+		var bone_rest: Transform3D = _skeleton.get_bone_global_rest(_saddle_bone)
+		var skeleton_in_holder: Transform3D = holder.global_transform.affine_inverse() * _skeleton.global_transform if is_inside_tree() else model.transform * _skeleton.transform
+		var bone_in_holder := skeleton_in_holder * bone_rest
+		_saddle_rest_y = bone_in_holder.origin.y
+		attach.add_child(saddle)
+		saddle.transform = bone_in_holder.affine_inverse() * Transform3D(Basis(), at)
+	else:
+		saddle.position = at
+		holder.add_child(saddle)
+
+
+## Height of the saddle above the ground now (it rises and falls with the
+## horse's stride).
+func saddle_height() -> float:
+	var at: Vector3 = info.get("saddle", Vector3(0, 1.4, 0))
+	if _saddle_bone < 0 or _skeleton == null:
+		return at.y
+	var holder := model.get_parent() as Node3D
+	var now := (holder.global_transform.affine_inverse() * _skeleton.global_transform * _skeleton.get_bone_global_pose(_saddle_bone)).origin.y
+	return at.y + (now - _saddle_rest_y)
+
+
+## Two leather reins from the rider's hands to the bit.
+func _update_reins() -> void:
+	var model_of_rider = rider.get("model")
+	var head := _skeleton.find_bone("Head") if _skeleton else -1
+	var head_end := _skeleton.find_bone("Head_end") if _skeleton else -1
+	if model_of_rider == null or head < 0 or head_end < 0 or model_of_rider.get("skeleton") == null:
+		return
+	if _reins.is_empty():
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.22, 0.13, 0.07)
+		material.roughness = 0.8
+		for i in 2:
+			var strap := MeshInstance3D.new()
+			strap.name = "Rein%d" % i
+			var box := BoxMesh.new()
+			box.size = Vector3(0.016, 0.008, 1.0)
+			strap.mesh = box
+			strap.material_override = material
+			strap.top_level = true
+			strap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(strap)
+			_reins.append(strap)
+	var sk_global := _skeleton.global_transform
+	var mouth: Vector3 = (sk_global * _skeleton.get_bone_global_pose(head).origin).lerp(sk_global * _skeleton.get_bone_global_pose(head_end).origin, 0.8)
+	var right := global_transform.basis.x.normalized()
+	var rider_skeleton: Skeleton3D = model_of_rider.skeleton
+	var hands := [model_of_rider.bone_name(&"LeftHand"), model_of_rider.bone_name(&"RightHand")]
+	for i in 2:
+		var bone := rider_skeleton.find_bone(hands[i])
+		if bone < 0:
+			_reins[i].visible = false
+			continue
+		var a: Vector3 = rider_skeleton.global_transform * rider_skeleton.get_bone_global_pose(bone).origin
+		var b: Vector3 = mouth + right * (0.07 if i == 0 else -0.07) * signf((a - global_position).dot(right) + 0.0001)
+		var length := a.distance_to(b)
+		if length < 0.05:
+			continue
+		_reins[i].visible = true
+		_reins[i].global_transform = Transform3D(Basis.looking_at(b - a, Vector3.UP) * Basis.from_scale(Vector3(1, 1, length)), (a + b) * 0.5)
+
+
+func is_ridden() -> bool:
+	return rider != null and is_instance_valid(rider)
+
+
 # --- Brain ---------------------------------------------------------------------------------
 
 func home_area() -> Dictionary:
+	# Left somewhere by its rider, it grazes there a while before going home.
+	var parked: Array = record.get("parked", [])
+	if parked.size() == 2 and float(record.get("parked_until", 0.0)) > WorldClock.day * 24.0 + WorldClock.time_of_day:
+		return {"center": Vector3(float(parked[0]), 0.0, float(parked[1])), "radius": 3.0}
 	return AnimalManager.instance.home_area(record) if AnimalManager.instance else {"center": global_position, "radius": 6.0}
 
 
@@ -189,6 +313,20 @@ func _sound(volume: float) -> void:
 
 
 func _process(delta: float) -> void:
+	if is_ridden():
+		# The rider steers; the horse just moves its legs to match.
+		_detail = 0
+		_moving = ride_speed > 0.2
+		_speed = ride_speed
+		state = State.WANDER
+		if ride_airborne:
+			_play("Jump", 1.2)
+			_animate_player(delta)
+		else:
+			_animate(delta)
+		_update_reins()
+		record["pos"] = [global_position.x, global_position.y, global_position.z]
+		return
 	var player = GameManager.player
 	var d := global_position.distance_to(player.global_position) if player else 0.0
 	_detail = 0 if d < NEAR else (1 if d < MID else 2)
@@ -291,9 +429,11 @@ func _animate(delta: float) -> void:
 	var walk_anim := String(info.get("walk_anim", ""))
 	var running := _moving and _speed > float(info["walk"]) * 1.5
 	if _moving and running:
-		_play(String(info.get("run_anim", "")) if String(info.get("run_anim", "")) != "" else String(info["idle"]), 1.0)
+		var run_scale := clampf(_speed / float(info.get("ride_run", info["run"])) * 1.1, 0.7, 1.3) if is_ridden() else 1.0
+		_play(String(info.get("run_anim", "")) if String(info.get("run_anim", "")) != "" else String(info["idle"]), run_scale)
 	elif _moving and walk_anim != "":
-		_play(walk_anim, clampf(_speed / float(info["walk"]), 0.6, 1.6))
+		var walk_ref := float(info.get("ride_walk", info["walk"])) if is_ridden() else float(info["walk"])
+		_play(walk_anim, clampf(_speed / walk_ref, 0.6, 1.6))
 	else:
 		_play(String(info["idle"]), 0.6 if state == State.REST else 1.0)
 	# A walking gait in code for animals without a walk animation, and a
@@ -314,6 +454,10 @@ func _animate(delta: float) -> void:
 		holder.position.y = lerpf(holder.position.y, 0.0, clampf(delta * 6.0, 0.0, 1.0))
 		holder.rotation.z = lerpf(holder.rotation.z, 0.0, clampf(delta * 6.0, 0.0, 1.0))
 		holder.rotation.x = lerpf(holder.rotation.x, 0.0, clampf(delta * 6.0, 0.0, 1.0))
+	_animate_player(delta)
+
+
+func _animate_player(delta: float) -> void:
 	if player_anim:
 		var manual := _detail == 1
 		var mode := AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL if manual else AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
@@ -340,6 +484,10 @@ func _prompt() -> String:
 	var who := display_name()
 	var title := "%s the %s" % [who, String(info["name"]).to_lower()]
 	match _verb():
+		"Ride":
+			return "Ride %s" % who
+		"Get off":
+			return "Get off %s" % who
 		"Milk":
 			return "Milk %s (+2 food)" % who
 		"Feed":
@@ -352,6 +500,8 @@ func _prompt() -> String:
 
 
 func _verb() -> String:
+	if is_players() and bool(info.get("rideable", false)):
+		return "Get off" if is_ridden() else "Ride"
 	if is_players() and bool(info.get("milk", false)) and int(record.get("milked_day", -1)) != WorldClock.day:
 		return "Milk"
 	if bool(info.get("eats", false)) and int(record.get("fed_day", -1)) != WorldClock.day:
@@ -364,6 +514,14 @@ func _verb() -> String:
 func interact(actor) -> String:
 	var verb := _verb()
 	match verb:
+		"Ride":
+			if actor and actor.has_method("mount"):
+				actor.mount(self)
+			return verb
+		"Get off":
+			if actor and actor.has_method("dismount"):
+				actor.dismount()
+			return verb
 		"Milk":
 			record["milked_day"] = WorldClock.day
 			GameState.add(&"food", 2)

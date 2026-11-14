@@ -4,7 +4,8 @@ extends RefCounted
 ## Vol.2, CC0), how big it is in the world, which way the model faces, its
 ## animations, how it moves, where it lives and what it costs.
 ##
-## scale/yaw were measured from each model's skeleton: the farm animals face
+## scale/yaw were measured (the horse is a little bigger than its model's
+## proportions suggest, so a grown rider looks right on it) from each model's skeleton: the farm animals face
 ## +Z, the dog, cat and wolf face +X (so they're turned a quarter).
 ## Animals without a walk animation (sheep, pig, pug) walk with a bobbing,
 ## swaying gait done in code.
@@ -12,10 +13,14 @@ extends RefCounted
 const DIR := "res://assets/quaternius/animals/"
 
 const SPECIES := {
-	&"horse": {"name": "Horse", "model": "Horse", "scale": 0.27, "yaw": 0.0, "walk": 1.4, "run": 5.5,
+	&"horse": {"name": "Horse", "model": "Horse", "scale": 0.31, "yaw": 0.0, "walk": 1.4, "run": 5.5,
 		"idle": "Idle", "walk_anim": "Walk", "run_anim": "Run", "home": "stable", "price": 40,
 		"eats": true, "skittish": 0.2, "sound": "neigh", "names": ["Bramble", "Clover", "Juniper", "Ember", "Willow"],
-		"radius": 0.7, "about": "A riding horse. Needs a stable."},
+		"radius": 0.7, "about": "A horse you can ride. Needs a stable.",
+		"rideable": true, "ride_walk": 3.4, "ride_run": 9.5,
+		# Where the saddle sits on the model (metres, in the animal's space)
+		# and the bone it moves with.
+		"saddle": Vector3(0.0, 1.5, -0.1), "saddle_bone": "Torso"},
 	&"cow": {"name": "Cow", "model": "Cow", "scale": 0.26, "yaw": 0.0, "walk": 0.9, "run": 3.0,
 		"idle": "Idle", "walk_anim": "WalkSlow", "run_anim": "Run", "home": "pen", "price": 25,
 		"eats": true, "skittish": 0.1, "sound": "moo", "milk": true, "names": ["Daisy", "Buttercup", "Bella", "Hazel", "Poppy"],

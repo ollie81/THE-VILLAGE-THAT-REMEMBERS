@@ -211,6 +211,12 @@ func _on_focus_changed(target) -> void:
 	if target == null or not exploring or GameManager.is_in_conversation():
 		_prompt_panel.visible = false
 		return
+	# On horseback the prompt would sit right over the horse; on a phone the
+	# button already says "Get off".
+	var riding: bool = GameManager.player != null and GameManager.player.is_riding()
+	if riding and GameSettings.touch_controls_visible():
+		_prompt_panel.visible = false
+		return
 	var key_hint := "" if GameSettings.touch_controls_visible() else "  [E]"
 	_prompt_label.text = target.get_prompt() + key_hint
 	_prompt_panel.visible = true

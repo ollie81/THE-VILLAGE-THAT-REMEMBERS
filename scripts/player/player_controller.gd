@@ -54,6 +54,20 @@ const SWIM_SPEED := 2.3
 const SWIM_FLOAT := 1.3
 var swimming: bool = false
 
+## The horse you're riding, if any (see mount()).
+var mount_animal: Animal = null
+## Riding: how quickly the horse speeds up and turns, and how deep a ford
+## it will wade (it won't swim with you).
+const RIDE_ACCELERATION := 7.0
+const RIDE_TURN_SPEED := 5.0
+const RIDE_MAX_WATER := 0.8
+## How far forward the rider's model goes so their hips (which sit behind
+## the model's origin in the seated pose) are over the saddle.
+const RIDE_FORWARD := 0.3
+var _hoof_distance: float = 0.0
+
+signal mounted_changed(riding: bool)
+
 
 func _ready() -> void:
 	name = "Player"
@@ -133,6 +147,80 @@ static func create_default_appearance() -> CharacterAppearance:
 
 
 ## Player input only drives the character in the third-person exploration mode.
+# --- Riding ---------------------------------------------------------------------------------
+
+func is_riding() -> bool:
+	return mount_animal != null and is_instance_valid(mount_animal)
+
+
+## Climbs into the saddle: you steer the horse from now on (walk, gallop when
+## you push the stick all the way / hold run, jump). Tap Get off to dismount.
+func mount(animal: Animal) -> void:
+	if animal == null or is_riding() or swimming:
+		return
+	stand_up()
+	if tools:
+		tools.hold(&"", 0.0)
+	_action_time = 0.0
+	mount_animal = animal
+	animal.rider = self
+	animal.record.erase("parked")
+	animal.record["follow"] = false
+	var at := animal.global_position
+	global_position = Vector3(at.x, VillageLayout.get_walk_height(at.x, at.z) + 0.05, at.z)
+	model.rotation.y = animal.rotation.y
+	velocity = Vector3.ZERO
+	model.set_animation(&"ride")
+	_place_in_saddle(animal)
+	Sounds.play(String(animal.info.get("sound", "")), at, -8.0)
+	GameManager.notify("You swing up onto %s. Push the stick all the way (or hold run) to gallop." % animal.display_name())
+	mounted_changed.emit(true)
+	if detector:
+		GameManager.interaction_focus_changed.emit(detector.focused)  # the prompt now says Get off
+
+
+## Gets down beside the horse, which grazes there a while before heading home.
+func dismount() -> void:
+	if not is_riding():
+		mount_animal = null
+		return
+	var animal := mount_animal
+	var side := Vector3(cos(model.rotation.y), 0, -sin(model.rotation.y))  # the horse's left
+	var landing := global_position
+	for offset: Vector3 in [side * 1.1, -side * 1.1, -get_facing() * 1.6]:
+		var at := global_position + offset
+		if VillageLayout.water_depth(at.x, at.z) < 0.5 and _clear_to(at):
+			landing = at
+			break
+	animal.rider = null
+	animal.ride_speed = 0.0
+	for strap in animal._reins:
+		strap.visible = false
+	animal.record["parked"] = [animal.global_position.x, animal.global_position.z]
+	animal.record["parked_until"] = WorldClock.day * 24.0 + WorldClock.time_of_day + 3.0
+	mount_animal = null
+	model.position = Vector3.ZERO
+	global_position = Vector3(landing.x, VillageLayout.get_walk_height(landing.x, landing.z) + 0.05, landing.z)
+	velocity = Vector3.ZERO
+	model.set_animation(&"idle")
+	mounted_changed.emit(false)
+	if detector:
+		GameManager.interaction_focus_changed.emit(detector.focused)
+
+
+func _place_in_saddle(horse: Animal) -> void:
+	var saddle: Vector3 = horse.info.get("saddle", Vector3.ZERO)
+	var along := saddle.z + RIDE_FORWARD
+	model.position = Vector3(sin(model.rotation.y) * along, model.ride_offset(horse.saddle_height()), cos(model.rotation.y) * along)
+
+
+func _clear_to(at: Vector3) -> bool:
+	var from := global_position + Vector3(0, 0.6, 0)
+	var query := PhysicsRayQueryParameters3D.create(from, Vector3(at.x, from.y, at.z), 1)
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+
 func can_control() -> bool:
 	return GameManager.camera_mode == GameManager.CameraMode.EXPLORATION and not GameManager.is_in_conversation() \
 		and _action_time <= 0.0
@@ -258,9 +346,22 @@ func _physics_process(delta: float) -> void:
 	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
 	var direction := (right * move.x - forward * move.y).limit_length(1.0)
 
-	_update_swimming()
+	if is_riding() and combat and combat.in_fight():
+		dismount()  # no fighting from the saddle
+	var riding := is_riding()
+	if riding:
+		swimming = false
+	else:
+		_update_swimming()
 	var running := InputRouter.is_run_requested(move) and not swimming
 	var target_speed := (run_speed if running else walk_speed) * minf(move.length() * 1.15, 1.0)
+	if riding:
+		var info := mount_animal.info
+		target_speed = (float(info["ride_run"]) if running else float(info["ride_walk"])) * minf(move.length() * 1.15, 1.0)
+		# The horse won't wade deeper than its knees.
+		var ahead := global_position + direction.normalized() * 1.6
+		if direction.length() > 0.01 and VillageLayout.water_depth(ahead.x, ahead.z) > RIDE_MAX_WATER:
+			target_speed = 0.0
 	if swimming:
 		target_speed = SWIM_SPEED * minf(move.length() * 1.15, 1.0)
 	if combat:
@@ -268,9 +369,11 @@ func _physics_process(delta: float) -> void:
 	var target_velocity := direction.normalized() * target_speed if direction.length() > 0.01 else Vector3.ZERO
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var rate := acceleration if target_velocity.length() > 0.01 else deceleration
+	if riding:
+		rate = RIDE_ACCELERATION if target_velocity.length() > 0.01 else RIDE_ACCELERATION * 1.4
 	horizontal = horizontal.move_toward(target_velocity, rate * delta)
 	# A dodge or a knock-back moves the player whatever the stick says.
-	var forced: Variant = combat.movement_override() if combat else null
+	var forced: Variant = combat.movement_override() if combat and not riding else null
 	if forced is Vector3:
 		horizontal = forced
 	velocity.x = horizontal.x
@@ -290,19 +393,44 @@ func _physics_process(delta: float) -> void:
 
 	if horizontal.length() > 0.2 and not (combat and (combat.blocking or combat.is_dodging() or combat.is_attacking())):
 		var target_yaw := atan2(horizontal.x, horizontal.z)
-		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clampf(turn_speed * delta, 0.0, 1.0))
+		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clampf((RIDE_TURN_SPEED if riding else turn_speed) * delta, 0.0, 1.0))
+	if riding:
+		_carry_mount(horizontal.length(), delta)
 
 	var placing := BuildMode.instance != null and BuildMode.instance.active
-	if can_control() and not placing and not swimming and Input.is_action_just_pressed("interact") and GameManager.can_start_interaction():
+	if can_control() and not placing and not swimming and Input.is_action_just_pressed("interact") and (riding or GameManager.can_start_interaction()):
 		detector.try_interact(self)
 
-	_update_animation(horizontal.length())
-	_footsteps(horizontal.length(), delta)
+	if not riding:
+		_update_animation(horizontal.length())
+		_footsteps(horizontal.length(), delta)
 
 	# Safety net: never let the player fall out of the world.
 	if global_position.y < -25.0:
 		global_position = spawn_point
 		velocity = Vector3.ZERO
+
+
+## Keeps the horse under you, its legs matching your speed, you in the
+## saddle as it rises and falls, and hoof beats.
+func _carry_mount(speed: float, delta: float) -> void:
+	var horse := mount_animal
+	horse.global_position = Vector3(global_position.x, VillageLayout.get_walk_height(global_position.x, global_position.z), global_position.z)
+	if not is_on_floor():
+		horse.global_position.y = global_position.y
+	horse.rotation.y = model.rotation.y
+	horse.ride_speed = speed
+	horse.ride_airborne = not is_on_floor()
+	model.set_animation(&"ride")
+	_place_in_saddle(horse)
+	if speed < 0.4 or not is_on_floor():
+		_hoof_distance = 0.0
+		return
+	_hoof_distance += speed * delta
+	var stride := 1.1 if speed < float(horse.info["ride_walk"]) + 1.0 else 2.4
+	if _hoof_distance >= stride:
+		_hoof_distance = 0.0
+		Sounds.play("step", null, -9.0)
 
 
 ## A step sound each half stride while walking or running on the ground.
@@ -359,6 +487,9 @@ func face_towards(point: Vector3) -> void:
 
 func get_save_data() -> Dictionary:
 	var at := global_position
+	if is_riding():
+		dismount()  # saved standing beside the horse
+		at = global_position
 	if Interiors.instance and Interiors.instance.is_inside():
 		at = Interiors.instance.exit_position()  # rooms aren't saved; the doorstep is
 	return {

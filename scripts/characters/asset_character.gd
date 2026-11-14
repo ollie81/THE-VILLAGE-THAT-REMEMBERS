@@ -21,10 +21,10 @@ const CLIPS := {
 	&"gather": "PickUp_Table", &"talk": "Idle_Talking", &"wave": "Interact", &"sit": "Sitting_Idle",
 	&"sit_ground": "Crouch_Idle", &"sleep": "Death01", &"cheer": "Spell_Simple_Shoot", &"dance": "Dance",
 	&"bow": "Interact", &"slash": "Sword_Attack", &"block": "Sword_Idle", &"dodge": "Roll", &"hurt": "Hit_Chest",
-	&"swim": "Swim_Fwd", &"swim_idle": "Swim_Idle",
+	&"swim": "Swim_Fwd", &"swim_idle": "Swim_Idle", &"ride": "Driving",
 }
 const LOOPING := ["Idle", "Walk", "Jog_Fwd", "Jump", "Idle_Talking", "Sitting_Idle", "Crouch_Idle", "Dance",
-	"Sword_Idle", "Sword_Attack", "PickUp_Table", "Swim_Fwd", "Swim_Idle"]
+	"Sword_Idle", "Sword_Attack", "PickUp_Table", "Swim_Fwd", "Swim_Idle", "Driving"]
 ## The animation clips' own ground speeds (m/s at speed 1).
 const WALK_CLIP_SPEED := 1.45
 const RUN_CLIP_SPEED := 3.6
@@ -45,6 +45,7 @@ static var _scenes: Dictionary = {}
 static var _heads: Dictionary = {}
 static var _texture_means: Dictionary = {}
 static var _sit_hips: float = 0.55
+static var _ride_hips: float = 0.55
 
 var female: bool = false
 ## Height of the hair above the head bone (0 without hair).
@@ -140,6 +141,7 @@ func _build_asset() -> void:
 	animation_player.name = "AnimationPlayer"
 	add_child(animation_player)
 	animation_player.root_node = animation_player.get_path_to(skeleton.get_parent())
+	animation_player.mixer_applied.connect(_after_animation)
 	animation_player.add_animation_library(&"", _get_library(skeleton))
 	animation_player.playback_default_blend_time = BLEND_TIME
 	# A villager's work tool in the hand.
@@ -290,6 +292,8 @@ static func _get_library(target: Skeleton3D) -> AnimationLibrary:
 					animation.track_set_key_value(t, k, pelvis_to + (v - pelvis_from) * hips_scale)
 				if clip == "Sitting_Idle" and animation.track_get_key_count(t) > 0:
 					_sit_hips = (animation.track_get_key_value(t, 0) as Vector3).z
+				if clip == "Driving" and animation.track_get_key_count(t) > 0:
+					_ride_hips = (animation.track_get_key_value(t, 0) as Vector3).z
 			animation.track_set_path(t, NodePath("Skeleton3D:" + bone))
 		animation.loop_mode = Animation.LOOP_LINEAR if LOOPING.has(clip) else Animation.LOOP_NONE
 		_library.add_animation(StringName(clip), animation)
@@ -309,6 +313,12 @@ func set_animation(state: StringName, speed: float = 0.0) -> void:
 	if _tool:
 		_tool.visible = state in WORK_ANIMATIONS
 	_update_clip()
+
+
+## Pose touches after the animation: legs astride a horse when riding.
+func _after_animation() -> void:
+	if _state == &"ride" and skeleton:
+		RidingPose.apply(skeleton, self)
 
 
 func _update_clip() -> void:
@@ -352,6 +362,11 @@ func hip_clearance() -> float:
 
 func seat_offset(seat_height: float) -> float:
 	return seat_height + hip_clearance() - _sit_hips * scale.y
+
+
+## How far to raise the model so the riding pose sits in a saddle this high.
+func ride_offset(saddle_height: float) -> float:
+	return saddle_height + hip_clearance() - _ride_hips * scale.y
 
 
 func get_face_position() -> Vector3:

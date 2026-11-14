@@ -41,7 +41,15 @@ func _physics_process(_delta: float) -> void:
 	var player := get_parent() as PlayerController
 	if player:
 		facing = player.get_facing()
-	for area in get_overlapping_areas():
+	# In the saddle, the only thing to do is get off.
+	var riding: bool = player != null and player.is_riding()
+	if riding:
+		best = player.mount_animal.find_child("Interactable", true, false) as Interactable
+		if best == null:
+			for child in player.mount_animal.find_children("*", "Interactable", true, false):
+				best = child
+				break
+	for area in ([] if riding else get_overlapping_areas()):
 		var candidate := area as Interactable
 		if candidate == null or not candidate.is_available():
 			continue
