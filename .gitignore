@@ -1,0 +1,9 @@
+# Godot 4 generated data
+.godot/
+*.tmp
+/android/
+/export/
+*.apk
+*.aab
+export_credentials.cfg
+/build/
