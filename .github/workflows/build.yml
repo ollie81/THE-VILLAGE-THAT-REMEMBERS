@@ -88,7 +88,8 @@ jobs:
         env:
           COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          sed -i "s/^const COMMIT := \"dev\"/const COMMIT := \"${COMMIT_SHA::7}\"/; s/^const BUILT := \"\"/const BUILT := \"$(date -u +%Y-%m-%d)\"/" scripts/core/build_info.gd
+          SHORT=$(echo "$COMMIT_SHA" | cut -c1-7)
+          sed -i "s/^const COMMIT := \"dev\"/const COMMIT := \"$SHORT\"/; s/^const BUILT := \"\"/const BUILT := \"$(date -u +%Y-%m-%d)\"/" scripts/core/build_info.gd
           grep -n "^const" scripts/core/build_info.gd
 
       - name: Export APK
