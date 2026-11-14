@@ -492,11 +492,19 @@ static func _build_plaza(kit: Kit, root: Node3D) -> void:
 	# Walk on the floor, not through it (it's raised above the lowest ground);
 	# the sloping rim lets you step up onto it.
 	kit.ramp_disc_collider(VillageLayout.PLAZA_FLOOR_TOP, r, -0.6, r + 1.2)
-	# Paving stones dotted over the surface.
-	for i in 36:
-		var angle := m.rng.randf() * TAU
-		var dist := m.rng.randf_range(2.0, r - 0.4)
-		m.add_box_at(Vector3(cos(angle) * dist, 0.05, sin(angle) * dist), Vector3(0.6, 0.04, 0.45), STONE.lightened(m.rng.randf_range(-0.05, 0.12)), m.rng.randf() * PI)
+	# A real cobblestone surface on top (Poly Haven texture, CC0).
+	var paving := MeshInstance3D.new()
+	paving.name = "PlazaCobbles"
+	var disc := CylinderMesh.new()
+	disc.top_radius = r - 0.05
+	disc.bottom_radius = r - 0.05
+	disc.height = 0.02
+	disc.radial_segments = 40
+	disc.rings = 1
+	paving.mesh = disc
+	paving.material_override = Materials.cobblestone()
+	paving.position = Vector3(0, VillageLayout.PLAZA_FLOOR_TOP - 0.005, 0)
+	root.add_child(paving)
 	# Fire pit: ring of stones, logs and ash.
 	for i in 12:
 		var a := TAU * i / 12.0

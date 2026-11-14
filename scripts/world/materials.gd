@@ -5,6 +5,8 @@ extends RefCounted
 ## source) to a minimum.
 
 static var _cache: Dictionary = {}
+static var _ground: ShaderMaterial
+static var _cobble: StandardMaterial3D
 
 
 ## The main material for all merged low-poly geometry.
@@ -99,6 +101,37 @@ static func flame() -> StandardMaterial3D:
 		material.emission_energy_multiplier = 2.0
 		_cache["flame"] = material
 	return _cache["flame"]
+
+
+## The textured ground (grass, path dirt, cobblestones; Poly Haven, CC0).
+static func ground() -> ShaderMaterial:
+	if _ground == null:
+		_ground = ShaderMaterial.new()
+		_ground.shader = load("res://shaders/terrain.gdshader")
+		var dir := "res://assets/polyhaven/"
+		_ground.set_shader_parameter("grass_albedo", load(dir + "aerial_grass_rock_diff_1k.jpg"))
+		_ground.set_shader_parameter("grass_normal", load(dir + "aerial_grass_rock_nor_gl_1k.jpg"))
+		_ground.set_shader_parameter("dirt_albedo", load(dir + "brown_mud_leaves_01_diff_1k.jpg"))
+		_ground.set_shader_parameter("dirt_normal", load(dir + "brown_mud_leaves_01_nor_gl_1k.jpg"))
+		_ground.set_shader_parameter("cobble_albedo", load(dir + "cobblestone_floor_01_diff_1k.jpg"))
+		_ground.set_shader_parameter("cobble_normal", load(dir + "cobblestone_floor_01_nor_gl_1k.jpg"))
+	return _ground
+
+
+## Cobblestones for raised paved surfaces (the meeting circle).
+static func cobblestone() -> StandardMaterial3D:
+	if _cobble == null:
+		_cobble = StandardMaterial3D.new()
+		var dir := "res://assets/polyhaven/"
+		_cobble.albedo_texture = load(dir + "cobblestone_floor_01_diff_1k.jpg")
+		_cobble.normal_enabled = true
+		_cobble.normal_texture = load(dir + "cobblestone_floor_01_nor_gl_1k.jpg")
+		_cobble.roughness_texture = load(dir + "cobblestone_floor_01_rough_1k.jpg")
+		_cobble.uv1_triplanar = true
+		_cobble.uv1_world_triplanar = true
+		_cobble.uv1_scale = Vector3.ONE * 0.32
+		_cobble.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return _cobble
 
 
 static func grass() -> ShaderMaterial:

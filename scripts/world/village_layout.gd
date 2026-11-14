@@ -98,6 +98,9 @@ static func get_walk_height(x: float, z: float) -> float:
 	var room_floor := Interiors.floor_at(x, z)
 	if not is_nan(room_floor):
 		return room_floor
+	var cottage_floor := KitCottage.floor_at(x, z)
+	if not is_nan(cottage_floor):
+		return cottage_floor
 	var ground := TerrainGenerator.get_height(x, z)
 	if is_on_bridge(x, z):
 		return maxf(ground, bridge_deck_height(x))
@@ -142,6 +145,8 @@ static func blocking_reason(x: float, z: float, radius: float, path_margin: floa
 		var p: Vector3 = node
 		if Vector2(x - p.x, z - p.z).length() < radius + 1.0:
 			return "That would block a path"
+	if KitCottage.reserves(x, z, radius):
+		return "Too close to the cottage"
 	return ""
 
 

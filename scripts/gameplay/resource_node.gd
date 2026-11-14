@@ -134,6 +134,22 @@ func _mesh_node(builder: MeshBuilder) -> Node3D:
 
 func _build_full() -> Node3D:
 	var b := MeshBuilder.new(hash(spot_id))
+	# Real tree and rock models (Stylized Nature MegaKit, CC0).
+	if kind == &"tree" or kind == &"rock":
+		var model: String = ["CommonTree_2", "CommonTree_4"][absi(hash(spot_id)) % 2] if kind == &"tree" else "Rock_Medium_3"
+		var kit := NatureSpawner._kit_mesh(model)
+		if kit:
+			var root := Node3D.new()
+			var instance := MeshInstance3D.new()
+			instance.mesh = kit
+			instance.scale = Vector3.ONE * (0.66 if kind == &"tree" else 0.4)
+			instance.rotation.y = float(absi(hash(spot_id)) % 628) / 100.0
+			root.add_child(instance)
+			if kind == &"tree":
+				# A notch cut into the trunk marks trees that are free to fell.
+				b.add_box_at(Vector3(0, 0.55, 0.22), Vector3(0.22, 0.14, 0.06), Color(0.85, 0.7, 0.45))
+				root.add_child(_mesh_node(b))
+			return root
 	match kind:
 		&"tree":
 			var bark := Color(0.44, 0.31, 0.2)

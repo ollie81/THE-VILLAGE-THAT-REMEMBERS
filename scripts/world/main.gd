@@ -32,11 +32,14 @@ func _ready() -> void:
 	world.name = "World"
 	add_child(world)
 	TerrainGenerator.build(world)
+	KitCottage.spot = Vector3.INF
+	KitCottage.find_spot()  # reserve the cottage's plot before anything else is placed
 	VillageBuilder.build(world)
 	RiverBuilder.build(world)
 	NatureSpawner.new().spawn(world)
 	ResourceSpawner.spawn(world)
 	VillageDecor.build(world)
+	world.add_child(KitCottage.new())
 	world.add_child(VillageLife.new())
 	world.add_child(WildHarvest.new())
 	world.add_child(Guide.new())

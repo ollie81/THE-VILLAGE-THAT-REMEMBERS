@@ -76,10 +76,12 @@ static func build(parent: Node3D) -> void:
 				_add_terrain_triangle(builder, p00, p10, p01, path_segments)
 				_add_terrain_triangle(builder, p10, p11, p01, path_segments)
 
+	# The flat-coloured mesh is kept for collision (same shape as always); what
+	# you see is a smooth, textured mesh over the same heights.
 	var mesh := builder.build(Materials.vertex_color())
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.name = "TerrainMesh"
-	mesh_instance.mesh = mesh
+	mesh_instance.mesh = build_textured_mesh(heights, cells, path_segments)
 	parent.add_child(mesh_instance)
 
 	var body := StaticBody3D.new()
@@ -90,6 +92,53 @@ static func build(parent: Node3D) -> void:
 	shape.shape = mesh.create_trimesh_shape()
 	body.add_child(shape)
 	parent.add_child(body)
+
+
+## The ground you see: shared, smooth-shaded vertices on the same 2 m grid,
+## each carrying the old tint (COLOR) and how much path dirt and cobblestone
+## it has (UV2), for the textured ground shader.
+static func build_textured_mesh(heights: Array[PackedFloat32Array], cells: int, path_segments: Array) -> ArrayMesh:
+	var half := VillageLayout.WORLD_HALF_SIZE
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for zi in cells + 1:
+		for xi in cells + 1:
+			var x := -half + xi * CELL_SIZE
+			var z := -half + zi * CELL_SIZE
+			var h: float = heights[zi][xi]
+			var hl: float = heights[zi][maxi(xi - 1, 0)]
+			var hr: float = heights[zi][mini(xi + 1, cells)]
+			var hd: float = heights[maxi(zi - 1, 0)][xi]
+			var hu: float = heights[mini(zi + 1, cells)][xi]
+			var normal := Vector3(hl - hr, 2.0 * CELL_SIZE, hd - hu).normalized()
+			var p := Vector3(x, h, z)
+			var tint := _terrain_color(p, normal.y, path_segments)
+			var plaza_distance := Vector2(x, z).length()
+			var cobble := 1.0 - smoothstep(VillageLayout.PLAZA_RADIUS + 0.4, VillageLayout.PLAZA_RADIUS + 2.4, plaza_distance)
+			var dirt := 1.0 - smoothstep(0.6, 1.9, _distance_to_segments(Vector2(x, z), path_segments))
+			var river_distance := absf(x - VillageLayout.river_center_x(z))
+			if h < VillageLayout.WATER_LEVEL + 0.45 and river_distance < 8.0:
+				dirt = maxf(dirt, 0.85)
+			if normal.y < 0.82:
+				dirt = maxf(dirt, 0.7)
+			st.set_color(tint)
+			st.set_uv(Vector2(x, z) * 0.1)
+			st.set_uv2(Vector2(cobble, dirt))
+			st.set_normal(normal)
+			st.add_vertex(p)
+	var row := cells + 1
+	for zi in cells:
+		for xi in cells:
+			var i00 := zi * row + xi
+			var i10 := i00 + 1
+			var i01 := i00 + row
+			var i11 := i01 + 1
+			for i in [i00, i10, i11, i00, i11, i01]:
+				st.add_index(i)
+	st.generate_tangents()
+	var mesh := st.commit()
+	mesh.surface_set_material(0, Materials.ground())
+	return mesh
 
 
 static func _add_terrain_triangle(builder: MeshBuilder, a: Vector3, b: Vector3, c: Vector3,

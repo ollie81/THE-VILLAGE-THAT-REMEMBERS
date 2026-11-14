@@ -698,6 +698,25 @@ The plan for the whole upgrade (bigger homes, village danger, villagers reacting
 
 Tests: `godot --headless --path . res://tests/economy_test.tscn`. Screenshots: `tools/wardrobe_screenshots.tscn`.
 
+## Visual pilot (real 3D assets)
+
+A first test of the new semi-realistic direction, using free CC0 assets (see [CREDITS.md](CREDITS.md)):
+
+- **Ground:** real grass, dirt-path and cobblestone textures (Poly Haven) on a smooth terrain, blended by
+  path and plaza; the meeting circle is paved. Heights and collision are unchanged.
+- **A walk-in cottage** next to the village (Medieval Village MegaKit): plaster and timber walls with brick
+  bases, a round-tiled roof, brick gables, a chimney, windows with shutters and a front door that opens and
+  closes. Inside, with no loading screen: a living room with a dining table, chairs, a bookcase and a
+  chandelier; a kitchen with a stone hearth, fire and cauldron; a bedroom with a bed, nightstand and chest; a
+  warm lamp in each room. Bed, chair, hearth, books and door can be used. While you're inside the roof is
+  hidden and the camera looks down over the walls.
+- **Trees, bushes and rocks** near the camera are real models (Stylized Nature MegaKit), switching to the
+  simple shapes further away to keep phones fast; the trees you chop are real models too.
+- Not yet changed: the founders' houses, the player and villagers (the free character pack has to be
+  downloaded from itch.io in a browser), animals.
+
+Tests: `godot --headless --path . res://tests/pilot_test.tscn`. Screenshots: `tools/pilot_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

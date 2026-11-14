@@ -25,6 +25,8 @@ var pitch: float = -0.3
 var distance: float = 5.5
 ## Inside a home: a closer camera that stays under the ceiling.
 var indoor: bool = false
+## Inside the walk-in cottage (its roof hidden): look down over the walls.
+var overhead: bool = false
 var _view_timer: float = 0.0
 const INDOOR_DISTANCE := 3.0
 var manage_focus: Vector3 = Vector3.ZERO
@@ -165,13 +167,17 @@ func _exploration_transform(delta: float = 0.0) -> Transform3D:
 	var pivot := target.global_position + Vector3(0.0, 1.55, 0.0)
 	if indoor:
 		pitch = clampf(pitch, -0.7, -0.15)
+	if overhead:
+		pitch = clampf(pitch, -1.1, -0.85)
 	var offset := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch) * Vector3(0.0, 0.0, 1.0)
 	var wanted := minf(distance, INDOOR_DISTANCE) if indoor else distance
+	if overhead:
+		wanted = clampf(distance, 5.0, 7.0)
 	# Pull the camera in front of walls and trees between it and the player.
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(pivot, pivot + offset * (distance + 0.3), 1)
 	query.exclude = [target.get_rid()]
-	var hit := space.intersect_ray(query)
+	var hit := {} if overhead else space.intersect_ray(query)
 	if not hit.is_empty():
 		var hit_position: Vector3 = hit["position"]
 		wanted = maxf(pivot.distance_to(hit_position) - 0.3, 0.8)

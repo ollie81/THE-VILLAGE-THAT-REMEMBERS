@@ -21,6 +21,14 @@ var _grass_root: Node3D
 ## building somewhere clears the land under it (see clear_area).
 static var _clearable: Array = []
 const CLEARABLE := ["tree", "pine", "bush", "rock", "log"]
+## Real tree models (Stylized Nature MegaKit, Quaternius, CC0) shown for
+## chunks near the camera; the simple shapes stand in further away.
+const KIT_MODELS := {
+	"tree_0": ["CommonTree_5", 0.72], "tree_1": ["CommonTree_3", 0.62], "tree_2": ["CommonTree_1", 0.7],
+	"pine_0": ["Pine_2", 0.82], "pine_1": ["Pine_1", 0.85], "bush_0": ["Bush_Common_Flowers", 0.75],
+	"rock_0": ["Rock_Medium_2", 0.35], "rock_1": ["Rock_Medium_1", 0.32],
+}
+const KIT_RANGE := 38.0
 
 
 func spawn(parent: Node3D) -> void:
@@ -95,6 +103,10 @@ func _build_meshes() -> void:
 		var rock := MeshBuilder.new(SEED + 30 + v)
 		rock.add_blob_at(Vector3(0, 0.15, 0), Vector3(0.7, 0.45, 0.6), Color(0.55, 0.55, 0.52).darkened(v * 0.1), 6, 4, 0.28)
 		_meshes["rock_%d" % v] = rock.build(material)
+	for key in KIT_MODELS:
+		var kit := _kit_mesh(String(KIT_MODELS[key][0]))
+		if kit:
+			_meshes[key + "_kit"] = kit
 	var log_builder := MeshBuilder.new(SEED + 40)
 	log_builder.add_cylinder(Transform3D(Basis(Vector3.FORWARD, PI * 0.5), Vector3(-1.4, 0.25, 0)), 0.28, 0.25, 2.8, 7, bark)
 	log_builder.add_blob_at(Vector3(0.4, 0.5, 0.1), Vector3(0.25, 0.12, 0.25), Color(0.35, 0.5, 0.28), 5, 3)
@@ -153,6 +165,8 @@ func _build_grass_mesh() -> ArrayMesh:
 func _is_clear(x: float, z: float, path_margin: float, building_margin: float) -> bool:
 	if absf(x) > VillageLayout.WORLD_HALF_SIZE - 1.0 or absf(z) > VillageLayout.WORLD_HALF_SIZE - 1.0:
 		return false
+	if KitCottage.reserves(x, z, building_margin):
+		return false
 	if Vector2(x, z).length() < VillageLayout.PLAZA_RADIUS + building_margin:
 		return false
 	var river_distance := absf(x - VillageLayout.river_center_x(z))
@@ -201,6 +215,36 @@ func _random_xform(x: float, z: float, scale_min: float, scale_max: float, sink:
 	return Transform3D(basis, Vector3(x, TerrainGenerator.get_height(x, z) - sink, z))
 
 
+## The mesh of a nature kit model, with leaves cut out (alpha scissor)
+## rather than blended: cheaper on phones and they cast proper shadows.
+static func _kit_mesh(model: String) -> Mesh:
+	var path := "res://assets/quaternius/nature/%s.gltf" % model
+	if not ResourceLoader.exists(path):
+		return null
+	var scene := (load(path) as PackedScene).instantiate()
+	var found: MeshInstance3D = null
+	for node in scene.find_children("*", "MeshInstance3D", true, false):
+		found = node
+		break
+	if found == null:
+		scene.free()
+		return null
+	var mesh := found.mesh.duplicate() as ArrayMesh
+	for i in mesh.get_surface_count():
+		var material := mesh.surface_get_material(i)
+		if material == null and found.get_surface_override_material(i):
+			material = found.get_surface_override_material(i)
+		if material is BaseMaterial3D:
+			var m := (material as BaseMaterial3D).duplicate() as BaseMaterial3D
+			if m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or m.albedo_texture and m.albedo_texture.get_image() and m.albedo_texture.get_image().detect_alpha() != Image.ALPHA_NONE:
+				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+				m.alpha_scissor_threshold = 0.45
+				m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mesh.surface_set_material(i, m)
+	scene.free()
+	return mesh
+
+
 func _add_instance(kind: String, variant: int, xform: Transform3D) -> Dictionary:
 	var cx := int(floor(xform.origin.x / CHUNK_SIZE))
 	var cz := int(floor(xform.origin.z / CHUNK_SIZE))
@@ -238,6 +282,9 @@ static func _set_shown(entry: Dictionary, shown: bool) -> void:
 		return
 	var pos: Vector3 = entry["pos"]
 	multimesh.set_instance_transform(int(entry["index"]), entry["xform"] if shown else Transform3D(Basis().scaled(Vector3.ZERO), pos))
+	var kit: MultiMesh = entry.get("kit_multimesh")
+	if kit:
+		kit.set_instance_transform(int(entry["index"]), entry["kit_xform"] if shown else Transform3D(Basis().scaled(Vector3.ZERO), pos))
 	var shape: CollisionShape3D = entry.get("shape")
 	if shape and is_instance_valid(shape):
 		shape.set_deferred("disabled", not shown)
@@ -506,6 +553,8 @@ func _scatter_ground_detail() -> void:
 
 
 func _is_ground_detail_spot(x: float, z: float) -> bool:
+	if KitCottage.reserves(x, z, -0.4):
+		return false
 	var height := TerrainGenerator.get_height(x, z)
 	if height < VillageLayout.WATER_LEVEL + 0.35:
 		return false
@@ -546,6 +595,32 @@ func _flush(parent: Node3D, kinds: Array) -> void:
 		var instance := MultiMeshInstance3D.new()
 		instance.name = String(key).replace("|", "_")
 		instance.multimesh = multimesh
+		# Near the camera, the real model instead of the simple shape.
+		var kit_key := String(batch["mesh"])
+		if KIT_MODELS.has(kit_key) and _meshes.has(kit_key + "_kit"):
+			var kit_scale := float(KIT_MODELS[kit_key][1])
+			var kit_multimesh := MultiMesh.new()
+			kit_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+			kit_multimesh.mesh = _meshes[kit_key + "_kit"]
+			kit_multimesh.instance_count = transforms.size()
+			for i in transforms.size():
+				var t: Transform3D = transforms[i]
+				var kit_xform := Transform3D(t.basis.scaled(Vector3.ONE * kit_scale), t.origin)
+				kit_multimesh.set_instance_transform(i, kit_xform)
+				if clearable:
+					entries[i]["kit_multimesh"] = kit_multimesh
+					entries[i]["kit_xform"] = kit_xform
+			var kit_instance := MultiMeshInstance3D.new()
+			kit_instance.name = instance.name + "_kit"
+			kit_instance.multimesh = kit_multimesh
+			kit_instance.visibility_range_end = KIT_RANGE
+			kit_instance.visibility_range_end_margin = 4.0
+			kit_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+			if String(batch["kind"]) == "rock":
+				kit_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			parent.add_child(kit_instance)
+			instance.visibility_range_begin = KIT_RANGE
+			instance.visibility_range_begin_margin = 4.0
 		match String(batch["kind"]):
 			"grass", "flower", "mushroom", "pebble":
 				instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
