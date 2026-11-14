@@ -73,6 +73,16 @@ const LOCATION_LABELS := {
 	"ruins": "the old ruins",
 	"watchtower": "the watchtower",
 	"pond": "the pond",
+	"pasture": "the pasture",
+	"sheepfold": "the sheepfold",
+	"sty": "the pig sty",
+	"paddock": "the paddock",
+	"market": "the market",
+}
+
+## Which side of each farm-animal home villagers come to (towards the road).
+const ANIMAL_HOME_SIDE := {
+	"pasture": Vector3(0, 0, 1), "paddock": Vector3(1, 0, 0), "sheepfold": Vector3(1, 0, 0), "sty": Vector3(1, 0, 0),
 }
 
 const DEFAULT_WANDER_LOCATIONS: Array[String] = [
@@ -259,6 +269,11 @@ static func get_nav_edges() -> Array:
 		["south_street_west", "pond"],
 		["forest_edge", "wilds_road"],
 		["wilds_road", "watchtower"],
+		# Paths round the farm animals.
+		["farmland_gate", "pasture"],
+		["pasture", "paddock"],
+		["paddock", "sheepfold"],
+		["farm_road", "sty"],
 	])
 	return edges
 
@@ -476,6 +491,25 @@ static func _build_tables() -> void:
 	_nav_nodes["pond"] = POND_CENTER + Vector3(POND_RADIUS + 3.0, 0.0, -4.0)
 	_nav_nodes["wilds_road"] = Vector3(88.0, 0.0, 6.0)
 	_nav_nodes["watchtower"] = Vector3(118.0, 0.0, -18.0)
+	# Where villagers stand to tend the village's animals (see AnimalManager):
+	# at the edge of each home area, looking in.
+	for home in ["pasture", "paddock", "sheepfold", "sty"]:
+		var centre: Vector3 = AnimalManager.VILLAGE_HOMES[home][0]
+		var radius: float = AnimalManager.VILLAGE_HOMES[home][1]
+		var toward := ANIMAL_HOME_SIDE[home] as Vector3
+		_nav_nodes[home] = centre + toward * (radius + 3.0)
+		var care_spots: Array = []
+		var care_looks: Array = []
+		for i in 3:
+			var side := toward.rotated(Vector3.UP, (i - 1) * 0.45)
+			care_spots.append(centre + side * (radius + 1.0))
+			care_looks.append(centre)
+		_locations[home] = {"spots": care_spots, "looks": care_looks}
+	# Places to walk out to: by the windmill, round the pond, along the south
+	# street.
+	_locations["windmill"] = _ring_location(_nav_nodes["windmill"], WorldExpansion.WINDMILL, 3, 2.5)
+	_locations["pond"] = _ring_location(_nav_nodes["pond"], POND_CENTER, 3, 2.0)
+	_locations["south_street_east"] = _ring_location(_nav_nodes["south_street_east"], _nav_nodes["south_street_east"] + Vector3(0, 0, -6), 3, 2.0)
 	var lake_spots: Array = []
 	var lake_looks: Array = []
 	for i in 4:
@@ -491,6 +525,18 @@ static func _build_tables() -> void:
 		"spots": [Vector3(river_x - 1.0, 0, BRIDGE_Z + 0.7), Vector3(river_x + 1.2, 0, BRIDGE_Z - 0.7)],
 		"looks": [Vector3(river_x - 1.0, 0, BRIDGE_Z + 5.0), Vector3(river_x + 1.2, 0, BRIDGE_Z - 5.0)],
 	}
+
+
+## A few spots near `at`, side by side, everyone looking at `look`.
+static func _ring_location(at: Vector3, look: Vector3, count: int, spacing: float) -> Dictionary:
+	var toward := Vector3(look.x - at.x, 0, look.z - at.z).normalized()
+	var side := Vector3(-toward.z, 0, toward.x)
+	var spots: Array = []
+	var looks: Array = []
+	for i in count:
+		spots.append(at + side * (i - (count - 1) * 0.5) * spacing)
+		looks.append(look)
+	return {"spots": spots, "looks": looks}
 
 
 ## Converts [local_spot, local_look] pairs in a building's frame to world space.

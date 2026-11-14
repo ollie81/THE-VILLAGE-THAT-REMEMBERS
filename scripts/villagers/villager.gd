@@ -35,6 +35,8 @@ var data: VillagerData
 var person: Person = null
 ## Meshes built ahead of time on a worker thread (optional).
 var prebuilt_meshes: Dictionary = {}
+## How much faster people walk when hurrying out of the rain.
+const HURRY := 1.6
 ## Where a newcomer appears (walking in) instead of their schedule spot.
 var spawn_at: Variant = null
 var navigation: VillageNavigation
@@ -121,7 +123,7 @@ func _ready() -> void:
 	add_child(interactable)
 
 	mind = VillagerMind.new(String(data.id))
-	brain = ScheduleBrain.new(data)
+	brain = LifeBrain.new(data)
 	GameManager.register_villager(self)
 	GameManager.villager_selected.connect(_on_villager_selected)
 	if spawn_at != null:
@@ -182,7 +184,7 @@ func _place_for_current_time() -> void:
 	var spot := navigation.get_spot(_location_id, _spot_index)
 	_look_target = navigation.get_spot_look(_location_id, _spot_index)
 	global_position = VillageLayout.ground_point(spot.x, spot.z)
-	if current_activity.is_sleep():
+	if current_activity.goes_indoors() and navigation.is_inside_location(_location_id):
 		_enter_house()
 	else:
 		_begin_performing()
@@ -363,7 +365,7 @@ func is_leaving() -> bool:
 ## A welcomed traveller starts living by their own timetable.
 func become_resident(new_data: VillagerData) -> void:
 	data = new_data
-	brain = ScheduleBrain.new(data)
+	brain = LifeBrain.new(data)
 	name_label.text = data.display_name
 	interactable.display_name = data.display_name
 	current_activity = null
@@ -526,11 +528,15 @@ func _process_travel(delta: float) -> void:
 		model.set_animation(&"idle")
 		return
 	_blocked_time = 0.0
-	var step := minf(data.walk_speed * delta, distance)
+	# Caught in the rain (or with fighting nearby), people hurry.
+	var speed := data.walk_speed
+	if current_activity and current_activity.reason in ["rain", "rain_visit", "fight"]:
+		speed *= HURRY
+	var step := minf(speed * delta, distance)
 	var next := flat + direction * step
 	global_position = VillageLayout.ground_point(next.x, next.z)
 	_face_direction(direction, delta)
-	model.set_animation(&"walk", data.walk_speed)
+	model.set_animation(&"walk" if speed < 2.4 else &"run", speed)
 
 
 func _arrive() -> void:
@@ -539,7 +545,7 @@ func _arrive() -> void:
 		departed.emit(self)
 		queue_free()
 		return
-	if current_activity.is_sleep():
+	if current_activity.is_sleep() or (current_activity.goes_indoors() and navigation.is_inside_location(_location_id)):
 		_enter_house()
 	else:
 		_begin_performing()

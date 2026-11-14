@@ -8,6 +8,7 @@ const DEFAULT_ANIMATIONS := {
 	"gather": &"gather",
 	"trade": &"talk",
 	"socialize": &"talk",
+	"explore": &"idle",
 }
 
 var kind: StringName = &"wander"
@@ -15,6 +16,8 @@ var location_id: String = ""
 var label: String = ""
 var animation: StringName = &""
 var start_hour: float = 0.0
+## Why the plan changed for now (rain, fight, thorns), or "".
+var reason: String = ""
 
 
 static func from_entry(entry: Dictionary) -> VillagerActivity:
@@ -42,6 +45,11 @@ func is_sleep() -> bool:
 	return kind == &"sleep"
 
 
+## Goes inside on arrival: to sleep, to shelter, or visiting a friend.
+func goes_indoors() -> bool:
+	return kind == &"sleep" or kind == &"shelter" or kind == &"visit"
+
+
 func is_wander() -> bool:
 	return kind == &"wander" or location_id == ""
 
@@ -54,6 +62,10 @@ func describe(location_label: String) -> String:
 			return "Sleeping at home"
 		&"rest":
 			return "Resting at home"
+		&"shelter":
+			return "Sheltering at home"
+		&"visit":
+			return "Visiting %s" % location_label
 		&"socialize":
 			return "Chatting at the meeting circle"
 		&"wander":

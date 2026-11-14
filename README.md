@@ -766,8 +766,7 @@ Tests: `godot --headless --path . res://tests/world_test.tscn` (37 checks). Scre
   thinks and animates every frame, to 60 m a few times a second, beyond that it stands still. Birds have no
   physics. Rain is 500 particles (220 on the Low setting).
 - **Not yet:** no goats or ducks (no free models found that match); sheep, pigs and the small dog walk with
-  a simple bob done in code because their models have no walking animation; villagers don't react to rain
-  yet (stage 4). The chicken coop still comes with its three hens, as before.
+  a simple bob done in code because their models have no walking animation;  The chicken coop still comes with its three hens, as before.
 
 Tests: `godot --headless --path . res://tests/animals_test.tscn`. Screenshots: `tools/animal_screenshots.tscn`
 (`--skip-farm` or `--weather-only` for a shorter run).
@@ -789,6 +788,26 @@ Tests: `godot --headless --path . res://tests/animals_test.tscn`. Screenshots: `
 
 Tests: `godot --headless --path . res://tests/riding_test.tscn` (27 checks). Screenshots: `tools/ride_screenshots.tscn`
 (`--close` for just the close-ups).
+
+## Living world, stage 4: villagers' daily lives
+
+- **Varied days.** Each villager's job is still the backbone of their day, but every day is planned afresh
+  from who they are: farmers work the big fields at the farmland some mornings and feed the cows, check the
+  sheep, feed the pigs or brush the horses some afternoons; fishers go out to the forest lake or the pond;
+  herbalists pick water mint by the pond. After work people go shopping (at your market stalls once you've
+  built some, otherwise the storehouse), visit a friend at home (friendships come from Social Life), walk out to
+  the windmill, the lake, the pond or the south street, or stroll. In the evening some cook supper at home, and
+  the village cook makes stew for everyone at the meeting circle. Sociable, curious and dutiful people lean
+  different ways. The same person always makes the same plan for the same day, so nothing new is saved.
+- **Rain:** most people outdoors go and shelter at home (they hurry, and go inside); the sociable sometimes
+  shelter at a friend's; the most dutiful work on in the rain. Each choice holds for the whole shower, and
+  everyone goes back to their day when it stops.
+- **Danger:** when thornlings are out, nobody goes near their clearing; when there's fighting nearby, people
+  hurry indoors.
+- New places on the map for villagers: the pasture, sheepfold, pig sty and paddock (where they tend the
+  animals), by the windmill, round the pond, along the south street, and the market.
+
+Tests: `godot --headless --path . res://tests/lives_test.tscn`. Screenshots: `tools/lives_screenshots.tscn`.
 
 ## Sound and music
 
