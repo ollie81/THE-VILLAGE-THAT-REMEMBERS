@@ -111,8 +111,22 @@ func _kinds() -> void:
 	_check(ok, "all %d monsters load with their animations %s" % [Monster.KINDS.size(), bad])
 
 
+## Kinds seen over several rounds of filling the area round `at` (cleared
+## between rounds), so a check never hangs on one lucky or unlucky batch.
+func _gather(at: Vector3, rounds: int) -> Dictionary:
+	var kinds := {}
+	_put_player(at)
+	for r in rounds:
+		_clear()
+		await _scan(10)
+		for m in MonsterSpawner.instance.active():
+			kinds[m.kind] = int(kinds.get(m.kind, 0)) + 1
+	return kinds
+
+
 func _spawning() -> void:
 	var spawner := MonsterSpawner.instance
+	spawner._rng.seed = 2026  # the same monsters every run
 	_put_player(Vector3(0, 0, 10))
 	await _scan(6)
 	_check(spawner.active().is_empty(), "no monsters appear while you're in the village")
@@ -137,17 +151,16 @@ func _spawning() -> void:
 	WorldClock.set_time(23.0)
 	await _scan(14)
 	var skeletons := spawner.active().filter(func(m): return m.kind == &"skeleton").size()
-	_check(skeletons > 0, "at night skeletons rise in the forest (%d)" % skeletons)
+	var night_kinds := await _gather(forest, 4)
+	_check(skeletons > 0 and int(night_kinds.get(&"skeleton", 0)) > 0 and not night_kinds.has(&"slime"), "at night skeletons rise in the forest (%d; over 4 rounds %s)" % [skeletons, str(night_kinds)])
 	WorldClock.set_time(10.0)
 	_clear()
 	# The wilds by day.
 	var wilds := Vector3(112, 0, 30)
+	var wild_kinds := await _gather(wilds, 5)
+	_check(int(wild_kinds.get(&"wolf", 0)) > 0 and not wild_kinds.has(&"slime"), "wolves hunt in the wilds, and no forest slimes (over 5 rounds %s)" % str(wild_kinds))
 	_put_player(wilds)
 	await _scan(14)
-	var wild_kinds := {}
-	for m in spawner.active():
-		wild_kinds[m.kind] = true
-	_check(wild_kinds.has(&"wolf"), "wolves hunt in the wilds (%s)" % str(wild_kinds.keys()))
 	_check(spawner.active().filter(func(m): return m.kind != &"dragon").size() <= spawner.cap(), "the cap holds in the wilds too")
 	# Going home tidies them away.
 	_put_player(Vector3(0, 0, 10))
