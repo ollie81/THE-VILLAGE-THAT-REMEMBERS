@@ -49,6 +49,7 @@ func _run() -> void:
 	await _activities()
 	await _rooms()
 	await _characters()
+	await _device_prep()
 	print("== %s: %d failure(s) ==" % ["PASSED" if _failures == 0 else "FAILED", _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
 
@@ -125,6 +126,17 @@ func _hens() -> void:
 	var before := hen.global_position
 	await _seconds(0.6)
 	_check(hen.global_position.distance_to(before) > 0.3, "(and really runs)")
+	# Eggs and feeding survive closing the app (the save is JSON).
+	record["eggs"] = 5
+	record["fed_day"] = WorldClock.day
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(GameState.to_dict()))
+	var saved_coop: Dictionary = {}
+	for r: Dictionary in saved["structures"]:
+		if int(r.get("uid", -1)) == int(record.get("uid", -2)):
+			saved_coop = r
+	_check(int(saved_coop.get("eggs", -1)) == 5 and int(saved_coop.get("fed_day", -1)) == WorldClock.day and coop.eggs() == 5 and coop.hens_fed_today(),
+		"eggs in the nest and feeding are in the save (%s)" % str(saved_coop.get("eggs", "missing")))
+	record["eggs"] = 0
 
 
 # --- Tools in hand -------------------------------------------------------------------------
@@ -262,3 +274,52 @@ func _characters() -> void:
 	look.accessories = PackedStringArray(["flower_crown", "necklace"])
 	var meshes := CharacterModel.build_meshes(look, null, false)
 	_check(meshes["head"] != null and meshes["body"] != null, "a newcomer with braids, a flower crown and a necklace builds fine")
+
+
+# --- Real-device testing support ------------------------------------------------------------
+
+func _device_prep() -> void:
+	var player: PlayerController = GameManager.player
+	# Saves can't be lost if the phone kills the app mid-write.
+	var path := "user://quality_test_save.json"
+	var first := {"version": SaveService.SAVE_VERSION, "n": 1}
+	var second := {"version": SaveService.SAVE_VERSION, "n": 2}
+	_check(SaveService.write_safely(path, JSON.stringify(first)) and SaveService.write_safely(path, JSON.stringify(second)),
+		"saves are written through a temporary file")
+	_check(int(SaveService.read_safely(path).get("n", 0)) == 2 and FileAccess.file_exists(path + ".bak"), "the newest save loads, the previous one is kept as a backup")
+	var cut := FileAccess.open(path, FileAccess.WRITE)
+	cut.store_string(JSON.stringify(second).left(12))  # as if the write was cut off
+	cut.close()
+	_check(int(SaveService.read_safely(path).get("n", 0)) == 1, "a cut-off save falls back to the backup instead of starting over")
+	for f in [path, path + ".bak", path + ".tmp"]:
+		if FileAccess.file_exists(f):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(f))
+	# Report a problem.
+	var report := ReportPanel.build_report()
+	_check(report.contains(BuildInfo.text()) and report.contains("Device:") and report.contains("Renderer:") and report.contains("FPS:")
+		and report.contains("Goal:") and report.contains("Villagers:") and report.contains("Recent errors"), "the problem report has the build, phone, renderer, FPS and game state")
+	var settings: Node = _main.find_child("SettingsPanel", true, false)
+	var button: Button = settings.find_child("ReportButton", true, false) if settings else null
+	_check(button != null, "Settings has a Report a problem button")
+	if button:
+		button.pressed.emit()
+		_check(ReportPanel.instance.visible and ReportPanel.instance._text.text.contains("Device:"), "which opens the report")
+		ReportPanel.instance.visible = false
+	# Tapping the goal card opens the Journal (a touch arrives as a mouse click).
+	var panels: Node = _main.find_child("GameplayPanels", true, false)
+	var card: Control = panels._objective_box if panels else null
+	var journal := JournalPanel.instance
+	journal.visible = false
+	if card:
+		var tap := InputEventMouseButton.new()
+		tap.button_index = MOUSE_BUTTON_LEFT
+		tap.pressed = true
+		card.gui_input.emit(tap)
+	_check(card != null and card.mouse_filter == Control.MOUSE_FILTER_STOP and journal.visible, "tapping the goal card opens the Journal")
+	journal.visible = false
+	# Tools are held on the right hand bone.
+	player.tools.hold(&"axe", 1.0)
+	var hand := player.tools._attachment
+	_check(hand != null and hand.bone_name == "RightHand" and hand.get_bone_idx() >= 0 and player.tools._meshes[&"axe"].get_parent() == hand,
+		"tools are attached to the right hand bone")
+	player.tools.hold(&"", 0.0)

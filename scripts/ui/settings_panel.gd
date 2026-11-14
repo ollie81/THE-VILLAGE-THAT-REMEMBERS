@@ -18,6 +18,8 @@ func _ready() -> void:
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
 	custom_minimum_size = Vector2(640, 0)
+	# Solid, so tips and notices behind it don't show through.
+	add_theme_stylebox_override("panel", UiTheme._box(Color(0.13, 0.1, 0.08, 0.98), 14))
 
 	# Scrolls on short (landscape phone) screens; the buttons stay at the bottom.
 	var outer := VBoxContainer.new()
@@ -119,6 +121,16 @@ func _ready() -> void:
 	_fps_toggle.focus_mode = Control.FOCUS_NONE
 	_fps_toggle.toggled.connect(GameSettings.set_show_fps)
 	box.add_child(_fps_toggle)
+
+	box.add_child(UiTheme.label("Something not working?"))
+	var report := UiTheme.button("Report a problem", 260)
+	report.name = "ReportButton"
+	report.pressed.connect(func():
+		visible = false
+		if ReportPanel.instance:
+			ReportPanel.instance.open())
+	box.add_child(report)
+	box.add_child(UiTheme.label(BuildInfo.text(), 14, UiTheme.MUTED))
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)

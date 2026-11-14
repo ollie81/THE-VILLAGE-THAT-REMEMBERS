@@ -49,12 +49,14 @@ func _ready() -> void:
 	_root.add_child(TradePanel.new())
 	_root.add_child(TutorialTips.new())
 	_root.add_child(JournalPanel.new())
+	_root.add_child(ReportPanel.new())
 	_root.add_child(CombatHud.new())
 	var dialogue := DialoguePanel.new()
 	dialogue.name = "DialoguePanel"
 	_root.add_child(dialogue)
 	_root.add_child(VillagerInfoPanel.new())
 	_settings = SettingsPanel.new()
+	_settings.name = "SettingsPanel"
 	_root.add_child(_settings)
 
 	GameManager.camera_mode_changed.connect(func(_m): _refresh_buttons())
@@ -221,6 +223,8 @@ func _refresh_prompt() -> void:
 
 func _toggle_settings() -> void:
 	_settings.visible = not _settings.visible
+	if _settings.visible:
+		_settings.move_to_front()
 
 
 func _unhandled_input(event: InputEvent) -> void:

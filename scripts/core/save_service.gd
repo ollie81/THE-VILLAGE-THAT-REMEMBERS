@@ -133,29 +133,62 @@ func save_game() -> void:
 		"thornwood": Thornwood.instance.to_dict() if Thornwood.instance else {},
 		"saved_unix": Time.get_unix_time_from_system(),
 	}
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		push_warning("Could not write save file: %s" % FileAccess.get_open_error())
-		return
-	file.store_string(JSON.stringify(_data, "\t"))
+	if not write_safely(SAVE_PATH, JSON.stringify(_data, "\t")):
+		push_error("SaveService: could not write the save file %s." % SAVE_PATH)
 
 
 func delete_save() -> void:
 	_data = {}
 	GameState.reset()
 	Population.reset()
-	if FileAccess.file_exists(SAVE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	for path in [SAVE_PATH, SAVE_PATH + ".bak", SAVE_PATH + ".tmp"]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _read_from_disk() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	_data = read_safely(SAVE_PATH)
+
+
+## Writes `text` so that a phone killing the app mid-write can't lose the
+## save: it goes to a .tmp file first, is read back to check it, then the old
+## save becomes the .bak and the new one takes its place.
+static func write_safely(path: String, text: String) -> bool:
+	var tmp := path + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
 	if file == null:
-		return
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if parsed is Dictionary and int(parsed.get("version", 0)) == SAVE_VERSION:
-		_data = parsed
-	else:
-		push_warning("Ignoring incompatible or corrupt save file.")
+		push_error("SaveService: can't open %s (error %d)." % [tmp, FileAccess.get_open_error()])
+		return false
+	file.store_string(text)
+	file.close()
+	if FileAccess.get_file_as_string(tmp).length() != text.length():
+		push_error("SaveService: %s was not written completely." % tmp)
+		return false
+	var dir := DirAccess.open(path.get_base_dir())
+	if dir == null:
+		push_error("SaveService: can't open the save folder.")
+		return false
+	if FileAccess.file_exists(path):
+		if FileAccess.file_exists(path + ".bak"):
+			dir.remove(path.get_file() + ".bak")
+		dir.rename(path.get_file(), path.get_file() + ".bak")
+	var err := dir.rename(tmp.get_file(), path.get_file())
+	if err != OK:
+		push_error("SaveService: can't move the new save into place (error %d)." % err)
+		return false
+	return true
+
+
+## The save at `path`, or its backup if the save is missing, cut short or from
+## an older version ({} if neither is usable).
+static func read_safely(path: String) -> Dictionary:
+	for candidate in [path, path + ".bak"]:
+		if not FileAccess.file_exists(candidate):
+			continue
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(candidate))
+		if parsed is Dictionary and int(parsed.get("version", 0)) == SAVE_VERSION:
+			if candidate != path:
+				push_warning("SaveService: the save was unreadable; restored the backup from the previous save.")
+			return parsed
+		push_warning("SaveService: ignoring an unreadable or incompatible save at %s." % candidate)
+	return {}

@@ -707,6 +707,11 @@ Tested with **Godot 4.3-stable** (official Linux build):
 - Rendered screenshots (above) in exploration and Village View, at morning, sunset and night, and during
   a conversation.
 
+### Testing on a phone
+
+See [docs/DEVICE_TESTING.md](docs/DEVICE_TESTING.md) for the checklist. In the game, **Menu → Report a problem**
+collects the build, phone, renderer, frame rate, game state and recent errors, ready to copy into a message.
+
 ### Not yet verified
 
 - The **Mobile (Vulkan) renderer**. The screenshots used the OpenGL fallback because this machine has no GPU.

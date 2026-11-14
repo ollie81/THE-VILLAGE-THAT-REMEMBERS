@@ -84,6 +84,13 @@ jobs:
       - name: Import project
         run: godot --headless --path . --import || true
 
+      - name: Stamp the build
+        env:
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          sed -i "s/^const COMMIT := \"dev\"/const COMMIT := \"${COMMIT_SHA::7}\"/; s/^const BUILT := \"\"/const BUILT := \"$(date -u +%Y-%m-%d)\"/" scripts/core/build_info.gd
+          grep -n "^const" scripts/core/build_info.gd
+
       - name: Export APK
         run: |
           mkdir -p build/android
