@@ -642,6 +642,39 @@ Tests: `godot --headless --path . res://tests/adventure_test.tscn`. Screenshots:
 
 Tests: `godot --headless --path . res://tests/home_test.tscn`. Screenshots: `tools/home_screenshots.tscn`.
 
+## Hens, tools, a journal and more to do (quality pass after the second phone test)
+
+- **Real hens.** A chicken coop now has a hen house with a nest box, a fenced run and a feeder. Three hens
+  live in the run: they wander, step and bob their heads as they walk, peck at the ground, sit down to rest,
+  go to the feeder when they've been fed, steer round posts and walls, keep away from the river, and scurry
+  off flapping and clucking if you walk right up to them (`Chicken`). Feed them (1 herb) and they lay 3 eggs
+  the next morning, unfed just 1; the eggs show in the nest until you collect them (1 food each). Eggs and the
+  day they were fed are saved; where each hen stands is not.
+- **Tools in your hand.** Chopping puts an axe in your right hand, mining a pickaxe, building and the
+  workshop a hammer, planting a hoe, drawing water a watering can, fishing a rod (`PlayerTools`). The sword
+  is put away while you work. The tools are always carried: you don't have to craft the axe first.
+- **You always know what to do next.** The goal card (top left) shows the next step, the tool and the
+  reward; tap it to open the **Journal** (or press J): what you're on, the exact next step, what it needs,
+  which tool, where it is and how far, the reward, your missions, every activity you can do (how, where,
+  which tool, progress) and what opens the ones still to come, and the controls. **Tips** appear one at a
+  time the first time they're useful (moving, talking, chopping, building, the journal, sleeping, fighting).
+- **More to do, opening up over the days** (`Activities`): gather, help villagers, build, craft, farm, keep
+  hens (day 3 or after your first farm plot), **fish** (make a rod at the workshop, cast from the bank or the
+  bridge, tap Reel when a fish bites: +2 food), **trade** at the market stalls (from day 3), **explore** for
+  three old chests hidden in the woods (from day 2), cook, chase off thornlings, and the weekly festivals.
+- **Homes feel lived in.** The bedroom is behind a partition wall, there's a window seat to sit in, a shelf of
+  books to read (short village stories), and indoors the light is the warm light of the hearth and lamp
+  instead of the cold daylight outside.
+- **The village is livelier:** butterflies over the meadows by day, smoke from the chimneys in the morning and
+  evening, slightly richer colours. A tree whose crown would fill the camera is hidden while you stand by it.
+- **More varied villagers:** new hair (an afro, long braids) and accessories (a flower crown, a cap, a
+  necklace); the herbalist wears a flower crown, the fisher a cap, the weaver a necklace.
+- **Fix:** the action button now follows its object's verb as it changes (Fish → Reel, Plant → Harvest);
+  before, it kept the old word until you walked away and back.
+
+Tests: `godot --headless --path . res://tests/quality_test.tscn`. Screenshots: `tools/quality_screenshots.tscn`
+(hens, chopping, fishing, journal, tip, home) and `tools/style_lineup.tscn` (hair and accessories).
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):
@@ -691,7 +724,9 @@ Tested with **Godot 4.3-stable** (official Linux build):
   (grey hair and beard).
 - Changing the grass density preset applies on the next launch. Everything else applies immediately.
 - Villagers do not avoid each other. They wait briefly if the player blocks their way, then carry on.
-- Villagers sleep indoors (hidden). Houses have no interiors yet.
+- Villagers sleep indoors (hidden). You can go into every home, but you can't move or add furniture yet.
+- Hens are the only animals so far; where each hen stands isn't saved (their eggs are).
+- Faces and animations weren't redesigned in this pass: villagers vary by hair, clothes and accessories.
 
 ### Before a Play Store release
 

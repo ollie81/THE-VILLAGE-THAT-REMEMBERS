@@ -16,8 +16,8 @@ const STRUCTURES := {
 		"description": "A place to sit and watch the village."},
 	&"lantern": {"name": "Lantern", "cost": {&"wood": 3, &"stone": 2}, "work": 1, "footprint": Vector2(0.9, 0.9),
 		"description": "Lights the way at night.", "beauty": 1.0},
-	&"chicken_coop": {"name": "Chicken coop", "cost": {&"wood": 8}, "work": 2, "footprint": Vector2(2.6, 2.0),
-		"description": "Hens lay eggs: 2 food every morning."},
+	&"chicken_coop": {"name": "Chicken coop", "cost": {&"wood": 8}, "work": 2, "footprint": Vector2(5.0, 6.2),
+		"description": "Three hens and their run. Feed them and collect their eggs every morning."},
 	&"fruit_tree": {"name": "Fruit tree", "cost": {&"wood": 1, &"herbs": 1}, "work": 1, "footprint": Vector2(1.6, 1.6),
 		"description": "A sapling. In two days it bears fruit to pick every day.", "beauty": 1.0},
 	&"market_stall": {"name": "Market stall", "cost": {&"wood": 10, &"stone": 2}, "work": 3, "footprint": Vector2(3.0, 2.0),
@@ -95,20 +95,32 @@ static func create_finished(type: StringName) -> Node3D:
 			m.add_cylinder_at(Vector3(0.3, 1.55, 0), 0.16, 0.18, 0.28, 8, BuildingFactory.WOOD_LIGHT)
 			kit.cylinder_collider(Vector3(0, -0.2, 0), 1.0, 1.2)
 		&"chicken_coop":
-			m.add_box_at(Vector3(0, 0.55, 0), Vector3(2.2, 0.9, 1.5), BuildingFactory.WOOD_LIGHT)
+			# The hen house at the back, a fenced run in front (the hens are
+			# real animals: see Chicken), a feeder trough and a nest box.
+			var house := Vector3(0, 0, COOP_HOUSE_Z)
+			m.add_box_at(house + Vector3(0, 0.55, 0), Vector3(2.2, 0.9, 1.5), BuildingFactory.WOOD_LIGHT)
 			for sx: float in [-1.0, 1.0]:
 				for sz: float in [-1.0, 1.0]:
-					m.add_box_at(Vector3(sx * 1.0, 0.25, sz * 0.65), Vector3(0.12, 0.5, 0.12), BuildingFactory.WOOD_DARK)
-			m.add_prism(Transform3D(Basis.IDENTITY, Vector3(0, 1.0, 0)), 2.5, 1.8, 0.6, Color(0.62, 0.3, 0.2))
-			m.add_box_at(Vector3(0, 0.45, 0.76), Vector3(0.4, 0.45, 0.04), Color(0.2, 0.14, 0.1))
-			m.add_box_at(Vector3(0, 0.2, 1.05), Vector3(0.35, 0.04, 0.7), BuildingFactory.WOOD, 0.0)
-			# A few hens pecking about.
-			for i in 3:
-				var at := Vector3(-0.8 + i * 0.7, 0.13, 1.35 + (i % 2) * 0.25)
-				m.add_blob_at(at, Vector3(0.14, 0.12, 0.18), Color(0.95, 0.92, 0.85) if i != 1 else Color(0.6, 0.38, 0.22), 6, 4, 0.0)
-				m.add_blob_at(at + Vector3(0, 0.1, 0.12), Vector3(0.06, 0.07, 0.06), Color(0.95, 0.92, 0.85) if i != 1 else Color(0.6, 0.38, 0.22), 5, 3, 0.0)
-				m.add_box_at(at + Vector3(0, 0.17, 0.13), Vector3(0.02, 0.05, 0.05), Color(0.85, 0.15, 0.12))
-			kit.box_collider(Vector3(0, 0.6, 0), Vector3(2.3, 1.2, 1.6))
+					m.add_box_at(house + Vector3(sx * 1.0, 0.25, sz * 0.65), Vector3(0.12, 0.5, 0.12), BuildingFactory.WOOD_DARK)
+			m.add_prism(Transform3D(Basis.IDENTITY, house + Vector3(0, 1.0, 0)), 2.5, 1.8, 0.6, Color(0.62, 0.3, 0.2))
+			m.add_box_at(house + Vector3(0, 0.45, 0.76), Vector3(0.4, 0.45, 0.04), Color(0.2, 0.14, 0.1))
+			m.add_box_at(house + Vector3(0, 0.2, 1.05), Vector3(0.35, 0.04, 0.7), BuildingFactory.WOOD, 0.0)
+			m.add_box_at(house + Vector3(1.35, 0.45, 0.3), Vector3(0.5, 0.35, 0.5), BuildingFactory.WOOD)  # nest box
+			m.add_box_at(house + Vector3(1.35, 0.6, 0.3), Vector3(0.42, 0.04, 0.42), Color(0.85, 0.75, 0.45))  # straw
+			kit.box_collider(house + Vector3(0, 0.6, 0), Vector3(2.3, 1.2, 1.6))
+			var run := Vector3(0, 0, COOP_RUN_Z)
+			for i in 14:
+				var a := TAU * i / 14.0
+				if absf(a - PI * 1.5) < 0.5:
+					continue  # the gap by the hen house door
+				var p := run + Vector3(cos(a), 0, sin(a)) * (COOP_RUN_RADIUS + 0.35)
+				m.add_box_at(p + Vector3(0, 0.3, 0), Vector3(0.07, 0.6, 0.07), BuildingFactory.WOOD_DARK)
+				var a2 := TAU * (i + 1) / 14.0
+				var q := run + Vector3(cos(a2), 0, sin(a2)) * (COOP_RUN_RADIUS + 0.35)
+				var mid := (p + q) * 0.5
+				m.add_box_at(mid + Vector3(0, 0.42, 0), Vector3(p.distance_to(q), 0.05, 0.04), BuildingFactory.WOOD, atan2(q.x - p.x, q.z - p.z) + PI * 0.5)
+			m.add_box_at(run + COOP_FEEDER + Vector3(0, 0.12, 0), Vector3(0.9, 0.2, 0.3), BuildingFactory.WOOD)
+			m.add_box_at(run + COOP_FEEDER + Vector3(0, 0.2, 0), Vector3(0.8, 0.04, 0.22), Color(0.85, 0.72, 0.35))
 		&"fruit_tree":
 			pass  # grows: see create_fruit_tree()
 		&"market_stall":
@@ -185,6 +197,14 @@ static func create_fruit_tree(growth: float, has_fruit: bool) -> Node3D:
 
 ## A foundation and frame sized to the footprint; more of it appears as work
 ## progresses (0..1).
+## Chicken coop layout (local to the coop): the hen house, the run's middle,
+## its size, and the feeder (relative to the run).
+const COOP_HOUSE_Z := -1.9
+const COOP_RUN_Z := 0.9
+const COOP_RUN_RADIUS := 2.0
+const COOP_FEEDER := Vector3(1.0, 0, -0.6)
+
+
 ## What each tap of Build adds to a home (6 stages), shown on the site.
 const HOME_STAGES: Array[String] = ["corner posts", "lower walls", "upper walls", "roof beams", "thatched roof", "door and windows"]
 

@@ -75,7 +75,7 @@ func harvest(actor: Node = null) -> int:
 	var tree := _is_tree()
 	var at: Vector3 = entry["pos"]
 	if actor and actor.has_method("perform_action"):
-		actor.perform_action(&"work", 0.9 if tree else 1.0, at)
+		actor.perform_action(&"work", 0.9 if tree else 1.0, at, &"axe" if tree else &"pickaxe")
 	var resource: StringName = &"wood" if tree else &"stone"
 	var gained := amount()
 	GameState.add(resource, gained)

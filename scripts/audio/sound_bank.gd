@@ -82,6 +82,16 @@ static func effects() -> Dictionary:
 	for i in 3:
 		Synth.mix(pop, Synth.bell(Synth.midi_hz([84.0, 88.0, 91.0][i]), 0.4), 0.05 + i * 0.06, 0.3)
 	add.call("pop", pop)
+	# A splash when a fish bites.
+	var splash := Synth.envelope(Synth.noise(0.4, 0.45, rng), 0.005, 0.12)
+	Synth.mix(splash, Synth.envelope(Synth.sweep(600.0, 200.0, 0.2, 0.005), 0.005, 0.08), 0.0, 0.4)
+	add.call("splash", splash)
+	# A hen's cluck: two quick throaty notes.
+	var cluck := Synth.buffer(0.35)
+	for n in 2:
+		Synth.mix(cluck, Synth.envelope(Synth.sweep(520.0 - n * 60.0, 380.0, 0.09, 0.004), 0.004, 0.05), n * 0.13, 0.7)
+		Synth.mix(cluck, Synth.envelope(Synth.noise(0.06, 0.3, rng), 0.002, 0.03), n * 0.13, 0.25)
+	add.call("cluck", cluck)
 	var cricket := Synth.buffer(0.6)
 	for n in 6:
 		Synth.mix(cricket, Synth.envelope(Synth.sweep(4200.0, 4300.0, 0.03, 0.002), 0.001, 0.02), n * 0.05 + (0.25 if n >= 3 else 0.0), 0.5)

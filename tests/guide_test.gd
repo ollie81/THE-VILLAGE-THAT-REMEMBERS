@@ -128,7 +128,7 @@ func _run() -> void:
 	GameState.check_objectives()
 	await _frames(3)
 	guide.refresh()
-	_check(GameState.is_week_complete() and guide.target_label == "Workshop" and guide.step.contains("sword"),
+	_check(GameState.is_week_complete() and guide.target_label == "Workshop" and guide.step.begins_with("At the workshop"),
 		"after the week, it points to the next adventure: %s" % guide.step)
 	GameState.set_flag(&"has_sword")
 	Thornwood.instance.mission_started = true

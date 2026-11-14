@@ -19,6 +19,8 @@ var model: CharacterModel
 var detector: InteractionDetector
 ## Health, sword, shield and dodging (see PlayerCombat).
 var combat: PlayerCombat
+## The axe, pickaxe, hammer, hoe or watering can in hand while working.
+var tools: PlayerTools
 var spawn_point: Vector3 = Vector3.ZERO
 
 var _action_time: float = 0.0
@@ -66,6 +68,8 @@ func _ready() -> void:
 	add_child(detector)
 	combat = PlayerCombat.new()
 	add_child(combat)
+	tools = PlayerTools.new()
+	add_child(tools)
 	GameManager.register_player(self)
 
 
@@ -178,9 +182,11 @@ func sleep_until_morning(in_bed: bool = false) -> void:
 
 ## Plays a short action (chopping, building, planting); the player stands
 ## still and faces `target` until it finishes.
-func perform_action(animation: StringName, duration: float, target: Vector3) -> void:
+func perform_action(animation: StringName, duration: float, target: Vector3, tool: StringName = &"") -> void:
 	_action_time = duration
 	_action_animation = animation
+	if tools:
+		tools.hold(tool, duration)
 	face_towards(target)
 	velocity.x = 0.0
 	velocity.z = 0.0

@@ -8,6 +8,8 @@ var _objective_title: Label
 var _objective_hint: Label
 var _objective_progress: Label
 var _objective_box: PanelContainer
+## Tool, reward, and where the Journal is.
+var _objective_details: Label
 var _build_menu: PanelContainer
 var _build_list: VBoxContainer
 var _placement_bar: PanelContainer
@@ -60,6 +62,15 @@ func _process(_delta: float) -> void:
 	var guide := Guide.instance
 	if guide and guide.step != "":
 		_objective_hint.text = guide.step
+	if guide:
+		var bits := PackedStringArray()
+		if guide.tool != "":
+			bits.append("Tool: %s" % guide.tool)
+		var reward := guide.reward_text()
+		if reward != "":
+			bits.append("Reward: %s" % reward)
+		bits.append("Tap for Journal")
+		_objective_details.text = "  ·  ".join(bits)
 	var glow := guide != null and guide.wanted_build != &"" and not _build_menu.visible
 	_build_button.modulate = Color(1.0, 0.9 + 0.1 * sin(Time.get_ticks_msec() * 0.006), 0.55 + 0.45 * absf(sin(Time.get_ticks_msec() * 0.003))) if glow else Color.WHITE
 	_objective_box.visible = not GameManager.is_in_conversation() and not _placement_bar.visible
@@ -80,7 +91,12 @@ func _build_objective() -> void:
 	_objective_box = PanelContainer.new()
 	_objective_box.position = Vector2(20, 160)
 	_objective_box.custom_minimum_size = Vector2(340, 0)
-	_objective_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Tap the goal card to open the Journal.
+	_objective_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_objective_box.gui_input.connect(func(event):
+		var tap := event as InputEventMouseButton
+		if tap and tap.pressed and tap.button_index == MOUSE_BUTTON_LEFT and JournalPanel.instance:
+			JournalPanel.instance.toggle())
 	add_child(_objective_box)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
@@ -93,6 +109,10 @@ func _build_objective() -> void:
 	_objective_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_objective_hint.custom_minimum_size = Vector2(320, 0)
 	box.add_child(_objective_hint)
+	_objective_details = UiTheme.label("", 15, UiTheme.ACCENT.darkened(0.1))
+	_objective_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_objective_details.custom_minimum_size = Vector2(320, 0)
+	box.add_child(_objective_details)
 
 
 func _refresh() -> void:

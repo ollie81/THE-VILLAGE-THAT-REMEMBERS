@@ -79,9 +79,17 @@ func _eat_center() -> Vector2:
 ## True while armed with something hostile near: the fight buttons show.
 var fighting: bool = false
 var _can_eat: bool = false
+## The verb last drawn on the action button: the same thing's verb can change
+## (Fish -> Reel, Plant -> Harvest) without the focus changing.
+var _shown_verb: String = ""
 
 
 func _process(_delta: float) -> void:
+	if interact_available and _interact_target and is_instance_valid(_interact_target):
+		var verb: String = _interact_target.get_verb()
+		if verb != _shown_verb:
+			_shown_verb = verb
+			queue_redraw()
 	var combat = GameManager.player.combat if GameManager.player and GameManager.player.get("combat") else null
 	var now: bool = combat != null and combat.in_fight()
 	var eat: bool = now and PlayerCombat.stews() > 0 and combat.health < PlayerCombat.MAX_HEALTH

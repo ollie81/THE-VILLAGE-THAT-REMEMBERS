@@ -467,6 +467,24 @@ func _create_tool(kind: String) -> Node3D:
 				var a := TAU * float(i) / 5.0
 				m.add_blob_at(c + Vector3(cos(a) * 0.06, 0.07, sin(a) * 0.06), Vector3(0.05, 0.04, 0.05), Color(0.42, 0.62, 0.32).lightened(0.05 * i), 5, 3)
 			m.add_blob_at(c + Vector3(0, 0.09, 0), Vector3(0.03, 0.03, 0.03), Color(0.65, 0.5, 0.85), 5, 3)
+		"axe":
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, 0, 0.2)), Vector3(0.028, 0.028, 0.6), wood)
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, -0.06, 0.46)), Vector3(0.02, 0.14, 0.11), iron)
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, -0.12, 0.46)), Vector3(0.024, 0.03, 0.14), iron.lightened(0.25))
+		"pickaxe":
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, 0, 0.22)), Vector3(0.028, 0.028, 0.64), wood)
+			m.add_box(Transform3D(Basis(Vector3.RIGHT, 0.0), grip + Vector3(0, 0, 0.52)), Vector3(0.03, 0.34, 0.04), iron)
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, 0.17, 0.5)), Vector3(0.02, 0.05, 0.05), iron.lightened(0.2))
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, -0.17, 0.5)), Vector3(0.02, 0.05, 0.05), iron.lightened(0.2))
+		"watering_can":
+			var body := grip + Vector3(0, -0.14, 0.06)
+			m.add_cylinder_at(body - Vector3(0, 0.08, 0), 0.08, 0.075, 0.17, 10, Color(0.35, 0.55, 0.62))
+			m.add_box(Transform3D(Basis(Vector3.RIGHT, -0.7), body + Vector3(0, 0.02, 0.13)), Vector3(0.025, 0.025, 0.2), Color(0.33, 0.5, 0.58))
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, -0.02, 0.04)), Vector3(0.02, 0.02, 0.16), Color(0.3, 0.46, 0.53))
+		"fishing_rod":
+			m.add_box(Transform3D(Basis(Vector3.RIGHT, -0.5), grip + Vector3(0, 0.45, 0.6)), Vector3(0.018, 0.018, 1.6), wood.lightened(0.1))
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, 0, 0.05)), Vector3(0.03, 0.03, 0.12), Color(0.3, 0.22, 0.15))
+			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(0, 0.45, 1.3)), Vector3(0.004, 0.9, 0.004), Color(0.92, 0.92, 0.9))
 		"ledger":
 			m.add_box(Transform3D(Basis.IDENTITY, grip + Vector3(-side * 0.02, -0.03, 0.06)), Vector3(0.03, 0.2, 0.16), Color(0.45, 0.25, 0.2))
 		_:

@@ -126,11 +126,21 @@ func _run() -> void:
 
 	# --- Chicken coop ---------------------------------------------------------------------
 	var coop := await _finish(GameState.add_structure(&"chicken_coop", VillageLayout.ground_point(-26.0, 30.0), 0.0))
-	var food := GameState.count(&"food")
+	await _frames(3)
+	_check(coop.hens().size() == PlacedStructure.HENS, "a finished coop has %d hens" % coop.hens().size())
+	_check(coop.get_interaction_verb() == "Feed" and coop.get_interaction_prompt().contains("every morning"), "the coop offers: %s" % coop.get_interaction_prompt())
+	GameState.add(&"herbs", 1)
+	coop.use(GameManager.player)
+	_check(coop.hens_fed_today(), "feeding the hens (1 herb)")
 	WorldClock.advance(24.0)
 	await _frames(2)
-	_check(GameState.count(&"food") == food + PlacedStructure.EGGS_FOOD, "the hens lay %d food every morning" % PlacedStructure.EGGS_FOOD)
-	_check(coop.get_interaction_prompt().contains("every morning"), "the coop says so: %s" % coop.get_interaction_prompt())
+	_check(coop.eggs() == PlacedStructure.HENS and coop.get_interaction_verb() == "Collect", "fed hens lay %d eggs by morning" % coop.eggs())
+	var food := GameState.count(&"food")
+	coop.use(GameManager.player)
+	_check(GameState.count(&"food") == food + PlacedStructure.HENS and coop.eggs() == 0, "collecting them gives %d food" % PlacedStructure.HENS)
+	WorldClock.advance(24.0)
+	await _frames(2)
+	_check(coop.eggs() == 1, "unfed, they lay just 1 egg")
 
 	# --- Fruit tree -------------------------------------------------------------------------
 	var tree := await _finish(GameState.add_structure(&"fruit_tree", VillageLayout.ground_point(-22.0, 33.0), 0.0))

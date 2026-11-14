@@ -71,7 +71,7 @@ func harvest(actor: Node = null) -> int:
 	var info: Dictionary = KINDS[kind]
 	var amount := harvest_amount()
 	if actor and actor.has_method("perform_action"):
-		actor.perform_action(info["anim"], float(info["time"]), global_position)
+		actor.perform_action(info["anim"], float(info["time"]), global_position, {&"tree": &"axe", &"rock": &"pickaxe"}.get(kind, &""))
 	# The sound lands when the axe or pick strikes (the swing's downstroke).
 	var sound: String = {&"tree": "chop", &"rock": "stone"}.get(kind, "gather")
 	var at := global_position

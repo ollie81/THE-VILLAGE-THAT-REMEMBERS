@@ -24,6 +24,10 @@ const SUNSET := 18.8
 const ENVIRONMENT_UPDATE_INTERVAL := 0.1
 
 var sun: DirectionalLight3D
+## Inside a home: warm ambient light, and the sun mostly shut out (rooms are
+## lit by their hearth and lamp; phones without shadows would otherwise light
+## a room straight through its roof).
+static var indoor: bool = false
 var environment: Environment
 var sky_material: ShaderMaterial
 
@@ -67,8 +71,8 @@ func _ready() -> void:
 	environment.glow_bloom = 0.04
 	environment.glow_hdr_threshold = 1.1
 	environment.adjustment_enabled = true
-	environment.adjustment_saturation = 1.08
-	environment.adjustment_contrast = 1.04
+	environment.adjustment_saturation = 1.16
+	environment.adjustment_contrast = 1.06
 
 	var world_environment := WorldEnvironment.new()
 	world_environment.name = "WorldEnvironment"
@@ -121,6 +125,8 @@ func _update_light() -> void:
 		sun.light_energy = moon_strength * 0.3
 		# Moonlight is dim; skipping its shadows saves a full shadow pass.
 		_set_shadows(false)
+	if indoor:
+		sun.light_energy *= 0.12
 
 
 func _set_shadows(enabled: bool) -> void:
@@ -140,8 +146,8 @@ func _update_environment() -> void:
 	sky_material.set_shader_parameter("moon_direction", -sun_dir)
 	sky_material.set_shader_parameter("star_intensity", night_factor)
 
-	environment.ambient_light_color = colors[3]
-	environment.ambient_light_energy = lerpf(0.62, 0.5, night_factor)
+	environment.ambient_light_color = colors[3] if not indoor else Color(1.0, 0.82, 0.62)
+	environment.ambient_light_energy = lerpf(0.62, 0.5, night_factor) if not indoor else 0.42
 	environment.fog_light_color = colors[4]
 	environment.fog_density = lerpf(0.003, 0.008, night_factor)
 

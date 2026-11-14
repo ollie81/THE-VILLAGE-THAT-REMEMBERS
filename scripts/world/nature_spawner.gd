@@ -294,6 +294,10 @@ static func _blocks_view(entry: Dictionary, camera: Vector3, target: Vector3, se
 		return false
 	var scale := float(entry["scale"])
 	var crown: Vector3 = entry["pos"] + Vector3(0, 3.0 * scale, 0)
+	# The camera inside a crown sees only leaves: hide that tree too (unless
+	# it's the very tree the player stands at).
+	if camera.distance_to(crown) < 2.4 * scale and Vector2(crown.x - target.x, crown.z - target.z).length() > 1.0:
+		return true
 	var t := clampf((crown - camera).dot(segment) / (length * length), 0.0, 1.0)
 	if t > 0.97:
 		return false  # behind the player

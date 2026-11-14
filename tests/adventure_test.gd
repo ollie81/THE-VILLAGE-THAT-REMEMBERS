@@ -161,6 +161,7 @@ func _combat() -> void:
 	# Forging a sword and shield at the workshop.
 	var bench: UsableObject = _main.find_child("WorkshopBench", true, false)
 	GameState.set_flag(&"has_tools")
+	GameState.set_flag(&"has_rod")
 	GameState.add(&"wood", 8)
 	GameState.add(&"stone", 6)
 	_check(String(bench.prompt.call()).begins_with("Forge a sword and shield"), "the workshop offers: %s" % bench.prompt.call())

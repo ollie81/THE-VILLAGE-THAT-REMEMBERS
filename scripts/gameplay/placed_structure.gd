@@ -15,7 +15,13 @@ const HARVEST_FOOD := 4
 ## Fruit trees: days from planting until they bear fruit, and the fruit.
 const FRUIT_TREE_DAYS := 2
 const FRUIT_FOOD := 2
-const EGGS_FOOD := 2
+## Eggs the hens lay each morning: one each when they were fed the day
+## before, otherwise one between them. Each egg is 1 food when collected.
+const HENS := 3
+const MAX_EGGS := 9
+const FEED_COST := {&"herbs": 1}
+## Kept for older saves and tests: what unfed hens leave (1) is the minimum.
+const EGGS_FOOD := 1
 
 var record: Dictionary
 var interactable: Interactable
@@ -87,6 +93,9 @@ func _rebuild() -> void:
 		_label.text = construction_text()
 	_update_progress_bar()
 	add_child(_visual)
+	if is_complete() and get_type() == &"chicken_coop":
+		_spawn_hens.call_deferred()
+		_update_nest.call_deferred()
 	_crop_stage = -1
 	_update_crops()
 	interactable.enabled = true
@@ -232,6 +241,7 @@ func move_to(at: Vector3, yaw: float) -> void:
 	position = at
 	rotation.y = yaw
 	NatureSpawner.clear_area(position, StructureCatalog.radius(get_type()))
+	_move_hens()
 	if get_type() == &"cottage" and is_complete():
 		moved.emit(self)
 
@@ -264,8 +274,10 @@ func new_day() -> int:
 		&"fruit_tree":
 			_refresh_tree()
 		&"chicken_coop":
-			GameState.add(&"food", EGGS_FOOD)
-			return EGGS_FOOD
+			var laid := HENS if int(record.get("fed_day", -10)) >= WorldClock.day - 1 else 1
+			record["eggs"] = mini(int(record.get("eggs", 0)) + laid, MAX_EGGS)
+			_update_nest()
+			return laid
 	return 0
 
 
@@ -306,7 +318,9 @@ func get_interaction_verb() -> String:
 		&"fruit_tree":
 			return "Pick" if has_fruit() else "Look"
 		&"chicken_coop":
-			return "Look"
+			if eggs() > 0:
+				return "Collect"
+			return "Feed" if not hens_fed_today() else "Look"
 		&"market_stall", &"flower_bed", &"statue", &"fence", &"stone_path", &"lantern":
 			return "Admire"
 	return "Use"
@@ -339,7 +353,11 @@ func get_interaction_prompt() -> String:
 				return "Pick fruit  (+%d food)" % FRUIT_FOOD
 			return "Fruit tree (growing, %d%%)" % int(tree_growth() * 100.0) if tree_growth() < 1.0 else "Fruit tree (picked today)"
 		&"chicken_coop":
-			return "Chicken coop  (+%d food every morning)" % EGGS_FOOD
+			if eggs() > 0:
+				return "Collect %d egg%s  (+%d food)" % [eggs(), "" if eggs() == 1 else "s", eggs()]
+			if not hens_fed_today():
+				return "Feed the hens  (%s; fed hens lay %d eggs every morning, unfed just 1)" % [GameState.cost_text(FEED_COST), HENS]
+			return "Chicken coop  (the hens are fed and happy; eggs in the morning)"
 		&"cottage":
 			var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
 			if names.is_empty():
@@ -361,6 +379,72 @@ func doorstep() -> Vector3:
 	var at := global_position + front * (float(get_info()["footprint"].y) * 0.5 + 1.2)
 	at.y = VillageLayout.get_walk_height(at.x, at.z)
 	return at
+
+
+# --- Hens ------------------------------------------------------------------------
+
+func eggs() -> int:
+	return int(record.get("eggs", 0))
+
+
+func hens_fed_today() -> bool:
+	return int(record.get("fed_day", -10)) == WorldClock.day
+
+
+var _hens: Array = []
+var _nest: Node3D
+
+
+## The run's middle and the feeder, in the world.
+func run_center() -> Vector3:
+	return global_transform * Vector3(0, 0, StructureCatalog.COOP_RUN_Z)
+
+
+func _spawn_hens() -> void:
+	if get_type() != &"chicken_coop" or not is_complete() or not _hens.is_empty() or not is_inside_tree():
+		return
+	for i in HENS:
+		var hen := Chicken.new()
+		hen.brown = i == 1
+		hen.coop = self
+		hen.home = run_center()
+		hen.feeder = global_transform * (Vector3(0, 0, StructureCatalog.COOP_RUN_Z) + StructureCatalog.COOP_FEEDER)
+		add_child(hen)
+		hen.global_position = run_center() + Vector3(cos(i * 2.1), 0, sin(i * 2.1)) * 1.0
+		_hens.append(hen)
+	_update_nest()
+
+
+func hens() -> Array:
+	return _hens.filter(func(h): return is_instance_valid(h))
+
+
+## The run follows the coop when it's moved.
+func _move_hens() -> void:
+	for hen in hens():
+		hen.home = run_center()
+		hen.feeder = global_transform * (Vector3(0, 0, StructureCatalog.COOP_RUN_Z) + StructureCatalog.COOP_FEEDER)
+		hen.global_position = run_center()
+
+
+## Eggs you can see waiting in the nest box.
+func _update_nest() -> void:
+	if not is_inside_tree() or get_type() != &"chicken_coop":
+		return
+	if _nest:
+		_nest.queue_free()
+		_nest = null
+	if eggs() <= 0 or not is_complete():
+		return
+	var b := MeshBuilder.new(5)
+	b.color_jitter = 0.0
+	for i in eggs():
+		var at := Vector3(1.35 - 0.12 + (i % 3) * 0.12, 0.66 + (i / 3) * 0.05, StructureCatalog.COOP_HOUSE_Z + 0.2 + (i % 2) * 0.1)
+		b.add_blob_at(at, Vector3(0.04, 0.05, 0.04), Color(0.98, 0.94, 0.85) if i % 2 == 0 else Color(0.85, 0.68, 0.5), 6, 4, 0.0)
+	var mesh := MeshInstance3D.new()
+	mesh.mesh = b.build(Materials.vertex_color())
+	_nest = mesh
+	add_child(mesh)
 
 
 ## The home location id of a finished cottage.
@@ -389,7 +473,7 @@ func _on_interacted(actor: Node) -> void:
 func use(actor: Node = null) -> String:
 	if not is_complete():
 		if actor and actor.has_method("perform_action"):
-			actor.perform_action(&"work", 1.0, global_position)
+			actor.perform_action(&"work", 1.0, global_position, &"hammer")
 		var finished := add_work(1.0)
 		var at := global_position
 		get_tree().create_timer(0.55).timeout.connect(func(): Sounds.play("hammer", at))
@@ -414,7 +498,7 @@ func use(actor: Node = null) -> String:
 				_notify("The crops are %d%% grown. Water from a well makes them grow faster." % int(crop_hours() / CROP_HOURS * 100.0))
 				return "growing"
 			if actor and actor.has_method("perform_action"):
-				actor.perform_action(&"gather", 1.0, global_position)
+				actor.perform_action(&"work", 1.0, global_position, &"hoe")
 			record["crop_hours"] = 0.0
 			_update_crops()
 			_notify("Seeds planted. They'll be ready in about %d hours." % int(CROP_HOURS))
@@ -426,7 +510,7 @@ func use(actor: Node = null) -> String:
 					structure.grow(3.0)
 					watered += 1
 			if actor and actor.has_method("perform_action"):
-				actor.perform_action(&"work", 0.8, global_position)
+				actor.perform_action(&"gather", 1.0, global_position, &"watering_can")
 			_notify("You watered %d farm plot%s." % [watered, "" if watered == 1 else "s"] if watered > 0 else "Fresh, cold water. Plant some crops and it will help them grow.")
 			return "watered"
 		&"house":
@@ -459,7 +543,27 @@ func use(actor: Node = null) -> String:
 			_notify("It's still growing. Come back in a day or two." if tree_growth() < 1.0 else "You picked it clean today. More tomorrow.")
 			return "growing"
 		&"chicken_coop":
-			_notify("The hens cluck at you. They lay %d food's worth of eggs every morning." % EGGS_FOOD)
+			if eggs() > 0:
+				var n := eggs()
+				if actor and actor.has_method("perform_action"):
+					actor.perform_action(&"gather", 1.0, global_position)
+				record["eggs"] = 0
+				GameState.add(&"food", n)
+				_update_nest()
+				Sounds.play("pickup", global_position)
+				FloatingText.spawn(get_parent(), global_position + Vector3(0, 1.4, 0), "+%d Food (eggs)" % n)
+				return "collected"
+			if not hens_fed_today():
+				if not GameState.spend(FEED_COST):
+					_notify("%s to feed the hens. (Pick herbs in the meadows.)" % GameState.missing_text(FEED_COST))
+					return "no_feed"
+				record["fed_day"] = WorldClock.day
+				if actor and actor.has_method("perform_action"):
+					actor.perform_action(&"gather", 1.0, global_position)
+				Sounds.play("cluck", global_position, -4.0)
+				_notify("You scatter feed for the hens. They'll lay %d eggs tomorrow morning." % HENS)
+				return "fed"
+			_notify("The hens are fed. Come back in the morning for their eggs.")
 			return "hens"
 		&"market_stall", &"flower_bed", &"statue", &"fence", &"stone_path", &"lantern":
 			_notify("The village looks lovelier for it. (Village beauty: %d)" % int(GameState.beauty()))

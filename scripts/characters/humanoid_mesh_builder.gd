@@ -41,7 +41,7 @@ var _torso_rows: Array = []
 var _controls: Dictionary = {}
 
 ## Accessories that belong to the head mesh (and so follow expressions).
-const HEAD_ACCESSORIES := ["beard", "long_beard", "glasses", "straw_hat", "wide_hat", "headband", "headwrap", "flower", "earrings"]
+const HEAD_ACCESSORIES := ["beard", "long_beard", "glasses", "straw_hat", "wide_hat", "headband", "headwrap", "flower", "earrings", "flower_crown", "cap"]
 ## Rows of the sculpted head grid, in unscaled profile units above the head
 ## joint. Dense around the eyes, nose and mouth where detail matters.
 const SKIN_ROWS := [-0.042, -0.033, -0.022, -0.011, 0.0, 0.012, 0.023, 0.032, 0.039, 0.045, 0.051, 0.058,
@@ -857,6 +857,29 @@ func _build_hair() -> void:
 				var outward := (p - _head_point(Vector3(0, y, 0))).normalized()
 				var basis := Basis.looking_at(-outward, Vector3.UP).scaled(Vector3(0.026, 0.022, 0.008))
 				t.ellipsoid(Transform3D(basis, p - outward * 0.003), _hair.lightened(t.rng.randf_range(-0.03, 0.06)), head, 7, 4, 0.12)
+		"afro":
+			# A full, rounded crown of tight curls.
+			_hair_shell(0.19, 0.12, 0.03, 0.014)
+			t.ellipsoid_at(_head_point(Vector3(0, 0.215, -0.035)), Vector3(0.155, 0.135, 0.145), _hair, head, 12, 8, 0.1)
+			for i in 18:
+				var a := TAU * float(i) / 18.0
+				var p := _head_point(Vector3(cos(a) * 0.14, 0.2 + 0.04 * sin(a * 3.0), sin(a) * 0.12 - 0.035))
+				t.ellipsoid_at(p, Vector3(0.035, 0.03, 0.035), _hair.lightened(0.04 * float(i % 3)), head, 6, 4, 0.1)
+		"braids":
+			# Two braids from behind the ears, down over the shoulders.
+			_hair_shell(0.2, 0.14, 0.05, 0.01)
+			for side: float in [-1.0, 1.0]:
+				var root := _head_point(Vector3(side * 0.095, 0.09, -0.04))
+				var chest_end := Vector3(side * 0.1, 1.3, _torso_front(1.3) + 0.03)
+				var rings: Array = []
+				for k in 7:
+					var f := float(k) / 6.0
+					var at := root.lerp(chest_end, f) + Vector3(0, 0, 0.03 * sin(f * PI))
+					var r := lerpf(0.026, 0.012, f) * (1.0 if k % 2 == 0 else 0.82)
+					var bone := _bind(B.HEAD) if f < 0.25 else (_blend(B.HEAD, B.NECK, 0.5) if f < 0.5 else _bind(B.CHEST))
+					rings.append(SkinnedMeshTool.ring(at, r, r, r, bone, _hair if k < 6 else look.accent_color))
+				t.loft(rings, 7)
+				t.ellipsoid_at(chest_end + Vector3(0, 0.005, 0), Vector3(0.02, 0.018, 0.02), look.accent_color, _bind(B.CHEST), 6, 3)
 		_:
 			_hair_shell(0.196, 0.135, 0.02, 0.012)
 
@@ -1189,6 +1212,33 @@ func _build_all_accessories(head_part: bool) -> void:
 			SkinnedMeshTool.ring(o + Vector3(0, 0.1, 0), 0.088, 0.082, 0.09, head, straw.darkened(0.05)),
 			SkinnedMeshTool.ring(o + Vector3(0, 0.11, 0), 0.06, 0.055, 0.062, head, straw),
 		], 14)
+	if _part("flower_crown", head_part):
+		t.material_id = SkinnedMeshTool.Surface.DETAIL
+		var petals := [Color(0.95, 0.45, 0.5), Color(0.98, 0.85, 0.3), Color(0.75, 0.55, 0.95), Color(1.0, 0.97, 0.9)]
+		for i in 9:
+			var a := TAU * float(i) / 9.0
+			var bloom := _head_surface(0.205, a, 0.022)
+			t.ellipsoid_at(bloom, Vector3(0.02, 0.016, 0.02), petals[i % petals.size()], head, 6, 3)
+			t.ellipsoid_at(bloom + Vector3(0, 0.004, 0), Vector3(0.008, 0.008, 0.008), Color(0.98, 0.8, 0.25), head, 5, 3)
+			var leaf := _head_surface(0.2, a + PI / 9.0, 0.018)
+			t.ellipsoid_at(leaf, Vector3(0.016, 0.006, 0.012), Color(0.35, 0.6, 0.3), head, 5, 3)
+	if _part("cap", head_part):
+		t.material_id = SkinnedMeshTool.Surface.CLOTH
+		var crown := _head_point(Vector3(0, 0.2, -0.005))
+		t.loft([
+			SkinnedMeshTool.ring(crown, 0.112, 0.106, 0.116, head, accent.darkened(0.15)),
+			SkinnedMeshTool.ring(crown + Vector3(0, 0.04, -0.004), 0.108, 0.1, 0.112, head, accent.darkened(0.1)),
+			SkinnedMeshTool.ring(crown + Vector3(0, 0.07, -0.01), 0.07, 0.06, 0.075, head, accent.darkened(0.1)),
+			SkinnedMeshTool.ring(crown + Vector3(0, 0.078, -0.012), 0.01, 0.01, 0.01, head, accent),
+		], 14)
+		t.box(Transform3D(Basis(Vector3.RIGHT, -0.15), crown + Vector3(0, 0.005, 0.12)), Vector3(0.16, 0.012, 0.09), accent.darkened(0.25), head)
+	if _part("necklace", head_part):
+		t.material_id = SkinnedMeshTool.Surface.DETAIL
+		for i in 11:
+			var f := float(i) / 10.0
+			var a := lerpf(-1.1, 1.1, f)
+			var bead := Vector3(sin(a) * 0.075, 1.43 - cos(a) * 0.05 + 0.05, _torso_front(1.43) + 0.012 - (1.0 - cos(a)) * 0.04)
+			t.ellipsoid_at(bead, Vector3(0.01, 0.01, 0.01), [Color(0.85, 0.3, 0.25), Color(0.95, 0.85, 0.4), Color(0.3, 0.55, 0.75)][i % 3], chest, 5, 3)
 	if _part("headband", head_part):
 		t.material_id = SkinnedMeshTool.Surface.CLOTH
 		t.loft([_head_ring(0.205, 0.016, head, accent), _head_ring(0.18, 0.018, head, accent)], 14, Vector3.BACK, false, false)

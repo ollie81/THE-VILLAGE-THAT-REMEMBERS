@@ -46,6 +46,9 @@ func _ready() -> void:
 	_root.add_child(GiftsPanel.new())
 	_root.add_child(RequestsPanel.new())
 	_root.add_child(FestivalPanel.new())
+	_root.add_child(TradePanel.new())
+	_root.add_child(TutorialTips.new())
+	_root.add_child(JournalPanel.new())
 	_root.add_child(CombatHud.new())
 	var dialogue := DialoguePanel.new()
 	dialogue.name = "DialoguePanel"

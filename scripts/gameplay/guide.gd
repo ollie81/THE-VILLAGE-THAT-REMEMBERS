@@ -25,6 +25,8 @@ var target_label: String = ""
 var wanted_build: StringName = &""
 ## The next step in a few words, shown under the objective.
 var step: String = ""
+## The tool the next step uses ("" if none), e.g. "Axe".
+var tool: String = ""
 var enabled: bool = true
 ## Tests that count resources exactly switch the objective rewards off.
 static var rewards: bool = true
@@ -83,6 +85,7 @@ func refresh() -> void:
 	target_label = ""
 	wanted_build = &""
 	step = ""
+	tool = ""
 	var player = GameManager.player
 	if player == null:
 		return
@@ -124,8 +127,9 @@ func refresh() -> void:
 func _adventure(_from: Vector3) -> void:
 	if not PlayerCombat.is_armed():
 		var bench := get_tree().current_scene.find_child("WorkshopBench", true, false) as Node3D
-		if bench:
-			_aim(bench.global_position, "Workshop", "Forge a sword and shield at the workshop (%s)." % GameState.cost_text(WorldObjects.SWORD_COST))
+		if bench and bench is UsableObject:
+			# Whatever the bench offers next (a fishing rod, then the sword).
+			_aim(bench.global_position, "Workshop", "At the workshop: %s." % String((bench as UsableObject).prompt.call()))
 		return
 	var woods := Thornwood.instance
 	if woods and woods.mission_active():
@@ -136,6 +140,17 @@ func _aim(at: Vector3, label: String, next_step: String) -> void:
 	target = at
 	target_label = label
 	step = next_step
+	tool = {"Chop": "Axe", "Mine": "Pickaxe", "Farm plot": "Hoe", "Thornlings": "Sword and shield", "Workshop": "Hammer"}.get(label, "")
+	if next_step.begins_with("Tap Build at the site"):
+		tool = "Hammer"
+
+
+## What finishing the current objective brings, e.g. "+3 food" ("" if nothing).
+func reward_text() -> String:
+	if GameState.is_week_complete():
+		return ""
+	var reward: Dictionary = REWARDS.get(String(GameState.current_objective()["id"]), {})
+	return "" if reward.is_empty() else "+" + GameState.cost_text(reward["items"])
 
 
 func _aim_resource(from: Vector3, kind: String, next_step: String) -> void:

@@ -69,6 +69,21 @@ static func _build_market(root: Node3D) -> void:
 		stall.rotation.y = atan2(-p.x, -p.z)
 		root.add_child(stall)
 		NatureSpawner.clear_area(stall.position, STALL_RADIUS)
+		var trader := UsableObject.new()
+		trader.name = "MarketStall"
+		trader.prompt = func(): return "Trade at the market" if TradePanel.is_open_today() else "Market stall  (the traders come from day %d)" % TradePanel.OPENS_DAY
+		trader.verb = func(): return "Trade" if TradePanel.is_open_today() else "Look"
+		trader.use = func(_actor):
+			if not TradePanel.is_open_today():
+				GameManager.notify("The stall is empty. Traders start coming on day %d." % TradePanel.OPENS_DAY)
+			elif TradePanel.instance:
+				TradePanel.instance.open()
+		stall.add_child(trader)
+		var interactable := Interactable.new()
+		interactable.radius = 2.0
+		interactable.handler = trader
+		interactable.interacted.connect(func(actor): trader.use.call(actor))
+		trader.add_child(interactable)
 
 
 ## Why `at` is taken by the market (for building), or "".

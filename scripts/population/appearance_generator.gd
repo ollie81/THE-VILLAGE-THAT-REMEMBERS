@@ -34,9 +34,9 @@ const PANTS: Array[Color] = [
 	Color(0.38, 0.34, 0.28), Color(0.3, 0.32, 0.24), Color(0.18, 0.17, 0.16),
 ]
 const SHOES: Array[Color] = [Color(0.3, 0.2, 0.12), Color(0.2, 0.14, 0.1), Color(0.4, 0.27, 0.16), Color(0.14, 0.12, 0.11)]
-const HEADWEAR: Array[String] = ["straw_hat", "wide_hat", "headband", "headwrap"]
-const STYLES_FEMALE := {"long": 3.0, "bun": 2.0, "ponytail": 2.0, "curly": 2.0, "locs": 1.5, "short": 1.5}
-const STYLES_MALE := {"short": 4.0, "curly": 2.0, "locs": 1.2, "ponytail": 0.8, "bun": 0.7, "long": 0.8, "balding": 0.0}
+const HEADWEAR: Array[String] = ["straw_hat", "wide_hat", "headband", "headwrap", "cap", "flower_crown"]
+const STYLES_FEMALE := {"long": 3.0, "bun": 2.0, "ponytail": 2.0, "curly": 2.0, "locs": 1.5, "short": 1.5, "braids": 2.0, "afro": 1.5}
+const STYLES_MALE := {"short": 4.0, "curly": 2.0, "locs": 1.2, "ponytail": 0.8, "bun": 0.7, "long": 0.8, "balding": 0.0, "afro": 1.5, "braids": 0.5}
 const CANDIDATES := 10
 
 
@@ -232,7 +232,7 @@ static func _candidate(rng: RandomNumberGenerator, sex: String, age: int, profes
 	for item in job.get("accessories", []):
 		if rng.randf() < 0.55:
 			items.append(String(item))
-	var extras: Array[String] = ["scarf", "satchel", "earrings", "flower", "backpack", "cloak", "glasses", "headband", "straw_hat", "wide_hat", "headwrap"]
+	var extras: Array[String] = ["scarf", "satchel", "earrings", "flower", "backpack", "cloak", "glasses", "headband", "straw_hat", "wide_hat", "headwrap", "cap", "flower_crown", "necklace"]
 	for i in rng.randi_range(0, 2):
 		items.append(_pick(rng, extras))
 	if elder and rng.randf() < 0.5:
@@ -256,6 +256,10 @@ static func _candidate(rng: RandomNumberGenerator, sex: String, age: int, profes
 		unique.append(item)
 	if has_hat:
 		unique.erase("flower")
+	# A full afro doesn't go under a hat or cap (a headband or flowers do).
+	if look.hair_style == "afro":
+		for hat in ["straw_hat", "wide_hat", "cap", "headwrap"]:
+			unique.erase(hat)
 	if look.hair_style == "balding" and not has_hat and rng.randf() < 0.3:
 		unique.append("straw_hat")
 	if unique.has("straw_hat") or unique.has("wide_hat"):

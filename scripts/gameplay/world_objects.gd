@@ -6,6 +6,7 @@ extends Node3D
 
 const TOOLS_COST := {&"wood": 4, &"stone": 3}
 const SWORD_COST := {&"wood": 8, &"stone": 6}
+const ROD_COST := {&"wood": 3, &"herbs": 1}
 const EDGE_COST := {&"wood": 6, &"stone": 12}
 
 var meeting: VillageMeeting
@@ -113,6 +114,8 @@ func _use_fire(_actor) -> void:
 func _next_recipe() -> String:
 	if not GameState.get_flag(&"has_tools"):
 		return "tools"
+	if not GameState.get_flag(&"has_rod"):
+		return "rod"
 	if not GameState.get_flag(&"has_sword"):
 		return "sword"
 	if not GameState.get_flag(&"sword_upgraded") and Thornwood.instance and Thornwood.instance.mission_done:
@@ -124,6 +127,8 @@ func _bench_prompt() -> String:
 	match _next_recipe():
 		"tools":
 			return "Craft better tools  (%s)" % GameState.cost_text(TOOLS_COST)
+		"rod":
+			return "Make a fishing rod  (%s; fish at the river)" % GameState.cost_text(ROD_COST)
 		"sword":
 			return "Forge a sword and shield  (%s)" % GameState.cost_text(SWORD_COST)
 		"edge":
@@ -133,12 +138,21 @@ func _bench_prompt() -> String:
 
 func _use_bench(actor) -> void:
 	match _next_recipe():
+		"rod":
+			if not GameState.spend(ROD_COST):
+				GameManager.notify(GameState.missing_text(ROD_COST) + " to make a fishing rod.")
+				return
+			if actor and actor.has_method("perform_action"):
+				actor.perform_action(&"work", 1.5, global_position, &"hammer")
+			GameState.set_flag(&"has_rod")
+			GameManager.notify("You made a fishing rod. Stand on the river bank or the bridge and tap Fish.")
+			return
 		"sword":
 			if not GameState.spend(SWORD_COST):
 				GameManager.notify(GameState.missing_text(SWORD_COST) + " to forge a sword and shield.")
 				return
 			if actor and actor.has_method("perform_action"):
-				actor.perform_action(&"work", 1.5, global_position)
+				actor.perform_action(&"work", 1.5, global_position, &"hammer")
 			GameState.set_flag(&"has_sword")
 			if actor and actor.get("combat") and actor.combat:
 				actor.combat.refresh_equipment()
@@ -151,7 +165,7 @@ func _use_bench(actor) -> void:
 				GameManager.notify(GameState.missing_text(EDGE_COST) + " for a steel edge.")
 				return
 			if actor and actor.has_method("perform_action"):
-				actor.perform_action(&"work", 1.5, global_position)
+				actor.perform_action(&"work", 1.5, global_position, &"hammer")
 			GameState.set_flag(&"sword_upgraded")
 			GameManager.notify("A steel edge! Your sword now hits twice as hard.")
 			return
@@ -162,7 +176,7 @@ func _use_bench(actor) -> void:
 		GameManager.notify(GameState.missing_text(TOOLS_COST) + " to craft tools.")
 		return
 	if actor and actor.has_method("perform_action"):
-		actor.perform_action(&"work", 1.5, global_position)
+		actor.perform_action(&"work", 1.5, global_position, &"hammer")
 	GameState.set_flag(&"has_tools")
 	GameManager.notify("You crafted an axe and a pick. Trees and rocks now give one more each time.")
 
