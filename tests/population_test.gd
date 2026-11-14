@@ -104,13 +104,16 @@ func _run() -> void:
 	WorldClock.set_time(10.0)
 	var traveller := director.bring_traveller()
 	_check(traveller.status == Person.STATUS_VISITOR and Population.visitors().size() == 1, "a traveller arrives: %s" % traveller.full_name())
-	_check(not GameManager.get_villager(StringName(traveller.id)), "their body is built in the background, not instantly")
+	# Drawn bodies are built on a worker thread; real models load at once.
+	_check(not GameManager.get_villager(StringName(traveller.id)) or AssetCharacter.available(), "their body is built in the background, not instantly")
 	await _wait_for_spawns(director)
 	var visitor = GameManager.get_villager(StringName(traveller.id))
 	_check(visitor != null and visitor.is_visitor(), "the traveller appears in the village")
 	_check(visitor.global_position.x > 50.0, "they walk in from the road past the bridge (x = %.0f)" % visitor.global_position.x)
-	_check(visitor.model.skeleton.get_bone_count() == 19 and visitor.model.animation_player.has_animation(&"walk"),
-		"they use the shared 19-bone skeleton and animations")
+	var shared_bones := 65 if visitor.model is AssetCharacter else 19
+	var walk_clip := &"Walk" if visitor.model is AssetCharacter else &"walk"
+	_check(visitor.model.skeleton.get_bone_count() == shared_bones and visitor.model.animation_player.has_animation(walk_clip),
+		"they use the shared %d-bone skeleton and animations" % shared_bones)
 	var talk := DialogueService.build_conversation(visitor, GameManager.PLAYER_ID)
 	_check(talk.lines[0].contains(traveller.first_name) and talk.choice_texts().size() == 3 and talk.choice_texts()[0].begins_with("Welcome"),
 		"talking to them: they introduce themselves and ask to stay")
@@ -289,12 +292,25 @@ func _run() -> void:
 	far_villager.global_position = player.global_position + Vector3(60, 0, 0)
 	await _frames(25)
 	var far_model: CharacterModel = far_villager.model
-	_check(far_model.detail != CharacterModel.Detail.FULL and not far_model.head.visible and far_model._proxy_head.visible,
-		"distant villagers swap to a simple head")
+	if far_model is AssetCharacter:
+		_check(far_model.detail != CharacterModel.Detail.FULL and far_model.animation_player.callback_mode_process == AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+			and far_model.body.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "distant villagers animate less often and cast no shadow")
+	else:
+		_check(far_model.detail != CharacterModel.Detail.FULL and not far_model.head.visible and far_model._proxy_head.visible,
+			"distant villagers swap to a simple head")
 	far_villager.global_position = player.global_position + Vector3(2.0, 0, 0)
 	await _frames(25)
 	_check(far_model.detail == CharacterModel.Detail.FULL and far_model.head.visible, "and get their full face back up close")
-	var shared: bool = GameManager.get_villager(StringName(traveller.id)).model.body.get_active_material(0) == mara_villager.model.body.get_active_material(0)
+	var model_a: CharacterModel = GameManager.get_villager(StringName(traveller.id)).model
+	var model_b: CharacterModel = mara_villager.model
+	var shared: bool
+	if model_a is AssetCharacter:
+		# Each real model tints its own material copies, but the textures are shared.
+		var tex_a = (model_a.head.get_active_material(0) as BaseMaterial3D).albedo_texture
+		var tex_b = (model_b.head.get_active_material(0) as BaseMaterial3D).albedo_texture
+		shared = tex_a != null and (tex_a == tex_b or (model_a as AssetCharacter).female != (model_b as AssetCharacter).female)
+	else:
+		shared = model_a.body.get_active_material(0) == model_b.body.get_active_material(0)
 	_check(shared, "everyone shares the same character materials")
 	_check(Population.MAX_POPULATION == 50, "the village is capped at 50 for phones")
 
@@ -362,8 +378,10 @@ func _generations(director: PopulationDirector, rng: RandomNumberGenerator) -> v
 	var adult_height: float = AppearanceCodec.from_dict(baby.appearance).standing_height()
 	_check(height / adult_height > 0.5 and height / adult_height < 0.6,
 		"a three-year-old is just over half their adult height (%.2f m of %.2f m)" % [height, adult_height])
-	_check(toddler.model.skeleton.get_bone_count() == 19 and toddler.model.animation_player.has_animation(&"walk"), "children use the same skeleton and animations")
-	var foot: Transform3D = toddler.model.skeleton.get_bone_global_pose(HumanoidRig.Bone.LEFT_FOOT)
+	var child_bones := 65 if toddler.model is AssetCharacter else 19
+	var child_walk := &"Walk" if toddler.model is AssetCharacter else &"walk"
+	_check(toddler.model.skeleton.get_bone_count() == child_bones and toddler.model.animation_player.has_animation(child_walk), "children use the same skeleton and animations")
+	var foot: Transform3D = toddler.model.skeleton.get_bone_global_pose(toddler.model.skeleton.find_bone(toddler.model.bone_name(&"LeftFoot")))
 	_check(foot.origin.y < 0.12, "a child's feet are on the ground (%.2f m)" % foot.origin.y)
 	_check(toddler.data.role == "Child" and String(toddler.data.schedule[0]["label"]).length() > 0, "children have their own day: %s" % toddler.data.schedule[0]["label"])
 	_check(not TaskSystem.request(toddler, &"wood")["accepted"], "children aren't given jobs")

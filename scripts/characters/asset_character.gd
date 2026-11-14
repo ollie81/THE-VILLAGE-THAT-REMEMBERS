@@ -318,7 +318,7 @@ func set_expression(expression: StringName, _weight: float = 1.0, _fade: float =
 
 
 func seat_offset(seat_height: float) -> float:
-	return seat_height - (_sit_hips - 0.1) * scale.y
+	return seat_height - _sit_hips * scale.y
 
 
 func get_face_position() -> Vector3:
@@ -338,6 +338,16 @@ func bone_name(generic: StringName) -> StringName:
 			return &"hand_l"
 		&"Head":
 			return &"Head"
+		&"Hips":
+			return &"pelvis"
+		&"LeftFoot":
+			return &"foot_l"
+		&"RightFoot":
+			return &"foot_r"
+		&"Spine":
+			return &"spine_01"
+		&"Neck":
+			return &"neck_01"
 	return generic
 
 

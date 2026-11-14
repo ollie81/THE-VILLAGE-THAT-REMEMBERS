@@ -96,7 +96,8 @@ func _run() -> void:
 	_check(player.is_resting() and player.model.get_animation() == &"sit", "the player sits on the log")
 	var seat_height := player.model.global_position.y - VillageLayout.get_walk_height(player.global_position.x, player.global_position.z)
 	_check(seat_height > 0.05 and seat_height < 0.35, "raised onto the seat (%.2f m)" % seat_height)
-	var hips_y := player.model.skeleton.global_transform * player.model.skeleton.get_bone_global_pose(HumanoidRig.Bone.HIPS).origin
+	var hips_bone := player.model.skeleton.find_bone(player.model.bone_name(&"Hips"))
+	var hips_y := player.model.skeleton.global_transform * player.model.skeleton.get_bone_global_pose(hips_bone).origin
 	var ground := VillageLayout.get_walk_height(player.global_position.x, player.global_position.z)
 	var log_top := VillageLayout.plaza_floor_height() + VillageLayout.PLAZA_SEAT_HEIGHT
 	_check(absf(hips_y.y - log_top) < 0.06, "hips rest on the log top (hips %.2f m, log top %.2f m)" % [hips_y.y, log_top])

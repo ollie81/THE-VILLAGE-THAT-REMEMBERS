@@ -320,6 +320,6 @@ func _device_prep() -> void:
 	# Tools are held on the right hand bone.
 	player.tools.hold(&"axe", 1.0)
 	var hand := player.tools._attachment
-	_check(hand != null and hand.bone_name == "RightHand" and hand.get_bone_idx() >= 0 and player.tools._meshes[&"axe"].get_parent() == hand,
+	_check(hand != null and hand.bone_name == player.model.bone_name(&"RightHand") and hand.get_bone_idx() >= 0 and player.tools._meshes[&"axe"].get_parent() == hand,
 		"tools are attached to the right hand bone")
 	player.tools.hold(&"", 0.0)

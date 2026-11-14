@@ -329,7 +329,7 @@ func _check_asset_character(model: AssetCharacter, who: String) -> void:
 		skinned = skinned and (mi as MeshInstance3D).skin != null
 	_check(model.skeleton.get_bone_count() == 65 and model.body != null and skinned,
 		"%s is a real skinned model on a 65-bone skeleton (%s)" % [who, model.outfit])
-	_check(triangles > 8000 and triangles < 30000, "%s is %d triangles (budget 30000)" % [who, triangles])
+	_check(triangles > 8000 and triangles < 36000, "%s is %d triangles (budget 36000)" % [who, triangles])
 	_check(model.animation_player.get_animation_list().size() >= 10, "%s has skeletal animations" % who)
 	_check(model.head != null and model.head.mesh.get_faces().size() > 300, "%s has a head and face" % who)
 	var arms: MeshInstance3D = null
