@@ -766,7 +766,7 @@ Tests: `godot --headless --path . res://tests/world_test.tscn` (37 checks). Scre
   thinks and animates every frame, to 60 m a few times a second, beyond that it stands still. Birds have no
   physics. Rain is 500 particles (220 on the Low setting).
 - **Not yet:** no goats or ducks (no free models found that match); sheep, pigs and the small dog walk with
-  a simple bob done in code because their models have no walking animation;  The chicken coop still comes with its three hens, as before.
+  a simple bob done in code because their models have no walking animation. The chicken coop still comes with its three hens, as before.
 
 Tests: `godot --headless --path . res://tests/animals_test.tscn`. Screenshots: `tools/animal_screenshots.tscn`
 (`--skip-farm` or `--weather-only` for a shorter run).
@@ -808,6 +808,24 @@ Tests: `godot --headless --path . res://tests/riding_test.tscn` (27 checks). Scr
   animals), by the windmill, round the pond, along the south street, and the market.
 
 Tests: `godot --headless --path . res://tests/lives_test.tscn`. Screenshots: `tools/lives_screenshots.tscn`.
+
+## Living world, stage 5: monsters
+
+- **Danger zones.** The village, the farmland and the south street are safe: no monster ever sets foot there.
+  The forest (the west woods, the lake, the ruins, the outskirts) is risky; the rocky wilds east of the
+  watchtower road are dangerous. A message tells you when you step out into each.
+- **Who lives where:** slimes and bats in the forest by day, wolves and bats in the wilds, skeletons rising
+  at night anywhere outside the village, and a **dragon** at its lair deep in the wilds (20 hits, 40 credits,
+  wood, stone and food; it returns 3 days after you drive it off; saved).
+- **Fair fights:** they appear 24–40 m away, never on top of you; at most 6 are about at once (4 on Low) and
+  they're removed once you've moved on or gone home. Each one winds up before it strikes (block or dodge), only
+  one attacks at a time, and beaten monsters leave something behind (herbs, food, stone) and fade away.
+  Without a sword they keep their distance and growl but don't attack. Being knocked out sends you home with
+  nothing lost, as before. Villagers hurry indoors when there's fighting nearby (stage 4).
+- Models: Quaternius Animated Monster Pack (slime, bat, skeleton, dragon) and the wolf from Animal Pack Vol.2
+  (tinted grey), all CC0.
+
+Tests: `godot --headless --path . res://tests/monsters_test.tscn` (32 checks). Screenshots: `tools/monster_screenshots.tscn`.
 
 ## Sound and music
 
