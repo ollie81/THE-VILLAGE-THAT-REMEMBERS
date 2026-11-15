@@ -134,6 +134,7 @@ func save_game() -> void:
 		"credits": VillageCredits.instance.to_dict() if VillageCredits.instance else (_data.get("credits", {}) if _data.get("credits", {}) is Dictionary else {}),
 		"animals": AnimalManager.instance.to_dict() if AnimalManager.instance else (_data.get("animals", {}) if _data.get("animals", {}) is Dictionary else {}),
 		"weather": Weather.instance.to_dict() if Weather.instance else {},
+		"defence": VillageDefence.instance.to_dict() if VillageDefence.instance else (_data.get("defence", {}) if _data.get("defence", {}) is Dictionary else {}),
 		"monsters": MonsterSpawner.instance.to_dict() if MonsterSpawner.instance else (_data.get("monsters", {}) if _data.get("monsters", {}) is Dictionary else {}),
 		"saved_unix": Time.get_unix_time_from_system(),
 	}

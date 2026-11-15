@@ -530,7 +530,7 @@ func _process_travel(delta: float) -> void:
 	_blocked_time = 0.0
 	# Caught in the rain (or with fighting nearby), people hurry.
 	var speed := data.walk_speed
-	if current_activity and current_activity.reason in ["rain", "rain_visit", "fight"]:
+	if current_activity and current_activity.reason in ["rain", "rain_visit", "fight", "raid"]:
 		speed *= HURRY
 	var step := minf(speed * delta, distance)
 	var next := flat + direction * step

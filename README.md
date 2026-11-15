@@ -834,6 +834,26 @@ for), wolves are grey and the hawks brown with white heads and yellow beaks.
 
 Tests: `godot --headless --path . res://tests/monsters_test.tscn` (32 checks). Screenshots: `tools/monster_screenshots.tscn`.
 
+## Living world, stage 6: village defence
+
+- **Guards:** the two bravest grown-ups (Mara and Elias in a new village) keep watch. When trouble comes
+  they take up a sword and shield you can see and go to meet it.
+- **The alarm bell** stands under a little roof just outside the meeting circle and rings when raiders come.
+- **Raids are rare:** never before day 3, then at most every 4–6 days (about half the time when one's due).
+  An hour and a half before, a guard spots monsters gathering on the west road, the north road or in the
+  east woods, and you're told when they'll reach the village edge (at dusk). The guards go and wait there.
+- **The raid:** the bell rings, 3–5 raiders (skeletons, wolves by daylight) march on the edge. They come no
+  further than the edge. The guards fight them; everyone else hurries to the meeting circle. Armed, you can
+  join in: the raiders come for you too. A guard knocked down falls back to the meeting circle hurt and is
+  fine by morning: nobody dies.
+- **Afterwards:** when the last raider falls the guards put their swords away and everyone goes back to their
+  day. Helping (being there armed, or beating raiders) earns 15 credits plus 5 for each raider you beat, and
+  the guards think better of you. A raid nobody beats melts back into the woods after a couple of hours.
+  Saved: when the next raid may come and how many you've driven off.
+- Long messages now wrap onto two lines instead of running off the screen.
+
+Tests: `godot --headless --path . res://tests/defence_test.tscn`. Screenshots: `tools/defence_screenshots.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

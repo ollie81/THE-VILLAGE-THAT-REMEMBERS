@@ -16,6 +16,8 @@ var _touch: TouchControls
 var _hint_time: float = 14.0
 var _notice_panel: PanelContainer
 var _notice_label: Label
+## Wider notices wrap onto more lines.
+const NOTICE_MAX_WIDTH := 900.0
 var _notice_time: float = 0.0
 
 ## Overheard gossip shows only when the player is close enough to hear.
@@ -155,6 +157,28 @@ func _build_notice() -> void:
 ## Small message near the top of the screen that fades after a few seconds.
 func show_notice(text: String) -> void:
 	_notice_label.text = text
+	# Long messages go onto two lines (split at a space near the middle)
+	# instead of running off the edges of the screen.
+	var font := _notice_label.get_theme_font("font")
+	var size := _notice_label.get_theme_font_size("font_size")
+	var limit := minf(NOTICE_MAX_WIDTH, get_viewport().get_visible_rect().size.x - 80.0)
+	if font and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > limit:
+		var middle := text.length() / 2
+		var cut := -1
+		for offset in middle:
+			if middle + offset < text.length() and text[middle + offset] == " ":
+				cut = middle + offset
+				break
+			if middle - offset > 0 and text[middle - offset] == " ":
+				cut = middle - offset
+				break
+		if cut > 0:
+			_notice_label.text = text.substr(0, cut) + "\n" + text.substr(cut + 1)
+	# Keep it centred whatever its size.
+	var box := _notice_panel.get_combined_minimum_size()
+	_notice_panel.offset_left = -box.x * 0.5
+	_notice_panel.offset_right = box.x * 0.5
+	_notice_panel.offset_bottom = _notice_panel.offset_top + box.y
 	_notice_panel.visible = true
 	_notice_panel.modulate.a = 1.0
 	_notice_time = 4.0 + text.length() * 0.03

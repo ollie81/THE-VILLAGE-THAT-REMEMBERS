@@ -119,6 +119,12 @@ static func effects() -> Dictionary:
 	Synth.mix(meow, Synth.envelope(Synth.sweep(600.0, 900.0, 0.25, 0.02), 0.02, 0.1), 0.0, 0.6)
 	Synth.mix(meow, Synth.envelope(Synth.sweep(900.0, 520.0, 0.35, 0.01), 0.01, 0.15), 0.25, 0.6)
 	add.call("meow", meow)
+	# The village alarm bell: a deep, ringing clang.
+	var alarm := Synth.buffer(1.9)
+	Synth.mix(alarm, Synth.bell(330.0, 1.85), 0.0, 0.8)
+	Synth.mix(alarm, Synth.bell(392.0 * 2.01, 1.2), 0.0, 0.25)
+	Synth.mix(alarm, Synth.envelope(Synth.noise(0.05, 0.9, rng), 0.0005, 0.02), 0.0, 0.3)
+	add.call("bell", alarm)
 	var cricket := Synth.buffer(0.6)
 	for n in 6:
 		Synth.mix(cricket, Synth.envelope(Synth.sweep(4200.0, 4300.0, 0.03, 0.002), 0.001, 0.02), n * 0.05 + (0.25 if n >= 3 else 0.0), 0.5)

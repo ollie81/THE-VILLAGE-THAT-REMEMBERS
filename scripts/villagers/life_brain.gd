@@ -213,6 +213,10 @@ func _react(villager: Node, chosen: VillagerActivity) -> VillagerActivity:
 	if chosen == null or chosen.is_sleep() or chosen.kind == &"wait":
 		return chosen
 	var person: Person = Population.get_person(person_id)
+	# A raid: everyone but the guards gathers at the meeting circle.
+	var defence := VillageDefence.instance
+	if defence and defence.is_raid() and not defence.is_guard(villager):
+		return _instead("raid", chosen, "socialize", "plaza", "Gathering at the meeting circle while the guards hold the edge")
 	# Fighting nearby: indoors, now.
 	var player = GameManager.player
 	if player and player.get("combat") and player.combat.in_fight() and villager is Node3D \

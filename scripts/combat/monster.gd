@@ -47,6 +47,14 @@ const GIVE_UP_RANGE := 22.0  # from where it appeared
 const WARY_RANGE := 7.0
 
 static var _attacker: Monster = null
+## How far onto the village's ground a raider may come round its raid point.
+const RAID_REACH := 14.0
+
+## A raider marches on `raid_point` at the village edge and fights the guards.
+var raider: bool = false
+var raid_point := Vector3.ZERO
+## Whether the blow that beat it was yours (for raid rewards).
+var beaten_by_player: bool = false
 
 var kind: StringName = &"slime"
 var info: Dictionary
@@ -178,21 +186,37 @@ func _player() -> Node3D:
 	return GameManager.player
 
 
+func _foe() -> Node3D:
+	var player := _player()
+	if not raider or VillageDefence.instance == null:
+		return player
+	var best: Node3D = player if PlayerCombat.is_armed() else null
+	var best_d := global_position.distance_to(player.global_position) if best else INF
+	for guard in VillageDefence.instance.fighting_guards():
+		var d := global_position.distance_to(guard.global_position)
+		if d < best_d:
+			best_d = d
+			best = guard
+	return best if best else player
+
+
 func _physics_process(delta: float) -> void:
 	if state == State.DEFEATED:
 		return
 	_timer -= delta
 	_growl -= delta
-	var player := _player()
+	# Who it's after: you, or (for a raider) whichever is nearer of you and
+	# the village guards.
+	var player := _foe()
 	var to_player := Vector3.ZERO
 	var player_distance := INF
-	var indoors := Interiors.instance != null and Interiors.instance.is_inside()
+	var indoors := Interiors.instance != null and Interiors.instance.is_inside() and player == _player()
 	if player and not indoors:
 		to_player = player.global_position - global_position
 		to_player.y = 0.0
 		player_distance = to_player.length()
-	var armed := PlayerCombat.is_armed()
-	var player_safe := player == null or MonsterZones.zone_at(player.global_position.x, player.global_position.z) == MonsterZones.SAFE
+	var armed := PlayerCombat.is_armed() or (player != null and player != _player())
+	var player_safe := player == null or (not raider and MonsterZones.zone_at(player.global_position.x, player.global_position.z) == MonsterZones.SAFE)
 	var desired := Vector3.ZERO
 	var speed_anim := 1.0
 	match state:
@@ -202,10 +226,12 @@ func _physics_process(delta: float) -> void:
 				_think = randf_range(2.5, 5.0)
 				var a := randf() * TAU
 				_wander_target = home + Vector3(cos(a), 0, sin(a)) * randf_range(1.5, 6.0)
+			if raider:
+				_wander_target = raid_point
 			var to := _wander_target - global_position
 			to.y = 0.0
 			if to.length() > 0.5:
-				desired = to.normalized() * float(info["speed"])
+				desired = to.normalized() * float(info["speed"]) * (1.4 if raider else 1.0)
 			if player_distance < float(info["notice"]) and not player_safe:
 				if armed:
 					state = State.CHASE
@@ -228,7 +254,7 @@ func _physics_process(delta: float) -> void:
 			var reach := float(info["reach"])
 			if not armed:
 				state = State.WARY
-			elif player_distance > float(info["notice"]) * 1.7 or global_position.distance_to(home) > GIVE_UP_RANGE or player_safe:
+			elif player_distance > float(info["notice"]) * 1.7 or (not raider and global_position.distance_to(home) > GIVE_UP_RANGE) or player_safe:
 				state = State.WANDER
 				_wander_target = home
 			elif player_distance < reach and _may_attack():
@@ -251,8 +277,11 @@ func _physics_process(delta: float) -> void:
 			desired = to_player.normalized() * float(info["chase"]) * 0.8 if player_distance > float(info["reach"]) * 0.6 else Vector3.ZERO
 			if not _struck and player_distance < float(info["reach"]) + 0.4:
 				_struck = true
-				if player.get("combat") and player.combat:
-					player.combat.take_hit(float(info["damage"]), global_position)
+				if player == _player():
+					if player.get("combat") and player.combat:
+						player.combat.take_hit(float(info["damage"]), global_position)
+				elif VillageDefence.instance:
+					VillageDefence.instance.guard_hit(player, float(info["damage"]), global_position)
 			if _timer <= 0.0:
 				state = State.RECOVER
 				_timer = RECOVER_TIME
@@ -267,9 +296,10 @@ func _physics_process(delta: float) -> void:
 	# Never onto the village's safe ground (or into deep water).
 	if desired.length() > 0.01:
 		var ahead := global_position + desired.normalized() * 1.5
-		if MonsterZones.zone_at(ahead.x, ahead.z) == MonsterZones.SAFE or VillageLayout.water_depth(ahead.x, ahead.z) > 0.6:
+		var allowed := raider and Vector2(ahead.x - raid_point.x, ahead.z - raid_point.z).length() < RAID_REACH
+		if (MonsterZones.zone_at(ahead.x, ahead.z) == MonsterZones.SAFE and not allowed) or VillageLayout.water_depth(ahead.x, ahead.z) > 0.6:
 			desired = Vector3.ZERO
-			if state == State.CHASE:
+			if state == State.CHASE and not raider:
 				state = State.WANDER
 				_wander_target = home
 	_knock = _knock.move_toward(Vector3.ZERO, 16.0 * delta)
@@ -331,6 +361,8 @@ func _animate(delta: float, moving: Vector3, to_player: Vector3, speed_anim: flo
 func take_hit(amount: int, from: Vector3) -> bool:
 	if state == State.DEFEATED:
 		return false
+	var player := _player()
+	beaten_by_player = player != null and from.distance_to(player.global_position) < 0.05
 	health -= amount
 	var away := global_position - from
 	away.y = 0.0
