@@ -48,6 +48,8 @@ var _room: Node3D
 var _fade: ColorRect
 var _busy: bool = false
 var _doors: Node3D
+## The size of the room you're in (player houses differ by size).
+var _room_size: Vector2 = ROOM_SIZE
 
 
 func _ready() -> void:
@@ -80,7 +82,8 @@ static func floor_at(x: float, z: float) -> float:
 	if instance == null or instance._room == null:
 		return NAN
 	var local := Vector2(x - ROOM_ORIGIN.x, z - ROOM_ORIGIN.z)
-	if absf(local.x) <= ROOM_SIZE.x * 0.5 + 0.5 and absf(local.y) <= ROOM_SIZE.y * 0.5 + 0.5:
+	var size: Vector2 = instance._room_size
+	if absf(local.x) <= size.x * 0.5 + 0.5 and absf(local.y) <= size.y * 0.5 + 0.5:
 		return ROOM_ORIGIN.y
 	return NAN
 
@@ -141,19 +144,50 @@ func _knock_or_enter(owner: String, outside: Vector3, yaw: float) -> void:
 func enter(home_id: String, outside: Vector3, yaw: float) -> void:
 	if _busy or is_inside() or GameManager.player == null:
 		return
+	home_id = resolve(home_id)
 	_busy = true
 	await _fade_to(1.0)
 	_outside_door = outside
 	_outside_yaw = yaw
-	_room = _build_room(home_id)
-	add_child(_room)
-	current = home_id
-	_place_player_standing(ROOM_ORIGIN + SPAWN, PI)
+	var spawn := ROOM_ORIGIN + SPAWN
+	if is_player_house(home_id):
+		var type := Furnishings.house_type(home_id)
+		var house := Furnishings.house_of(home_id)
+		_room = HouseInterior.build(type, HouseDesigns.of(house) if not house.is_empty() else HouseDesigns.default_design(), self)
+		_room.name = "Room_" + home_id
+		_room.position = ROOM_ORIGIN
+		_room_size = HouseDesigns.size_info(type)["inside"]
+		spawn = ROOM_ORIGIN + HouseInterior.spawn(type)
+		add_child(_room)
+		current = home_id
+		if Furnishings.instance:
+			Furnishings.instance.populate(_room, home_id)
+	else:
+		_room_size = ROOM_SIZE
+		_room = _build_room(home_id)
+		add_child(_room)
+		current = home_id
+	_place_player_standing(spawn, PI)
 	_set_indoor(true)
 	Sounds.play("open", null, -6.0)
 	entered.emit(home_id)
 	await _fade_to(0.0)
 	_busy = false
+
+
+## "player" means your home: your first finished house if you have one.
+static func resolve(home_id: String) -> String:
+	if home_id != "player":
+		return home_id
+	for s in GameState.structures:
+		if HouseDesigns.is_house(StringName(String(s.get("type", "")))) and bool(s.get("complete", false)) and String(s.get("owner", "player")) == "player":
+			return Furnishings.place_of(s)
+	return "player"
+
+
+## Your own house's rooms (built from its size and design, with furniture).
+static func is_player_house(home_id: String) -> bool:
+	return home_id == "player" or home_id.begins_with("house_")
 
 
 func leave() -> void:
@@ -597,21 +631,30 @@ func _bed_prompt() -> String:
 	return "Sleep until morning" if PlayerController.is_night() else "Your bed  (sleep at night, or have a nap)"
 
 
-## Lies down on the mattress, then sleeps (to morning at night, a two-hour
-## nap by day) and gets up standing beside the bed.
-func _sleep(actor) -> void:
+## Lies down in a bed (the one tapped, or the nearest), then sleeps (to
+## morning at night, a two-hour nap by day) and gets up standing beside it.
+func _sleep(actor, bed: FurniturePiece = null) -> void:
 	if actor == null or _busy or _room == null:
 		return
-	var bed_holder := _room.find_child("Bed", false, false) as Node3D
-	var f := float(home_config(current)["flip"])
-	var mattress := ROOM_ORIGIN + Vector3(f * 3.3, 0, -ROOM_SIZE.y * 0.5 + 1.35)
+	if bed == null:
+		var best := INF
+		for piece in _room.get_children():
+			if piece is FurniturePiece and String(piece.info.get("use", "")) == "sleep":
+				var d: float = piece.global_position.distance_to(actor.global_position)
+				if d < best:
+					best = d
+					bed = piece
+	if bed == null:
+		GameManager.notify("There's no bed here yet. Make one with Furnish.")
+		return
 	_busy = true
 	actor.stand_up()
 	actor._action_time = 0.0
 	actor.velocity = Vector3.ZERO
-	actor.global_position = mattress + Vector3(0, 0.0, 0.25)
-	actor.model.rotation = Vector3(0, PI, 0)
-	actor.model.position = Vector3(0, 0.52, 0)
+	var mattress := bed.global_transform * FurnitureCatalog.mattress(bed.type)
+	actor.global_position = Vector3(mattress.x, ROOM_ORIGIN.y, mattress.z)
+	actor.model.rotation = Vector3(0, bed.global_rotation.y + PI, 0)
+	actor.model.position = Vector3(0, mattress.y - ROOM_ORIGIN.y, 0)
 	actor.pose = &"sleep"
 	actor._pose_time = -1000.0  # the bed decides when you wake, not the timer
 	actor._slept = true
@@ -625,16 +668,27 @@ func _sleep(actor) -> void:
 		GameManager.notify("You have a short nap. Two hours pass and you feel rested.")
 	if actor.get("combat") and actor.combat:
 		actor.combat.heal_full()
-	var beside := bed_holder.global_position if bed_holder else ROOM_ORIGIN + SPAWN
-	_place_player_standing(Vector3(beside.x, ROOM_ORIGIN.y + 0.05, beside.z), PI * 0.5 * -f)
+	var beside := _beside(bed)
+	_place_player_standing(Vector3(beside.x, ROOM_ORIGIN.y + 0.05, beside.z), bed.global_rotation.y + PI * 0.5)
 	await _fade_to(0.0)
 	_busy = false
+
+
+## A clear spot next to a bed (either side, or the foot), in world space.
+func _beside(bed: FurniturePiece) -> Vector3:
+	var size: Vector2 = bed.info.get("size", Vector2(1.6, 2.3))
+	for local in [Vector3(size.x * 0.5 + 0.45, 0, 0.2), Vector3(-size.x * 0.5 - 0.45, 0, 0.2), Vector3(0, 0, size.y * 0.5 + 0.45)]:
+		var world: Vector3 = bed.global_transform * local
+		var room_local := world - ROOM_ORIGIN
+		if Furnishings.instance == null or Furnishings.instance.can_place(&"stool", current, room_local, 0.0) == "":
+			return world
+	return ROOM_ORIGIN + HouseInterior.spawn(Furnishings.house_type(current))
 
 
 ## Lying down indoors: in your own house that means going to bed; in someone
 ## else's home you don't lie on their floor.
 func lie_down_indoors(actor) -> void:
-	if current == "player":
+	if is_player_house(current) and (Furnishings.instance == null or Furnishings.instance.is_players_place(current)):
 		_sleep(actor)
 	else:
 		GameManager.notify("You can't lie down in someone else's home. Your own bed is in your house.")

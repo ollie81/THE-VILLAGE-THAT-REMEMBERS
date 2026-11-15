@@ -48,7 +48,8 @@ func _process(_delta: float) -> void:
 	_placement_bar.visible = build != null and build.active
 	_edit_bar.visible = build != null and build.edit_mode != "" and not build.active
 	if _edit_bar.visible:
-		_edit_label.text = "Walk up to something you built and tap %s." % ("Move" if build.edit_mode == "move" else "Remove (you get half back)")
+		_edit_label.text = {"move": "Walk up to something you built and tap Move.", "remove": "Walk up to something you built and tap Remove (you get half back).",
+			"redecorate": "Walk up to one of your houses and tap Redecorate.", "upgrade": "Walk up to one of your houses and tap Expand (you pay the difference)."}.get(build.edit_mode, "")
 	if _placement_bar.visible:
 		var info := StructureCatalog.info(build.type)
 		_placement_reason.text = ("Placing: %s  ·  Good spot! Tap Place." % info["name"]) if build.reason == "" \
@@ -211,6 +212,21 @@ func _build_build_menu() -> void:
 	var close := UiTheme.button("Close", 140)
 	close.pressed.connect(func(): _build_menu.visible = false)
 	footer.add_child(close)
+	var houses := HBoxContainer.new()
+	houses.add_theme_constant_override("separation", 10)
+	box.add_child(houses)
+	var redecorate := UiTheme.button("Redecorate a house", 260)
+	redecorate.name = "RedecorateButton"
+	redecorate.pressed.connect(func():
+		_build_menu.visible = false
+		BuildMode.instance.set_edit_mode("redecorate"))
+	houses.add_child(redecorate)
+	var upgrade := UiTheme.button("Expand a house", 230)
+	upgrade.name = "UpgradeButton"
+	upgrade.pressed.connect(func():
+		_build_menu.visible = false
+		BuildMode.instance.set_edit_mode("upgrade"))
+	houses.add_child(upgrade)
 
 
 func _refresh_build_list() -> void:

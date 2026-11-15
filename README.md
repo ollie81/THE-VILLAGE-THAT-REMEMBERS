@@ -854,6 +854,45 @@ Tests: `godot --headless --path . res://tests/monsters_test.tscn` (32 checks). S
 
 Tests: `godot --headless --path . res://tests/defence_test.tscn`. Screenshots: `tools/defence_screenshots.tscn`.
 
+## Living Village, stage A: houses, rooms and furniture
+
+The plan for the whole Living Village expansion (from an inspection of the code) is in
+`docs/LIVING_VILLAGE_PLAN.md`. Stage A:
+
+- **Four house sizes** in Build > Homes: Small house, Medium house, Large house and Manor (two storeys
+  outside, a pillared porch). Placed, rotated and built like any building.
+- **Designs:** while placing a house, a Design panel picks its style (timber-framed, stone or painted boards),
+  wall and roof colour, door colour, windows (shutters, arched, lattice) and the floor inside (oak planks,
+  flagstones, red tiles, wool carpet); the preview changes as you choose. Build > Redecorate a house changes a
+  finished one. Saved with the house.
+- **Real rooms inside:** small = one room; medium = living room and bedroom; large = living room, kitchen and
+  bedroom; manor = hall, living room, dining room, kitchen and two bedrooms. Solid walls with open doorways,
+  windows, the chosen floor, a light in every room, a hearth to cook at in the kitchen. Built when you go in,
+  freed when you leave.
+- **Furniture you own and arrange:** a new house comes with a bed, chest, table, two chairs, rug and lamp.
+  Furnish (top right) makes more: beds, double beds, chairs, stools, a cushioned settle, benches, long and round
+  tables, storage chests, wardrobes, bookshelves, rugs, lamps, potted plants, crates, barrels. A see-through
+  preview shows where it goes (green if it fits inside a room clear of walls, doorways, the hearth and other
+  pieces, red with the reason otherwise; facing a wall it slides to the nearest spot that fits). Rotate and
+  Place. **Arrange** lets you pick up anything you've placed: small things are carried in your hands (with a
+  marker on the floor where they'll go), bigger ones slide along in front of you; put it down, turn it, or
+  put it away to place again later for free. Carrying, you can walk out of the door and put a stool, chair,
+  lamp, plant, crate or barrel down outside.
+- **Using furniture:** sleep in your beds (night: until morning; day: a nap), sit on chairs, stools, settles and
+  benches, read from bookshelves, switch lamps on and off, and store resources in chests (40), wardrobes (60)
+  and crates (15): put in and take out from the storage panel; what's inside stays with the piece.
+- **Outdoor pieces:** benches, tables, chairs, stools, lamps, plants, crates and barrels can stand in the village.
+- **Expanding:** Build > Expand a house turns a small house into a medium one (then large, then a manor) if
+  there's room around it: pay the difference and build the extra stages. Its design and furniture stay
+  (anything a new wall would cut through moves to free floor). Removing a house puts its furniture away.
+- **Saved:** houses with their designs, every piece's position and turn, what's stored in it, lamps on/off.
+  Older saves: a house built before this gets the small-house design and its old furniture as movable pieces.
+- **Not yet:** inside is one storey even in the manor; furniture is simple low-poly pieces built in code (no new
+  model files, so the APK hardly grows); villagers don't use your furniture yet (stages B and C).
+
+Tests: `godot --headless --path . res://tests/housing_test.tscn` (64 checks). Screenshots: `tools/housing_screenshots.tscn`,
+`tools/house_lineup.tscn`.
+
 ## Sound and music
 
 Everything you hear is made by the game itself, on the device, with no audio files (`scripts/audio/`):

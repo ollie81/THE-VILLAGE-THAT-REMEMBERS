@@ -6,8 +6,14 @@ extends RefCounted
 const STRUCTURES := {
 	&"farm_plot": {"name": "Farm plot", "cost": {&"wood": 6}, "work": 2, "footprint": Vector2(4.0, 3.0),
 		"description": "Plant seeds and harvest food."},
-	&"house": {"name": "House", "cost": {&"wood": 20, &"stone": 10}, "work": 6, "footprint": Vector2(6.2, 4.8),
-		"description": "A home of your own. Sleep here at night."},
+	&"house": {"name": "Small house", "cost": {&"wood": 20, &"stone": 10}, "work": 6, "footprint": Vector2(6.4, 4.8),
+		"description": "A home of your own: one room inside. Choose its style, furnish it, sleep here at night."},
+	&"house_medium": {"name": "Medium house", "cost": {&"wood": 34, &"stone": 18}, "work": 8, "footprint": Vector2(8.4, 6.6),
+		"description": "A living room and a bedroom. Choose its style and furnish every room."},
+	&"house_large": {"name": "Large house", "cost": {&"wood": 50, &"stone": 30}, "work": 10, "footprint": Vector2(10.4, 8.4),
+		"description": "A living room, a kitchen and a bedroom."},
+	&"manor": {"name": "Manor", "cost": {&"wood": 80, &"stone": 55, &"herbs": 6}, "work": 14, "footprint": Vector2(14.0, 12.4),
+		"description": "Two storeys and a pillared porch. Hall, living room, dining room, kitchen and two bedrooms inside."},
 	&"cottage": {"name": "Cottage", "cost": {&"wood": 18, &"stone": 8}, "work": 6, "footprint": Vector2(6.2, 4.8),
 		"description": "A home for up to four newcomers. Travellers move in from the camp."},
 	&"well": {"name": "Well", "cost": {&"stone": 10, &"wood": 2}, "work": 3, "footprint": Vector2(2.2, 2.2),
@@ -37,14 +43,14 @@ const STRUCTURES := {
 }
 ## Shown in the Build menu, by tab.
 const CATEGORIES := {
-	"Homes": [&"house", &"cottage"],
+	"Homes": [&"house", &"house_medium", &"house_large", &"manor", &"cottage"],
 	"Food": [&"farm_plot", &"chicken_coop", &"animal_pen", &"stable", &"fruit_tree", &"well"],
 	"Village": [&"bench", &"lantern", &"flower_bed", &"fence", &"stone_path", &"market_stall", &"statue"],
 }
-const ORDER: Array[StringName] = [&"farm_plot", &"house", &"cottage", &"well", &"bench", &"lantern",
+const ORDER: Array[StringName] = [&"farm_plot", &"house", &"house_medium", &"house_large", &"manor", &"cottage", &"well", &"bench", &"lantern",
 	&"chicken_coop", &"animal_pen", &"stable", &"fruit_tree", &"market_stall", &"flower_bed", &"fence", &"stone_path", &"statue"]
 ## Homes rise wall by wall; everything else appears as a frame.
-const HOMES: Array[StringName] = [&"house", &"cottage"]
+const HOMES: Array[StringName] = [&"house", &"house_medium", &"house_large", &"manor", &"cottage"]
 
 
 ## How much a finished structure brightens the village (see GameState.beauty).
@@ -61,15 +67,12 @@ static func radius(type: StringName) -> float:
 	return footprint.length() * 0.5
 
 
-## The finished structure, built at the origin facing +Z.
-static func create_finished(type: StringName) -> Node3D:
+## The finished structure, built at the origin facing +Z. Houses are built
+## from their design (see HouseDesigns).
+static func create_finished(type: StringName, design: Dictionary = {}) -> Node3D:
+	if HouseDesigns.is_house(type):
+		return HouseBuilder.build(type, design if not design.is_empty() else HouseDesigns.default_design())
 	match type:
-		&"house":
-			var root := BuildingFactory.create({"id": "player_house", "type": "house", "position": Vector3.ZERO,
-				"yaw": 0.0, "footprint": Vector2(6.2, 4.8), "owner": "player"})
-			root.position = Vector3.ZERO
-			root.rotation = Vector3.ZERO
-			return root
 		&"cottage":
 			var cottage := BuildingFactory.create({"id": "cottage", "type": "house", "position": Vector3.ZERO,
 				"yaw": 0.0, "footprint": Vector2(6.2, 4.8), "owner": "cottage"})
@@ -265,7 +268,7 @@ const HOME_STAGES: Array[String] = ["corner posts", "lower walls", "upper walls"
 
 ## The name of construction stage `step` (1-based) of `type`.
 static func stage_name(type: StringName, step: int) -> String:
-	if type == &"house" or type == &"cottage":
+	if type in HOMES:
 		return HOME_STAGES[clampi(step - 1, 0, HOME_STAGES.size() - 1)]
 	return "stage %d" % step
 

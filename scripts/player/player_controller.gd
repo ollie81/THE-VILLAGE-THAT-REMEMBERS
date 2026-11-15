@@ -398,7 +398,8 @@ func _physics_process(delta: float) -> void:
 		_carry_mount(horizontal.length(), delta)
 
 	var placing := BuildMode.instance != null and BuildMode.instance.active
-	if can_control() and not placing and not swimming and Input.is_action_just_pressed("interact") and (riding or GameManager.can_start_interaction()):
+	if can_control() and not placing and not swimming and Input.is_action_just_pressed("interact") and (riding or GameManager.can_start_interaction()) \
+			and FurnishMode.allows_interaction(detector.focused):
 		detector.try_interact(self)
 
 	if not riding:

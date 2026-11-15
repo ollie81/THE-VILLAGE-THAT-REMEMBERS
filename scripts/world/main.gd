@@ -48,6 +48,8 @@ func _ready() -> void:
 	world.add_child(StructureManager.new())
 	world.add_child(WorldObjects.new())
 	world.add_child(Interiors.new())
+	world.add_child(Furnishings.new())
+	world.add_child(FurnishMode.new())
 	world.add_child(Fishing.new())
 	world.add_child(Treasure.new())
 	var thornwood := Thornwood.new()

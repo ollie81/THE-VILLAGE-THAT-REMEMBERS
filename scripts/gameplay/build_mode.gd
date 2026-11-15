@@ -25,6 +25,10 @@ var moving: PlacedStructure = null
 signal edit_mode_changed(mode: String)
 
 var _ghost: Node3D
+## The design for a house being placed (see HouseDesigns); kept between
+## houses so your second house starts like your first.
+var design: Dictionary = HouseDesigns.default_design()
+signal design_changed
 var _turns: int = 0
 var _position := Vector3.ZERO
 var _valid_material: StandardMaterial3D
@@ -68,11 +72,26 @@ func start(structure_type: StringName) -> void:
 	active = true
 	_turns = 0
 	_searched_from = Vector3.INF
-	_ghost = StructureCatalog.create_finished(type)
-	_strip_ghost(_ghost)
-	add_child(_ghost)
+	_make_ghost()
 	_update(0.0)
 	started.emit(type)
+
+
+func _make_ghost() -> void:
+	if _ghost:
+		_ghost.queue_free()
+	_ghost = StructureCatalog.create_finished(type, design if HouseDesigns.is_house(type) else {})
+	_strip_ghost(_ghost)
+	add_child(_ghost)
+
+
+## Changes the design of the house being placed (the preview updates).
+func set_design(new_design: Dictionary) -> void:
+	design = HouseDesigns.normalized(new_design)
+	if active and HouseDesigns.is_house(type):
+		_make_ghost()
+		_update(0.0)
+	design_changed.emit()
 
 
 func cancel() -> void:
@@ -116,7 +135,9 @@ func confirm() -> String:
 		cancel()
 		return ""
 	GameState.spend(info["cost"])
-	GameState.add_structure(type, _position, current_yaw())
+	var record := GameState.add_structure(type, _position, current_yaw())
+	if HouseDesigns.is_house(type):
+		record["design"] = design.duplicate()
 	var work := int(info["work"])
 	if work > 1:
 		GameManager.notify("%s site placed! Walk up to it and tap Build: each tap adds a stage (%d in all, starting with %s). Villagers can help if you ask them." % [info["name"], work, StructureCatalog.stage_name(type, 1)])
@@ -137,10 +158,76 @@ func set_edit_mode(mode: String) -> void:
 ## Picks up a structure: its preview follows the player until placed again.
 func start_move(structure: PlacedStructure) -> void:
 	set_edit_mode("")
+	if HouseDesigns.is_house(structure.get_type()):
+		design = HouseDesigns.of(structure.record)
 	start(structure.get_type())
 	moving = structure
 	structure.visible = false
 	_update(0.0)
+
+
+## A finished house gets a new look (free: it's paint, tiles and joinery).
+func redecorate(structure: PlacedStructure, new_design: Dictionary) -> void:
+	structure.record["design"] = HouseDesigns.normalized(new_design)
+	structure._rebuild()
+	if Interiors.instance and Interiors.instance.current == Furnishings.place_of(structure.record):
+		GameManager.notify("Redecorated. The new floor shows next time you come in.")
+	else:
+		GameManager.notify("Your %s is redecorated." % String(structure.get_info()["name"]).to_lower())
+
+
+## What expanding a house to the next size costs: the difference.
+static func upgrade_cost(structure: PlacedStructure) -> Dictionary:
+	var next := HouseDesigns.next_size(structure.get_type())
+	if next == &"":
+		return {}
+	var cost := {}
+	var have: Dictionary = structure.get_info()["cost"]
+	var want: Dictionary = StructureCatalog.info(next)["cost"]
+	for r in want:
+		var n := int(want[r]) - int(have.get(r, 0))
+		if n > 0:
+			cost[r] = n
+	return cost
+
+
+## Why a house can't be expanded now, or "".
+func upgrade_reason(structure: PlacedStructure) -> String:
+	var next := HouseDesigns.next_size(structure.get_type())
+	if next == &"":
+		return "A manor is as big as houses get"
+	if not structure.is_complete():
+		return "Finish building it first"
+	var cost := upgrade_cost(structure)
+	if not GameState.can_afford(cost):
+		return "%s to make it a %s" % [GameState.missing_text(cost), String(StructureCatalog.info(next)["name"]).to_lower()]
+	var space := placement_reason(next, structure.global_position, structure.rotation.y, structure, true)
+	if space != "":
+		return "No room to grow: %s" % space.to_lower()
+	return ""
+
+
+## Expands a house to the next size: pay the difference, then build the
+## extra stages at the site. Its look and furniture stay.
+func upgrade(structure: PlacedStructure) -> String:
+	set_edit_mode("")
+	var why := upgrade_reason(structure)
+	if why != "":
+		GameManager.notify(why + ".")
+		return why
+	var next := HouseDesigns.next_size(structure.get_type())
+	var old_work := int(structure.get_info()["work"])
+	GameState.spend(upgrade_cost(structure))
+	structure.record["type"] = String(next)
+	structure.record["work"] = float(old_work)
+	structure.record["complete"] = false
+	NatureSpawner.clear_area(structure.global_position, StructureCatalog.radius(next))
+	structure.name = "%s_%d" % [String(next).to_pascal_case(), int(structure.record["uid"])]
+	structure.interactable.radius = maxf(StructureCatalog.radius(next) * 0.75, 1.2)
+	structure._rebuild()
+	var left := int(StructureCatalog.info(next)["work"]) - old_work
+	GameManager.notify("Expanding into a %s! Tap Build at the site %d more time%s. Your furniture will be waiting." % [String(StructureCatalog.info(next)["name"]).to_lower(), left, "" if left == 1 else "s"])
+	return ""
 
 
 ## Takes a structure down and gives back half of what it cost.
@@ -220,10 +307,10 @@ static func nearest_free_spot(structure_type: StringName, around: Vector3, yaw: 
 
 
 ## Why `structure_type` can't go at `at`, or "" if it can.
-static func placement_reason(structure_type: StringName, at: Vector3, yaw: float) -> String:
+static func placement_reason(structure_type: StringName, at: Vector3, yaw: float, ignore: Node = null, skip_cost: bool = false) -> String:
 	var info := StructureCatalog.info(structure_type)
 	var moving_now: bool = instance != null and instance.moving != null
-	var missing := "" if moving_now else GameState.missing_text(info["cost"])
+	var missing := "" if moving_now or skip_cost else GameState.missing_text(info["cost"])
 	if missing != "":
 		return missing
 	var radius := StructureCatalog.radius(structure_type)
@@ -236,7 +323,7 @@ static func placement_reason(structure_type: StringName, at: Vector3, yaw: float
 		return blocked
 	if instance and instance.get_tree():
 		for structure in instance.get_tree().get_nodes_in_group("placed_structures"):
-			if structure == instance.moving:
+			if structure == instance.moving or structure == ignore:
 				continue
 			var other: float = StructureCatalog.radius(structure.get_type())
 			if Vector2(at.x - structure.global_position.x, at.z - structure.global_position.z).length() < radius + other + 0.3:

@@ -190,7 +190,7 @@ func _run() -> void:
 	await _use(house, Vector3(0, 0, 4.0))
 	# The house opens its door; the bed is inside.
 	await get_tree().create_timer(Interiors.FADE_TIME * 2.0 + 0.3).timeout
-	_check(Interiors.instance.is_inside() and Interiors.instance.current == "player", "the house's door takes you inside")
+	_check(Interiors.instance.is_inside() and Interiors.instance.current == Furnishings.place_of(house.record), "the house's door takes you inside its own rooms")
 	var bed: UsableObject = Interiors.instance._room.find_child("Bed", true, false)
 	bed.use.call(GameManager.player)
 	# You lie down on the mattress, then the night passes.

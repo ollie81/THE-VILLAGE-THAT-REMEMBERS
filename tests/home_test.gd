@@ -74,7 +74,7 @@ func _build_menu() -> void:
 	panels._category = "Homes"
 	panels._toggle_build_menu()
 	await _frames(3)
-	var row: Button = panels._build_list.get_child(1)
+	var row: Button = panels._build_list.get_children().filter(func(b): return b is Button and b.text.contains("Cottage"))[0]
 	_check(row.icon != null, "every Build menu item has a picture of the real model")
 	_check(row.text.contains("Cottage") and row.text.contains("Needs 18 wood, 8 stone") and row.text.contains("tap Build 6 times"),
 		"and says exactly what it needs and what to do next: %s" % row.text.replace("\n", " / "))
@@ -219,7 +219,9 @@ func _own_house() -> void:
 	var room: Node3D = interiors._room
 	_check(room.find_child("Bed", false, false) != null and room.find_child("Hearth", false, false) != null and room.find_child("Chest", false, false) != null,
 		"your house has your bed, a hearth to cook at and a chest")
-	var reached := await _walk_to(room.find_child("Bed", false, false).global_position)
+	# Walk up to the side of the bed (it's solid furniture now).
+	var bed_node: Node3D = room.find_child("Bed", false, false)
+	var reached := await _walk_to(bed_node.global_transform * Vector3(-1.3, 0, 0.3))  # its open side (the other is against the wall)
 	_check(reached, "you can walk to your bed")
 	_check(_standing(), "walking up to the bed doesn't make you lie down (only tapping Sleep does)")
 	WorldClock.set_time(22.0)

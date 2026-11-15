@@ -66,7 +66,7 @@ func _ready() -> void:
 	_label.fixed_size = true
 	_label.pixel_size = 0.0011
 	_label.no_depth_test = true
-	_label.position = Vector3(0, 2.6 if get_type() == &"house" else 1.6, 0)
+	_label.position = Vector3(0, (2.6 + float(HouseDesigns.size_info(get_type())["storeys"] - 1) * 2.7) if HouseDesigns.is_house(get_type()) else 1.6, 0)
 	add_child(_label)
 	interactable = Interactable.new()
 	interactable.radius = maxf(StructureCatalog.radius(get_type()) * 0.75, 1.2)
@@ -85,7 +85,7 @@ func _rebuild() -> void:
 		_label.text = "Growing (%d%%)" % int(tree_growth() * 100.0)
 		_tree_shown = "%.2f/%s" % [tree_growth(), has_fruit()]
 	elif is_complete():
-		_visual = StructureCatalog.create_finished(get_type())
+		_visual = StructureCatalog.create_finished(get_type(), HouseDesigns.of(record) if HouseDesigns.is_house(get_type()) else {})
 		_label.visible = false
 	else:
 		_visual = StructureCatalog.create_construction(get_type(), work_fraction())
@@ -302,6 +302,10 @@ func get_interaction_verb() -> String:
 			return "Move"
 		"remove":
 			return "Remove"
+		"redecorate":
+			return "Redecorate" if HouseDesigns.is_house(get_type()) else "Look"
+		"upgrade":
+			return "Expand" if HouseDesigns.is_house(get_type()) else "Look"
 	if not is_complete():
 		return "Build"
 	match get_type():
@@ -309,7 +313,7 @@ func get_interaction_verb() -> String:
 			return "Harvest" if is_ripe() else ("Check" if is_planted() else "Plant")
 		&"well":
 			return "Water"
-		&"house":
+		&"house", &"house_medium", &"house_large", &"manor":
 			return "Enter"
 		&"cottage":
 			return "Enter"
@@ -333,6 +337,16 @@ func get_interaction_prompt() -> String:
 			return "Move this %s" % String(info["name"]).to_lower()
 		"remove":
 			return "Remove this %s (get half back)" % String(info["name"]).to_lower()
+		"redecorate":
+			return "Change the look of this %s" % String(info["name"]).to_lower() if HouseDesigns.is_house(get_type()) else "Only houses can be redecorated"
+		"upgrade":
+			if not HouseDesigns.is_house(get_type()):
+				return "Only houses can be expanded"
+			var why := BuildMode.instance.upgrade_reason(self)
+			if why != "":
+				return why
+			var next := HouseDesigns.next_size(get_type())
+			return "Expand into a %s  (%s)" % [String(StructureCatalog.info(next)["name"]).to_lower(), GameState.cost_text(BuildMode.upgrade_cost(self))]
 	if not is_complete():
 		return "Build %s: next, %s  (%d / %d)" % [String(info["name"]).to_lower(), StructureCatalog.stage_name(get_type(), int(record["work"]) + 1), int(record["work"]), int(info["work"])]
 	match get_type():
@@ -344,8 +358,8 @@ func get_interaction_prompt() -> String:
 			return "Plant seeds"
 		&"well":
 			return "Draw water for the crops"
-		&"house":
-			return "Enter your house" + ("  (bed's inside)" if _is_night() else "")
+		&"house", &"house_medium", &"house_large", &"manor":
+			return "Enter your %s" % String(info["name"]).to_lower() + ("  (bed's inside)" if _is_night() else "")
 		&"bench":
 			return "Sit and rest"
 		&"fruit_tree":
@@ -369,7 +383,7 @@ func get_interaction_prompt() -> String:
 ## The room behind this home's door ("player", or "cottage_<uid>": every
 ## cottage keeps its own layout, saved through its uid).
 func interior_id() -> String:
-	return "player" if get_type() == &"house" else "cottage_%d" % int(record["uid"])
+	return Furnishings.place_of(record) if HouseDesigns.is_house(get_type()) else "cottage_%d" % int(record["uid"])
 
 
 ## Just outside the front door (where you come back out), wherever the home
@@ -465,6 +479,20 @@ func _on_interacted(actor: Node) -> void:
 		"remove":
 			BuildMode.instance.remove(self)
 			return
+		"redecorate":
+			if HouseDesigns.is_house(get_type()) and is_complete():
+				BuildMode.instance.set_edit_mode("")
+				if DesignPanel.instance:
+					DesignPanel.instance.open_for(self)
+			else:
+				GameManager.notify("Only finished houses can be redecorated.")
+			return
+		"upgrade":
+			if HouseDesigns.is_house(get_type()):
+				BuildMode.instance.upgrade(self)
+			else:
+				GameManager.notify("Only houses can be expanded.")
+			return
 	use(actor)
 
 
@@ -513,9 +541,9 @@ func use(actor: Node = null) -> String:
 				actor.perform_action(&"gather", 1.0, global_position, &"watering_can")
 			_notify("You watered %d farm plot%s." % [watered, "" if watered == 1 else "s"] if watered > 0 else "Fresh, cold water. Plant some crops and it will help them grow.")
 			return "watered"
-		&"house":
+		&"house", &"house_medium", &"house_large", &"manor":
 			if Interiors.instance and actor == GameManager.player:
-				Interiors.instance.enter("player", doorstep(), rotation.y)
+				Interiors.instance.enter(Furnishings.place_of(record), doorstep(), rotation.y)
 				return "entered"
 			if _is_night():
 				WorldClock.day += 1 if WorldClock.time_of_day >= 12.0 else 0

@@ -36,6 +36,10 @@ var collected: Dictionary = {}
 ## Placed structures: { uid, type, position: [x, y, z], yaw, work, complete,
 ## crop_planted_day, crop_planted_hour }.
 var structures: Array = []
+## Furniture and decorations: { id, type, place ("outside", "stored", or a
+## house's interior id), pos: [x, y, z] (room space indoors, world outside),
+## yaw, storage: {resource: n}, on (lamps) }. See Furnishings.
+var furniture: Array = []
 ## resource spot id -> day it grows back.
 var depleted: Dictionary = {}
 var objective_index: int = 0
@@ -54,6 +58,7 @@ func reset() -> void:
 		inventory[resource] = 0
 		collected[resource] = 0
 	structures = []
+	furniture = []
 	depleted = {}
 	objective_index = 0
 	flags = {}
@@ -252,6 +257,7 @@ func to_dict() -> Dictionary:
 		"inventory": inv, "collected": col, "structures": structures.duplicate(true),
 		"depleted": depleted.duplicate(), "objective_index": objective_index,
 		"flags": flags.duplicate(true), "next_uid": _next_uid,
+		"furniture": furniture.duplicate(true),
 	}
 
 
@@ -270,3 +276,5 @@ func from_dict(data: Dictionary) -> void:
 	var saved_flags: Variant = data.get("flags", {})
 	flags = saved_flags.duplicate(true) if saved_flags is Dictionary else {}
 	_next_uid = int(data.get("next_uid", structures.size() + 1))
+	var saved_furniture: Variant = data.get("furniture", [])
+	furniture = saved_furniture.duplicate(true) if saved_furniture is Array else []
