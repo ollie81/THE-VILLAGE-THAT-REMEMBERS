@@ -15,6 +15,8 @@ const NEAR := 28.0
 const MID := 60.0
 ## A follower further than this behind its owner catches up.
 const CATCH_UP := 18.0
+## Or after this long unable to get any closer.
+const STUCK_CATCH_UP := 2.5
 
 var record: Dictionary
 var species: StringName
@@ -42,6 +44,7 @@ var _saddle_bone: int = -1
 var _saddle_rest_y: float = 0.0
 var _skeleton: Skeleton3D
 var _reins: Array[MeshInstance3D] = []
+var _stuck_time: float = 0.0
 
 
 func setup(animal_record: Dictionary) -> void:
@@ -374,7 +377,16 @@ func _process(delta: float) -> void:
 			_timer = 4.0
 	# A follower left far behind (round a building, across water) catches
 	# up the way pets do in games: it reappears a little behind you.
-	if state == State.FOLLOW and player and global_position.distance_to(player.global_position) > CATCH_UP:
+	# Boxed in (round a corner it can't find its way past)? Count the time it
+	# hasn't been able to move towards you, and catch up after a moment.
+	if state == State.FOLLOW and player and goal != Vector3.INF and not _moving:
+		_stuck_time += delta
+	else:
+		_stuck_time = 0.0
+	var far_behind: bool = player != null and global_position.distance_to(player.global_position) > CATCH_UP
+	var boxed_in: bool = player != null and _stuck_time > STUCK_CATCH_UP and global_position.distance_to(player.global_position) > 4.0
+	if state == State.FOLLOW and player and (far_behind or boxed_in):
+		_stuck_time = 0.0
 		var back: Vector3 = player.global_position + player.global_transform.basis.z * 2.5
 		if VillageLayout.water_depth(back.x, back.z) < 0.5:
 			global_position = Vector3(back.x, VillageLayout.get_walk_height(back.x, back.z), back.z)

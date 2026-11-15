@@ -243,6 +243,16 @@ func _behaviour() -> void:
 		await get_tree().create_timer(4.0).timeout  # real seconds: it runs at 5 m/s
 		var d := Vector2(dog.global_position.x - player.global_position.x, dog.global_position.z - player.global_position.z).length()
 		_check(bool(dog_record["follow"]) and d < 6.0, "the dog follows you (%.1f m behind)" % d)
+		# Boxed in behind a house, it still finds you (catches up after a moment).
+		var house: Dictionary = VillageLayout.get_building("house_mara")
+		var hp: Vector3 = house["position"]
+		var back: Vector3 = hp + Basis(Vector3.UP, float(house["yaw"])) * Vector3(0, 0, -float(house["footprint"].y) * 0.5 - 0.8)
+		var front: Vector3 = hp + Basis(Vector3.UP, float(house["yaw"])) * Vector3(0, 0, float(house["footprint"].y) * 0.5 + 3.0)
+		dog.global_position = VillageLayout.ground_point(back.x, back.z)
+		player.global_position = VillageLayout.ground_point(front.x, front.z) + Vector3(0, 0.3, 0)
+		await get_tree().create_timer(4.0).timeout
+		var d2 := Vector2(dog.global_position.x - player.global_position.x, dog.global_position.z - player.global_position.z).length()
+		_check(d2 < 6.0, "boxed in behind a house, the dog still gets back to you (%.1f m)" % d2)
 		# A follower stays spawned even far away.
 		player.global_position += Vector3(0, 0, 150)
 		await get_tree().create_timer(0.7).timeout
