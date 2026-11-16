@@ -95,6 +95,9 @@ func _ready() -> void:
 	var gift := DailyGift.new()
 	add_child(gift)
 	gift.from_dict(SaveService.section("daily_gift"))
+	var rewards := CreditRewards.new()
+	rewards.from_dict(SaveService.section("rewards"))
+	add_child(rewards)
 	add_child(AwayTime.new())
 
 	add_child(GossipSystem.new())

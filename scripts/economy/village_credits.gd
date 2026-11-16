@@ -90,12 +90,83 @@ func buy_supplies(item_id: String) -> bool:
 		if not spend(int(item["price"])):
 			GameManager.notify("Not enough Village Credits (%d needed, you have %d)." % [int(item["price"]), balance])
 			return false
-		for resource in item["items"]:
-			GameState.add(resource, int(item["items"][resource]))
+		_give(item["items"])
 		GameManager.notify("Bought %s (+%s)." % [String(item["name"]).to_lower(), GameState.cost_text(item["items"])])
 		Sounds.play("built", null, -6.0)
 		return true
 	return false
+
+
+## Adds bought resources (not counted as gathering for challenges).
+static func _give(items: Dictionary) -> void:
+	CreditRewards.quiet = true
+	for resource in items:
+		GameState.add(resource, int(items[resource]))
+	CreditRewards.quiet = false
+
+
+## What's missing from `cost` right now (resource -> amount).
+static func missing(cost: Dictionary) -> Dictionary:
+	var out := {}
+	for resource in cost:
+		var n := int(cost[resource]) - GameState.count(resource)
+		if n > 0:
+			out[resource] = n
+	return out
+
+
+## The credit price of the materials missing for `cost` (0 if you have them).
+static func missing_price(cost: Dictionary) -> int:
+	return EconomyConfig.credits_for(missing(cost))
+
+
+## Buys exactly the materials missing for `cost` (a house, an expansion...).
+func buy_missing(cost: Dictionary, what: String) -> bool:
+	var need := missing(cost)
+	if need.is_empty():
+		GameManager.notify("You already have everything for %s." % what)
+		return false
+	var price := EconomyConfig.credits_for(need)
+	if not spend(price):
+		GameManager.notify("Not enough Village Credits (%d needed, you have %d)." % [price, balance])
+		return false
+	_give(need)
+	GameManager.notify("Bought the missing materials for %s (+%s)." % [what, GameState.cost_text(need)])
+	Sounds.play("built", null, -6.0)
+	return true
+
+
+static func furniture_price(type: StringName) -> int:
+	return EconomyConfig.credits_for(FurnitureCatalog.info(type).get("cost", {}))
+
+
+## Buys a piece of furniture; it waits in storage (Furnish > Put away) until
+## you place it.
+func buy_furniture(type: StringName) -> Dictionary:
+	var info := FurnitureCatalog.info(type)
+	if info.is_empty() or Furnishings.instance == null:
+		return {}
+	var price := furniture_price(type)
+	if not spend(price):
+		GameManager.notify("Not enough Village Credits (%d needed, you have %d)." % [price, balance])
+		return {}
+	var record := Furnishings.instance.add(type, "stored", Vector3.ZERO, 0.0)
+	GameManager.notify("Bought a %s. Place it from Furnish > Put away." % String(info["name"]).to_lower())
+	Sounds.play("built", null, -6.0)
+	return record
+
+
+## Unlocks `id` for `price` (once). Returns whether it's now owned.
+func buy_unlock(id: String, price: int, what: String) -> bool:
+	if owns(id):
+		return true
+	if not spend(price):
+		GameManager.notify("Not enough Village Credits (%d needed, you have %d)." % [price, balance])
+		return false
+	unlock(id)
+	GameManager.notify("Unlocked: %s." % what)
+	Sounds.play("built", null, -6.0)
+	return true
 
 
 ## Credits for an ad only once the ad SDK has confirmed the reward (AdRewards

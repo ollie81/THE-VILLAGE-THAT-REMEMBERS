@@ -22,15 +22,48 @@ const STYLE_LABELS := {"timber": "Timber-framed", "stone": "Stone", "painted": "
 const WALLS := [
 	["Cream", Color(0.9, 0.84, 0.72)], ["Honey", Color(0.88, 0.74, 0.5)], ["Rose", Color(0.86, 0.66, 0.6)],
 	["Sage", Color(0.7, 0.78, 0.64)], ["Sky", Color(0.66, 0.76, 0.84)], ["Grey stone", Color(0.62, 0.6, 0.57)],
+	["Lavender", Color(0.74, 0.68, 0.84)], ["Mint", Color(0.66, 0.86, 0.76)],
 ]
 const ROOFS := [
 	["Terracotta", Color(0.64, 0.29, 0.2)], ["Slate", Color(0.32, 0.34, 0.38)], ["Thatch", Color(0.76, 0.62, 0.34)],
 	["Teal", Color(0.3, 0.52, 0.5)], ["Plum", Color(0.42, 0.26, 0.36)],
+	["Copper", Color(0.66, 0.42, 0.24)], ["Mossy", Color(0.36, 0.48, 0.26)],
 ]
 const DOORS := [
 	["Oak", Color(0.42, 0.28, 0.16)], ["Red", Color(0.62, 0.2, 0.16)], ["Green", Color(0.26, 0.44, 0.28)],
 	["Blue", Color(0.24, 0.36, 0.56)], ["Black", Color(0.14, 0.12, 0.11)],
+	["Gilded", Color(0.8, 0.64, 0.26)],
 ]
+## Extra paints unlocked with Village Credits in the Shop (everything else is
+## free, as it always was). key -> {index: unlock id}.
+const PREMIUM := {
+	"wall": {6: "paint_lavender", 7: "paint_mint"},
+	"roof": {5: "paint_copper", 6: "paint_mossy"},
+	"door": {5: "paint_gilded"},
+}
+const PAINT_UNLOCKS := [
+	{"id": "paint_lavender", "name": "Lavender wall paint", "price": 25},
+	{"id": "paint_mint", "name": "Mint wall paint", "price": 25},
+	{"id": "paint_copper", "name": "Copper roof tiles", "price": 30},
+	{"id": "paint_mossy", "name": "Mossy roof", "price": 30},
+	{"id": "paint_gilded", "name": "Gilded front door", "price": 20},
+]
+
+
+## Whether choice `index` of `key` can be picked (premium paints need unlocking).
+static func is_unlocked(key: String, index: int) -> bool:
+	var id := String((PREMIUM.get(key, {}) as Dictionary).get(index, ""))
+	return id == "" or (VillageCredits.instance != null and VillageCredits.instance.owns(id))
+
+
+## Steps `by` through `count` choices of `key`, skipping locked ones.
+static func _next_unlocked(key: String, current: int, by: int, count: int) -> int:
+	var i := current
+	for _n in count:
+		i = posmod(i + (1 if by >= 0 else -1), count)
+		if is_unlocked(key, i):
+			return i
+	return current
 const WINDOWS := ["shutters", "arched", "lattice"]
 const WINDOW_LABELS := {"shutters": "With shutters", "arched": "Arched", "lattice": "Lattice panes"}
 const FLOORS := ["planks", "stone", "tiles", "carpet"]
@@ -112,11 +145,11 @@ static func step(d: Dictionary, key: String, by: int) -> Dictionary:
 		"style":
 			out["style"] = STYLES[posmod(STYLES.find(String(d["style"])) + by, STYLES.size())]
 		"wall":
-			out["wall"] = posmod(int(d["wall"]) + by, WALLS.size())
+			out["wall"] = _next_unlocked("wall", int(d["wall"]), by, WALLS.size())
 		"roof":
-			out["roof"] = posmod(int(d["roof"]) + by, ROOFS.size())
+			out["roof"] = _next_unlocked("roof", int(d["roof"]), by, ROOFS.size())
 		"door":
-			out["door"] = posmod(int(d["door"]) + by, DOORS.size())
+			out["door"] = _next_unlocked("door", int(d["door"]), by, DOORS.size())
 		"window":
 			out["window"] = WINDOWS[posmod(WINDOWS.find(String(d["window"])) + by, WINDOWS.size())]
 		"floor":

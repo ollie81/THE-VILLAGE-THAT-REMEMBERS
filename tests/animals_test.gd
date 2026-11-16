@@ -127,6 +127,7 @@ func _homes_and_buying() -> void:
 	await _frames(30)
 	_check(_structure_node(pen).is_complete() and _structure_node(stable).is_complete(), "an animal pen and a stable can be built")
 	_check(manager.records.size() == before, "building a pen and a stable makes no animals (%d → %d)" % [before, manager.records.size()])
+	credits.spend(credits.balance)  # no credits (achievements may have paid some meanwhile)
 	_check(manager.cannot_buy(&"cow").begins_with("Needs"), "with a pen but no credits, a cow needs credits (\"%s\")" % manager.cannot_buy(&"cow"))
 	credits.earn(300, "animals_test")
 	var balance := credits.balance

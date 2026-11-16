@@ -436,15 +436,18 @@ func hide_banner(owner: String) -> void:
 func banner_height() -> float:
 	if not banner_visible:
 		return 0.0
-	var window := DisplayServer.window_get_size()
 	var ui := get_viewport().get_visible_rect().size if get_viewport() else Vector2(1612, 720)
+	var window := Vector2(DisplayServer.window_get_size())
+	if window.y <= 0.0:
+		window = ui
 	var px := 0.0
 	if provider == Provider.ADMOB and _banner:
 		px = float(_banner.get_height_in_pixels())
 	if px <= 0.0:
-		# 50 dp, the standard banner, in physical pixels.
-		px = 50.0 * DisplayServer.screen_get_scale() if OS.get_name() != "Android" else 50.0 * DisplayServer.screen_get_dpi() / 160.0
-	return px * ui.y / maxf(float(window.y), 1.0) + 8.0
+		# The standard banner is 50 dp tall (dp = physical pixels at 160 dpi).
+		var dpi := float(DisplayServer.screen_get_dpi()) if OS.get_name() == "Android" else 160.0
+		px = 50.0 * maxf(dpi, 120.0) / 160.0
+	return clampf(px * ui.y / window.y, 30.0, ui.y * 0.2) + 8.0
 
 
 func _update_banner() -> void:
@@ -479,7 +482,7 @@ func _update_banner() -> void:
 				box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				_sim_banner.add_child(box)
 				var label := Label.new()
-				label.text = "Test banner (on a phone, a real banner shows here)"
+				label.text = "Test banner ad"
 				label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.25))
 				label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

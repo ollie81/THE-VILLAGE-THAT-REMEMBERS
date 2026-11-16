@@ -8,7 +8,10 @@ extends Node
 ##   and gives nothing until real time catches up. Setting it forward only
 ##   takes tomorrow's gift early.
 ## - Missing days never costs anything: gifts follow your number of visits,
-##   not a streak, so they just carry on where they left off.
+##   so they just carry on where they left off. Coming back on days in a row
+##   adds a streak bonus in credits on top (a missed day only restarts the
+##   count), and some days are lucky (decided by the date, so it can't be
+##   rerolled).
 ## - The record lives in the save and is signed, so editing it by hand
 ##   doesn't produce gifts either (an edited record just waits for tomorrow).
 
@@ -42,6 +45,8 @@ static var enabled: bool = true
 static var persist: bool = true
 
 var claims: int = 0
+## Days in a row with a visit (the latest claim included).
+var streak: int = 0
 var last_claim_day: int = -1
 var last_claim_unix: float = 0.0
 ## The latest clock time ever seen (to notice the clock being set back).
@@ -80,11 +85,19 @@ func try_claim(now_unix: float = -1.0) -> Dictionary:
 	var gift := check(now)
 	if gift.is_empty():
 		return {}
+	CreditRewards.quiet = true
 	for resource in gift["items"]:
 		GameState.add(resource, int(gift["items"][resource]))
+	CreditRewards.quiet = false
 	GameManager.notify("Welcome back! %s  (+%s)" % [gift["text"], GameState.cost_text(gift["items"])])
 	Sounds.play("built", null, -6.0)
 	VillageCredits.award("daily_gift", "daily_gift_%s" % Time.get_date_string_from_system(), "coming back today")
+	var date := Time.get_date_string_from_system(true)
+	var bonus := streak_bonus(int(gift["streak"]))
+	if bonus > 0 and VillageCredits.instance:
+		VillageCredits.instance.earn(bonus, "streak_%s" % date, "%d days in a row" % int(gift["streak"]))
+	if is_lucky(int(gift["day"])) and VillageCredits.instance:
+		VillageCredits.instance.earn(EconomyConfig.LUCKY_CREDITS, "lucky_%s" % date, "a lucky day")
 	SaveService.save_game()
 	claimed.emit(gift)
 	return gift
@@ -102,6 +115,7 @@ func check(now: float) -> Dictionary:
 		last_reason = "already claimed today"
 		return {}
 	claims += 1
+	streak = streak + 1 if today == last_claim_day + 1 else 1
 	last_claim_day = today
 	last_claim_unix = now
 	last_reason = ""
@@ -110,7 +124,21 @@ func check(now: float) -> Dictionary:
 	var text := String(entry["text"])
 	if text.contains("%s"):
 		text = text % _giver_name()
-	return {"items": entry["items"], "text": text, "visit": claims}
+	return {"items": entry["items"], "text": text, "visit": claims, "streak": streak, "day": today}
+
+
+## Extra credits for coming back `days` days in a row (0 most days).
+static func streak_bonus(days: int) -> int:
+	if EconomyConfig.STREAK_BONUS.has(days):
+		return int(EconomyConfig.STREAK_BONUS[days])
+	if days > 7 and days % 7 == 0:
+		return EconomyConfig.STREAK_WEEKLY
+	return 0
+
+
+## Whether `day` (a day number) is a lucky day.
+static func is_lucky(day: int) -> bool:
+	return hash("village-lucky:%d" % day) % EconomyConfig.LUCKY_ONE_IN == 0
 
 
 ## Whoever is around to leave the gift (a founder if possible).
@@ -127,7 +155,7 @@ func _giver_name() -> String:
 # --- Save ---------------------------------------------------------------------------
 
 func to_dict() -> Dictionary:
-	var data := {"claims": claims, "last_day": last_claim_day, "last_unix": last_claim_unix, "high_unix": high_unix}
+	var data := {"claims": claims, "last_day": last_claim_day, "last_unix": last_claim_unix, "high_unix": high_unix, "streak": streak}
 	data["sig"] = _signature(data)
 	return data
 
@@ -137,9 +165,14 @@ func from_dict(data: Dictionary) -> void:
 		return
 	var mirror := {"last_day": last_claim_day, "last_unix": last_claim_unix, "high_unix": high_unix}
 	var fields := {"claims": int(data.get("claims", 0)), "last_day": int(data.get("last_day", -1)),
-		"last_unix": float(data.get("last_unix", 0.0)), "high_unix": float(data.get("high_unix", 0.0))}
+		"last_unix": float(data.get("last_unix", 0.0)), "high_unix": float(data.get("high_unix", 0.0)),
+		"streak": int(data.get("streak", 0))}
 	claims = fields["claims"]
-	if String(data.get("sig", "")) != _signature(fields):
+	var sig := String(data.get("sig", ""))
+	if not data.has("streak") and sig == _signature(fields, false):
+		sig = _signature(fields)  # a save from before streaks: still genuine
+	streak = fields["streak"] if sig == _signature(fields) else 0
+	if sig != _signature(fields):
 		# Edited by hand: keep the visit count but treat today as claimed.
 		var now: float = floor(Time.get_unix_time_from_system())
 		last_claim_day = day_number(now)
@@ -153,9 +186,11 @@ func from_dict(data: Dictionary) -> void:
 	_merge(mirror)
 
 
-static func _signature(fields: Dictionary) -> String:
+static func _signature(fields: Dictionary, with_streak: bool = true) -> String:
 	var text := "%s|%d|%d|%.3f|%.3f" % [SALT, int(fields["claims"]), int(fields["last_day"]),
 		float(fields["last_unix"]), float(fields["high_unix"])]
+	if with_streak:
+		text += "|%d" % int(fields.get("streak", 0))
 	return text.sha256_text()
 
 
@@ -176,7 +211,7 @@ func _read_mirror() -> Dictionary:
 		return {}
 	var fields := {"claims": 0, "last_day": int(config.get_value("gift", "last_day", -1)),
 		"last_unix": float(config.get_value("gift", "last_unix", 0.0)), "high_unix": float(config.get_value("gift", "high_unix", 0.0))}
-	if String(config.get_value("gift", "sig", "")) != _signature(fields):
+	if String(config.get_value("gift", "sig", "")) != _signature(fields, false):
 		return {}
 	return fields
 
@@ -188,5 +223,5 @@ func _write_mirror() -> void:
 	var config := ConfigFile.new()
 	for key in ["last_day", "last_unix", "high_unix"]:
 		config.set_value("gift", key, fields[key])
-	config.set_value("gift", "sig", _signature(fields))
+	config.set_value("gift", "sig", _signature(fields, false))
 	config.save(MIRROR_PATH)

@@ -14,7 +14,32 @@ const EARN := {
 	"chest": 8,            # each hidden chest
 	"festival_goal": 6,    # each festival goal
 	"daily_gift": 3,       # coming back each day
+	"discovery": 5,        # each place found for the first time
+	"challenge": 5,        # each daily challenge
+	"challenges_all": 5,   # bonus for all three of today's challenges
 }
+
+## Coming back on consecutive days (on top of the daily gift). Missing a day
+## only restarts the count: nothing already earned is ever taken away.
+const STREAK_BONUS := {3: 3, 7: 10}
+## After a week, every 7th day in a row gives this.
+const STREAK_WEEKLY := 10
+## Some days are lucky: a small surprise on top (decided by the date, so
+## reopening the game can't reroll it). One day in LUCKY_ONE_IN.
+const LUCKY_ONE_IN := 6
+const LUCKY_CREDITS := 5
+
+## What a resource is worth in credits, for buying missing materials and
+## furniture (matches the supply bundles: 10 planks cost 12).
+const CREDIT_VALUE := {&"wood": 1.2, &"stone": 1.4, &"herbs": 1.6, &"food": 1.25}
+
+
+## The credit price of `items` (resource -> amount), rounded up.
+static func credits_for(items: Dictionary) -> int:
+	var total := 0.0
+	for resource in items:
+		total += float(CREDIT_VALUE.get(resource, 1.5)) * int(items[resource])
+	return int(ceil(total - 0.001))
 
 ## Credits for watching one optional rewarded ad (paid only after the ad SDK
 ## confirms the reward). The daily cap and cooldown are in AdRewards.
