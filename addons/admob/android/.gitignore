@@ -1,2 +1,1 @@
-# Remove /bin folder line if you want to commit
-/bin
+# The Android libraries (bin) are committed so CI can build the APK.
