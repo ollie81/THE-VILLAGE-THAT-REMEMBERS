@@ -126,9 +126,15 @@ jobs:
 
       - name: Install the Android build template (needed for the AdMob SDK)
         run: |
-          godot --headless --path . --install-android-build-template --quit || true
+          # What the editor's "Install Android Build Template" does.
+          SRC=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip
+          ls -la "$SRC"
+          rm -rf android && mkdir -p android/build
+          unzip -q "$SRC" -d android/build
+          echo "${GODOT_VERSION}.stable" > android/.build_version
+          touch android/build/.gdignore
           test -f android/build/build.gradle
-          ls android/build | head
+          ls android/build | head -20
 
       - name: Stamp the build
         env:
