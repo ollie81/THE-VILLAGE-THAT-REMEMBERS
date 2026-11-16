@@ -18,6 +18,9 @@ static var instance: CreditRewards
 ## Set while resources arrive from a purchase or gift, so buying planks
 ## doesn't count as gathering them.
 static var quiet: bool = false
+## Switched off by tests that count credits from other sources exactly (like
+## DailyGift.enabled), so a date-dependent challenge can't pay in between.
+static var enabled: bool = true
 
 ## Landmarks to discover: id, name, where, how close counts as "found".
 const PLACES := [
@@ -85,6 +88,8 @@ func _exit_tree() -> void:
 
 
 func _process(delta: float) -> void:
+	if not enabled:
+		return
 	_timer -= delta
 	if _timer > 0.0:
 		return
@@ -191,7 +196,9 @@ func check_achievements() -> void:
 # --- Daily challenges -------------------------------------------------------------------
 
 static func today() -> String:
-	return Time.get_date_string_from_system(true)
+	# Tests can pin the date to check every set of challenges.
+	var pinned := OS.get_environment("VILLAGE_TEST_DATE")
+	return pinned if pinned != "" and OS.is_debug_build() else Time.get_date_string_from_system(true)
 
 
 ## The three challenges for `date` (the same all day, different most days).
@@ -224,6 +231,8 @@ func _roll_day() -> void:
 
 ## Something happened that a challenge might count (`event`, `amount` times).
 func record(event: String, amount: int = 1) -> void:
+	if not enabled:
+		return
 	_roll_day()
 	for c in challenges_for(day):
 		if String(c["event"]) != event:
@@ -244,7 +253,7 @@ func _check_all_done() -> void:
 
 
 func _on_inventory(resource: StringName, amount: int, _total: int) -> void:
-	if quiet or amount <= 0:
+	if quiet or amount <= 0 or not enabled:
 		return
 	var key := String(resource)
 	if key in ["wood", "stone", "herbs"]:

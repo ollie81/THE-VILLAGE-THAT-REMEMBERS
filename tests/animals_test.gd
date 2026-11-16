@@ -11,6 +11,7 @@ var _main = null
 
 func _ready() -> void:
 	SaveService.enabled = false
+	CreditRewards.enabled = false  # counts credits exactly
 	PopulationDirector.auto_arrivals = false
 	Guide.rewards = false
 	DailyGift.persist = false
