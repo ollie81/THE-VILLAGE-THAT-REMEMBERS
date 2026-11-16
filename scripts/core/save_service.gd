@@ -132,6 +132,7 @@ func save_game() -> void:
 		"stories": VillageStories.instance.to_dict() if VillageStories.instance else {},
 		"thornwood": Thornwood.instance.to_dict() if Thornwood.instance else {},
 		"credits": VillageCredits.instance.to_dict() if VillageCredits.instance else (_data.get("credits", {}) if _data.get("credits", {}) is Dictionary else {}),
+		"home_life": HomeLife.instance.to_dict() if HomeLife.instance else (_data.get("home_life", {}) if _data.get("home_life", {}) is Dictionary else {}),
 		"rewards": CreditRewards.instance.to_dict() if CreditRewards.instance else (_data.get("rewards", {}) if _data.get("rewards", {}) is Dictionary else {}),
 		"animals": AnimalManager.instance.to_dict() if AnimalManager.instance else (_data.get("animals", {}) if _data.get("animals", {}) is Dictionary else {}),
 		"weather": Weather.instance.to_dict() if Weather.instance else {},

@@ -163,6 +163,11 @@ func homes() -> Array:
 	for record: Dictionary in GameState.structures:
 		if String(record.get("type", "")) == "cottage" and bool(record.get("complete", false)):
 			out.append({"id": cottage_home_id(record), "label": "Cottage %d" % int(record["uid"]), "capacity": COTTAGE_CAPACITY, "kind": "cottage"})
+		elif is_given_house(record):
+			# A house the player gave away (kept while it's being expanded, so
+			# the household keeps it; they stay elsewhere meanwhile).
+			out.append({"id": cottage_home_id(record), "label": house_label(record), "capacity": house_capacity(record), "kind": "house",
+				"available": bool(record.get("complete", false))})
 	out.append({"id": CAMP_ID, "label": "the camp", "capacity": CAMP_CAPACITY, "kind": "camp"})
 	for home: Dictionary in out:
 		home["residents"] = residents_of(String(home["id"]))
@@ -191,6 +196,158 @@ func housing_summary() -> Dictionary:
 		capacity += int(home["capacity"])
 		used += (home["residents"] as Array).size()
 	return {"capacity": capacity, "used": used, "free": capacity - used, "camping": residents_of(CAMP_ID).size()}
+
+
+# --- Houses the player gives to villagers --------------------------------------------------
+
+## People per house size (more only if there are beds for them).
+const HOUSE_SIZE_CAPACITY := {"house": 2, "house_medium": 4, "house_large": 5, "manor": 7}
+const GIVEN_OWNER := "villagers"
+
+
+static func is_given_house(record: Dictionary) -> bool:
+	return HouseDesigns.is_house(StringName(String(record.get("type", "")))) and String(record.get("owner", "player")) == GIVEN_OWNER
+
+
+static func house_record(home_id: String) -> Dictionary:
+	if not home_id.begins_with("home_s"):
+		return {}
+	var uid := int(home_id.substr(6))
+	for record: Dictionary in GameState.structures:
+		if int(record.get("uid", -1)) == uid:
+			return record
+	return {}
+
+
+## Beds in a house: a bed sleeps one, a double bed two.
+static func beds_in(record: Dictionary) -> int:
+	var n := 0
+	for f in Furnishings.records_in(Furnishings.place_of(record)):
+		match String(f.get("type", "")):
+			"bed":
+				n += 1
+			"bed_double":
+				n += 2
+	return n
+
+
+static func house_capacity(record: Dictionary) -> int:
+	return mini(int(HOUSE_SIZE_CAPACITY.get(String(record.get("type", "house")), 2)), beds_in(record))
+
+
+func house_label(record: Dictionary) -> String:
+	var name_ := String(StructureCatalog.info(StringName(String(record.get("type", "house")))).get("name", "House"))
+	var owner := get_person(String(home_owners.get(cottage_home_id(record), "")))
+	return "%s's %s" % [owner.first_name, name_.to_lower()] if owner else "the %s" % name_.to_lower()
+
+
+## Who moves with `person`: their partner and the children under 18 who live
+## with them (one household).
+func household_of(person: Person) -> Array:
+	var out: Array = [person]
+	var partner := get_person(person.partner)
+	if partner and partner.is_resident() and (partner.home == person.home or person.home == CAMP_ID or partner.home == CAMP_ID):
+		out.append(partner)
+	for parent: Person in out.duplicate():
+		for child_id in parent.children:
+			var child := get_person(String(child_id))
+			if child and child.is_resident() and child.age() < ADULT_AGE and not out.has(child) and child.home == parent.home:
+				out.append(child)
+	return out
+
+
+## Residents who can be given a house: grown-ups living here (children move
+## with their parents).
+func eligible_for_house() -> Array:
+	return residents().filter(func(p: Person): return p.is_present() and p.age() >= ADULT_AGE)
+
+
+## Why `record` can't be given to `person` (and their household), or "".
+func house_unsuitable_reason(record: Dictionary, person: Person) -> String:
+	if not HouseDesigns.is_house(StringName(String(record.get("type", "")))):
+		return "Only houses can be given"
+	if not bool(record.get("complete", false)):
+		return "The house isn't finished yet"
+	if person == null or not person.is_resident() or person.age() < ADULT_AGE:
+		return "Only grown-up residents can be given a house"
+	var home_id := cottage_home_id(record)
+	var household := household_of(person)
+	var ids := household.map(func(p: Person): return p.id)
+	for other_id in residents_of(home_id):
+		if not ids.has(other_id) and String(other_id) != person.partner and not are_family(get_person(String(other_id)), person):
+			return "%s already lives here" % get_person(String(other_id)).first_name
+	if person.home == home_id:
+		return "%s already lives here" % person.first_name
+	var cap := int(HOUSE_SIZE_CAPACITY.get(String(record["type"]), 2))
+	if household.size() > cap:
+		return "Too small for a household of %d (room for %d)" % [household.size(), cap]
+	var beds := beds_in(record)
+	if beds < household.size():
+		return "Needs a bed for each person: %d of %d (add beds with Furnish)" % [beds, household.size()]
+	return ""
+
+
+## Gives the house to `person` and their household. Returns "" or why not.
+func give_house(record: Dictionary, person: Person) -> String:
+	if not record.is_empty() and HouseDesigns.is_house(StringName(String(record.get("type", "")))) and bool(record.get("complete", false)):
+		Furnishings.ensure_furnished(Furnishings.place_of(record))
+	var why := house_unsuitable_reason(record, person)
+	if why != "":
+		return why
+	var home_id := cottage_home_id(record)
+	var previous: Dictionary = record.get("previous_homes", {}) if record.get("previous_homes", {}) is Dictionary else {}
+	record["owner"] = GIVEN_OWNER
+	for member: Person in household_of(person):
+		if member.home != home_id:
+			previous[member.id] = member.home
+		member.home = home_id
+		person_changed.emit(member)
+	record["previous_homes"] = previous
+	home_owners[home_id] = person.id
+	# A house they gave up that's now empty is the player's again (never two
+	# homes held by one household).
+	for old_home in previous.values():
+		var old := house_record(String(old_home))
+		if not old.is_empty() and is_given_house(old) and residents_of(String(old_home)).is_empty():
+			old["owner"] = "player"
+			old.erase("previous_homes")
+			home_owners.erase(String(old_home))
+	log_event("new_home", "%s moved into %s." % [person.first_name, house_label(record)], [person.id])
+	housing_changed.emit()
+	return ""
+
+
+## The household moves out (back where they lived before, if there's room);
+## the house is the player's again.
+func take_back_house(record: Dictionary) -> Array:
+	var home_id := cottage_home_id(record)
+	var moved := rehouse_from(home_id, record)
+	record["owner"] = "player"
+	record.erase("previous_homes")
+	home_owners.erase(home_id)
+	housing_changed.emit()
+	return moved
+
+
+## Everyone living in `home_id` moves out: to their previous home if it still
+## exists and has room, otherwise wherever there's space.
+func rehouse_from(home_id: String, record: Dictionary = {}) -> Array:
+	var previous: Dictionary = record.get("previous_homes", {}) if record.get("previous_homes", {}) is Dictionary else {}
+	var moved: Array = []
+	for id in residents_of(home_id):
+		var person := get_person(String(id))
+		var back := String(previous.get(person.id, ""))
+		person.home = ""
+		var placed := false
+		if back != "" and back != home_id:
+			for home: Dictionary in homes():
+				if home["id"] == back and home["kind"] != "house" and _has_space(home, person):
+					_move_in(person, back)
+					placed = true
+		if not placed:
+			assign_home(person, home_id)
+		moved.append(person)
+	return moved
 
 
 ## Finds someone a place to live: with their partner or family if there's
@@ -386,7 +543,7 @@ func move_in_together(a: Person, b: Person) -> bool:
 				_move_in(guest, host.home)
 				return true
 	for home: Dictionary in homes():
-		if home["kind"] == "camp":
+		if home["kind"] == "camp" or (home["kind"] == "house" and home["id"] != a.home and home["id"] != b.home):
 			continue
 		var free := int(home["capacity"]) - _occupants_excluding(home, a) - (0 if (home["residents"] as Array).has(b.id) else 1)
 		if free >= 1 or (home["id"] == a.home or home["id"] == b.home) and free >= 0:

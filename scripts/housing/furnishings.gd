@@ -222,18 +222,25 @@ func _spawn_in(room: Node3D, record: Dictionary) -> FurniturePiece:
 ## Fills a house's rooms with its furniture (giving a new house its starter
 ## pieces first). Anything that no longer fits (a wall built through it by an
 ## upgrade) moves to the nearest free floor, or is put away.
-func populate(room: Node3D, place: String) -> void:
+## The starter furniture a house gets the first time it's used (the first
+## visit, or being given to a villager before anyone has been in).
+static func ensure_furnished(place: String) -> void:
 	var flag := StringName("furnished_" + place)
-	if not GameState.get_flag(flag):
-		GameState.set_flag(flag, true)
-		for s in FurnitureCatalog.STARTER:
-			var at := Vector3(float(s[1]), 0, float(s[2]))
-			var spot := free_spot(s[0], place, at, float(s[3]))
-			if spot != Vector3.INF:
-				var record := {"id": next_id(), "type": String(s[0]), "place": place, "pos": [spot.x, 0.0, spot.z], "yaw": float(s[3]), "storage": {}}
-				if s[0] == &"lamp":
-					record["on"] = true
-				GameState.furniture.append(record)
+	if GameState.get_flag(flag) or instance == null:
+		return
+	GameState.set_flag(flag, true)
+	for s in FurnitureCatalog.STARTER:
+		var at := Vector3(float(s[1]), 0, float(s[2]))
+		var spot := instance.free_spot(s[0], place, at, float(s[3]))
+		if spot != Vector3.INF:
+			var record := {"id": next_id(), "type": String(s[0]), "place": place, "pos": [spot.x, 0.0, spot.z], "yaw": float(s[3]), "storage": {}}
+			if s[0] == &"lamp":
+				record["on"] = true
+			GameState.furniture.append(record)
+
+
+func populate(room: Node3D, place: String) -> void:
+	ensure_furnished(place)
 	var moved := 0
 	for record in records_in(place):
 		var p: Array = record["pos"]

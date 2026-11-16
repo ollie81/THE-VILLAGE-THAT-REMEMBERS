@@ -314,7 +314,7 @@ func get_interaction_verb() -> String:
 		&"well":
 			return "Water"
 		&"house", &"house_medium", &"house_large", &"manor":
-			return "Enter"
+			return "Knock" if Population.is_given_house(record) and not _visiting_hours() else "Enter"
 		&"cottage":
 			return "Enter"
 		&"bench":
@@ -359,6 +359,10 @@ func get_interaction_prompt() -> String:
 		&"well":
 			return "Draw water for the crops"
 		&"house", &"house_medium", &"house_large", &"manor":
+			if Population.is_given_house(record):
+				var names := Population.residents_of(home_id()).map(func(id): return Population.get_person(String(id)).first_name)
+				var who := " and ".join(names) if not names.is_empty() else "nobody right now"
+				return ("Visit %s  (home of %s)" % [Population.house_label(record), who]) if _visiting_hours() else "%s  (everyone's asleep)" % Population.house_label(record)
 			return "Enter your %s" % String(info["name"]).to_lower() + ("  (bed's inside)" if _is_night() else "")
 		&"bench":
 			return "Sit and rest"
@@ -378,6 +382,11 @@ func get_interaction_prompt() -> String:
 				return "Enter the cottage  (nobody lives here yet; room for %d)" % Population.COTTAGE_CAPACITY
 			return "Enter the cottage  (home of %s)" % ", ".join(names)
 	return String(info["name"])
+
+
+## Visiting hours for houses villagers live in (as for the founders' homes).
+static func _visiting_hours() -> bool:
+	return WorldClock.time_of_day >= Interiors.VISIT_FROM and WorldClock.time_of_day < Interiors.VISIT_UNTIL
 
 
 ## The room behind this home's door ("player", or "cottage_<uid>": every
@@ -542,6 +551,9 @@ func use(actor: Node = null) -> String:
 			_notify("You watered %d farm plot%s." % [watered, "" if watered == 1 else "s"] if watered > 0 else "Fresh, cold water. Plant some crops and it will help them grow.")
 			return "watered"
 		&"house", &"house_medium", &"house_large", &"manor":
+			if Population.is_given_house(record) and actor == GameManager.player and not _visiting_hours():
+				_notify("You knock softly. No answer: they're asleep. Come back in the morning.")
+				return "knocked"
 			if Interiors.instance and actor == GameManager.player:
 				Interiors.instance.enter(Furnishings.place_of(record), doorstep(), rotation.y)
 				return "entered"

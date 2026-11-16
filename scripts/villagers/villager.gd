@@ -12,7 +12,9 @@ signal activity_changed(villager: Villager, description: String)
 ## Walked off the edge of the map after leaving the village.
 signal departed(villager: Villager)
 
-enum State { IDLE, TRAVELING, PERFORMING, INSIDE, INTERACTING }
+## INSIDE: in a home, out of sight. HOME: inside a house the player is in
+## (seen in its rooms, moved by HomeLife).
+enum State { IDLE, TRAVELING, PERFORMING, INSIDE, INTERACTING, HOME }
 
 const ARRIVE_DISTANCE := 0.2
 const DECISION_INTERVAL := 1.0
@@ -83,6 +85,8 @@ var _bubble_time: float = 0.0
 ## When they last said something out loud (so they don't chatter nonstop).
 var last_spoke_msec: int = -100000
 var _physics_frame: int = 0
+## Walking the last steps through a house's doorway (then going in).
+var _entering_door: bool = false
 
 
 func get_villager_id() -> StringName:
@@ -184,7 +188,8 @@ func _place_for_current_time() -> void:
 	var spot := navigation.get_spot(_location_id, _spot_index)
 	_look_target = navigation.get_spot_look(_location_id, _spot_index)
 	global_position = VillageLayout.ground_point(spot.x, spot.z)
-	if current_activity.goes_indoors() and navigation.is_inside_location(_location_id):
+	var house := HomeLife.is_house_home(_location_id) and HomeLife.home_available(_location_id)
+	if (current_activity.goes_indoors() and navigation.is_inside_location(_location_id)) or (house and current_activity.kind == &"rest"):
 		_enter_house()
 	else:
 		_begin_performing()
@@ -254,7 +259,7 @@ func _process(delta: float) -> void:
 ## Close people get the expressive face and smooth animation; distant or
 ## off-screen people get a simple head and fewer animation updates.
 func _update_detail() -> void:
-	if state == State.INSIDE:
+	if state == State.INSIDE or not visible:
 		model.set_detail(CharacterModel.Detail.FAR, false)
 		return
 	var camera := get_viewport().get_camera_3d()
@@ -405,6 +410,8 @@ func set_home(home_location: String) -> void:
 func leave(exit_point: Vector3) -> void:
 	_leaving = true
 	task = {}
+	if state == State.HOME and HomeLife.instance:
+		HomeLife.instance.release(self, true)
 	if state == State.INSIDE:
 		_leave_house()
 	navigation.release_spot(_location_id, _spot_index, data.id)
@@ -436,22 +443,95 @@ func _think() -> void:
 		task = {}
 		current_activity = null
 	var desired := brain.choose_activity(self, WorldClock.time_of_day)
+	if HomeLife.instance:
+		desired = HomeLife.instance.override_activity(self, desired)
 	if desired and (current_activity == null or desired.key() != current_activity.key()):
 		start_activity(desired)
+	elif state == State.INSIDE and current_activity and current_activity.location_id == "home" and _resolve_location(current_activity) != _location_id:
+		# Home moved (a house being expanded, or ready again): go there.
+		start_activity(current_activity)
 
 
 func start_activity(activity: VillagerActivity) -> void:
 	current_activity = activity
+	# Already in the right house for it (asleep, now resting): stay in.
+	if (state == State.INSIDE or state == State.HOME) and _location_id != "" and _is_indoor_here(activity, _location_id) \
+			and _resolve_location(activity) == _location_id:
+		if state == State.HOME and HomeLife.instance:
+			HomeLife.instance.replan(self)
+		activity_changed.emit(self, get_activity_description())
+		return
+	if state == State.HOME and HomeLife.instance:
+		# Seen indoors: walk to the door first (HomeLife calls exit_home).
+		HomeLife.instance.walk_out(self)
+		activity_changed.emit(self, get_activity_description())
+		return
+	var from_house := state == State.INSIDE and HomeLife.is_house_home(_location_id)
+	var house := _location_id
 	if state == State.INSIDE:
 		_leave_house()
+	if from_house:
+		_step_out_of(house)
 	_travel_to(_resolve_location(activity))
+	if from_house:
+		_route = _route_out_of(house, _route)
 	activity_changed.emit(self, get_activity_description())
+
+
+## Does `activity` happen indoors at `location_id`?
+func _is_indoor_here(activity: VillagerActivity, location_id: String) -> bool:
+	if activity.is_sleep():
+		return true
+	if activity.goes_indoors() and navigation.is_inside_location(location_id):
+		return true
+	return activity.kind == &"rest" and HomeLife.is_house_home(location_id) and HomeLife.home_available(location_id)
+
+
+## Called by HomeLife when they reach the inside of the front door.
+func exit_home() -> void:
+	var house := _location_id
+	state = State.IDLE
+	visible = true
+	_collision.set_deferred("disabled", false)
+	interactable.enabled = true
+	model.position = Vector3.ZERO
+	model.set_talking(false)
+	_step_out_of(house)
+	_travel_to(_resolve_location(current_activity))
+	_route = _route_out_of(house, _route)
+	activity_changed.emit(self, get_activity_description())
+
+
+## Stands in the house's doorway, outside.
+func _step_out_of(home_id: String) -> void:
+	var door: Dictionary = HomeLife.door_of(home_id)
+	if not door.is_empty():
+		var at: Vector3 = door["threshold"]
+		global_position = VillageLayout.ground_point(at.x, at.z)
+		rotation.y = float(door["yaw"])
+
+
+## Leaving a house: out of the door, down the front path, then the route.
+func _route_out_of(home_id: String, route: PackedVector3Array) -> PackedVector3Array:
+	var door: Dictionary = HomeLife.door_of(home_id)
+	if door.is_empty():
+		return route
+	var out := PackedVector3Array()
+	for key in ["step", "approach"]:
+		var p: Vector3 = door[key]
+		out.append(Vector3(p.x, 0.0, p.z))
+	if not route.is_empty():
+		out.append_array(HomeLife.around(home_id, out[out.size() - 1], route[0]))
+	out.append_array(route)
+	return out
 
 
 ## Starts a job the player asked for: walk to `point`, then work there.
 func assign_task(new_task: Dictionary) -> void:
 	task = new_task
 	current_activity = task["activity"]
+	if state == State.HOME and HomeLife.instance:
+		HomeLife.instance.release(self, true)
 	if state == State.INSIDE:
 		_leave_house()
 	if state == State.INTERACTING:
@@ -486,7 +566,9 @@ func _resolve_location(activity: VillagerActivity) -> String:
 		options.erase(_location_id)
 		return String(options[_rng.randi_range(0, options.size() - 1)])
 	if activity.location_id == "home":
-		return data.home_location
+		return HomeLife.home_for(self) if HomeLife.instance else data.home_location
+	if HomeLife.is_house_home(activity.location_id) and not HomeLife.home_available(activity.location_id):
+		return HomeLife.home_for(self) if HomeLife.instance else data.home_location
 	# Evening chats: some sit on the logs round the fire.
 	if activity.kind == &"socialize" and activity.location_id == "plaza" and _rng.randf() < 0.45:
 		return "plaza_seats"
@@ -506,8 +588,20 @@ func _travel_to(location_id: String, exclude_spot: int = -1) -> void:
 	var spot := navigation.get_spot(location_id, _spot_index)
 	_look_target = navigation.get_spot_look(location_id, _spot_index)
 	_route = navigation.find_route(global_position, spot)
+	# Houses: come up the front path to the door (never through the house).
+	var door: Dictionary = HomeLife.door_of(location_id)
+	if not door.is_empty() and _route.size() >= 1:
+		var approach: Vector3 = door["approach"]
+		var before: Vector3 = _route[_route.size() - 2] if _route.size() >= 2 else Vector3(global_position.x, 0.0, global_position.z)
+		var detour := HomeLife.around(location_id, before, approach)
+		detour.append(Vector3(approach.x, 0.0, approach.z))
+		var last := _route[_route.size() - 1]
+		_route.resize(_route.size() - 1)
+		_route.append_array(detour)
+		_route.append(last)
 	_route_index = 0
 	_blocked_time = 0.0
+	_entering_door = false
 	state = State.TRAVELING
 
 
@@ -545,7 +639,20 @@ func _arrive() -> void:
 		departed.emit(self)
 		queue_free()
 		return
-	if current_activity.is_sleep() or (current_activity.goes_indoors() and navigation.is_inside_location(_location_id)):
+	var house := HomeLife.is_house_home(_location_id) and HomeLife.home_available(_location_id)
+	var indoors := current_activity.is_sleep() or (current_activity.goes_indoors() and navigation.is_inside_location(_location_id)) \
+		or (house and current_activity.kind == &"rest")
+	if indoors and house and not _entering_door:
+		# Through the doorway, then inside.
+		var door: Dictionary = HomeLife.door_of(_location_id)
+		var threshold: Vector3 = door["threshold"]
+		_route = PackedVector3Array([Vector3(threshold.x, 0.0, threshold.z)])
+		_route_index = 0
+		_entering_door = true
+		state = State.TRAVELING
+		return
+	_entering_door = false
+	if indoors:
 		_enter_house()
 	else:
 		_begin_performing()
@@ -614,6 +721,8 @@ func _enter_house() -> void:
 	_collision.set_deferred("disabled", true)
 	interactable.enabled = false
 	model.set_animation(&"idle")
+	if HomeLife.instance:
+		HomeLife.instance.arrived_inside(self, _location_id)
 
 
 func _leave_house() -> void:

@@ -50,6 +50,9 @@ func _ready() -> void:
 	world.add_child(Interiors.new())
 	world.add_child(Furnishings.new())
 	world.add_child(FurnishMode.new())
+	var home_life := HomeLife.new()
+	home_life.from_dict(SaveService.section("home_life"))
+	world.add_child(home_life)
 	world.add_child(Fishing.new())
 	world.add_child(Treasure.new())
 	var thornwood := Thornwood.new()
@@ -150,6 +153,9 @@ func _spawn_villagers() -> void:
 			data.appearance = person.current_look()
 			data.age = person.age()
 			villager.visual_stage = AgeLook.visual_stage(person.age(), person.look_age)
+			# Where they live now (a house the player gave them, a cottage...).
+			if person.home != "":
+				data.home_location = person.home
 		villager.data = data
 		villager.navigation = navigation
 		villagers.add_child(villager)
