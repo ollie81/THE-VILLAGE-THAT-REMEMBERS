@@ -13,6 +13,8 @@ signal person_changed(person: Person)
 signal person_removed(person: Person, reason: String)
 signal event_logged(event: Dictionary)
 signal housing_changed
+## The player gave `record` (a house) to `person`'s household.
+signal house_given(record: Dictionary, person: Person)
 
 ## Soft cap for affordable phones: no more travellers once this many live here.
 const MAX_POPULATION := 50
@@ -312,8 +314,12 @@ func give_house(record: Dictionary, person: Person) -> String:
 			old["owner"] = "player"
 			old.erase("previous_homes")
 			home_owners.erase(String(old_home))
+	record["moved_day"] = WorldClock.day
+	record["gift_day"] = WorldClock.day
+	record.erase("thanked")
 	log_event("new_home", "%s moved into %s." % [person.first_name, house_label(record)], [person.id])
 	housing_changed.emit()
+	house_given.emit(record, person)
 	return ""
 
 

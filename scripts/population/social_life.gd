@@ -113,6 +113,10 @@ func _update_happiness(villager, person: Person) -> void:
 	else:
 		person.homeless_days = 0
 		happiness += 10.0
+		# A house the player built and gave them: bigger houses, happier people.
+		var house := Population.house_record(person.home)
+		if not house.is_empty() and Population.is_given_house(house):
+			happiness += float(HomeLife.HOUSE_HAPPINESS.get(String(house.get("type", "house")), 6.0))
 	happiness += minf(friends_of(villager).size() * 5.0, 20.0)
 	if person.partner != "":
 		happiness += 10.0

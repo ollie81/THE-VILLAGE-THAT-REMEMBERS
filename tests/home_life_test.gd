@@ -166,10 +166,13 @@ func _assigning() -> void:
 	var confirm: PanelContainer = HousePanel.instance._confirm
 	_check(confirm.visible and HousePanel.instance._confirm_text.text.contains("Mara"), "a confirmation comes first: %s" % HousePanel.instance._confirm_text.text)
 	_check(person.home == old_home, "nothing changes before confirming")
+	var affection_before: float = mara.mind.get_affection(GameManager.PLAYER_ID)
+	_check(HousePanel.instance.find_child("Perks", true, false) != null, "the panel says what giving a house brings")
 	(HousePanel.instance.find_child("ConfirmYes", true, false) as Button).pressed.emit()
 	await _frames(2)
 	_check(person.home == _home_id and Population.is_given_house(_record), "confirmed: the house is Mara's")
 	_check(mara.data.home_location == _home_id, "and she knows it's her home now")
+	_check(mara.mind.get_affection(GameManager.PLAYER_ID) >= affection_before + HomeLife.GIVE_AFFECTION - 0.01, "she's much fonder of you (+%d)" % int(HomeLife.GIVE_AFFECTION))
 	_check(Population.residents_of(old_home).find("mara") < 0, "she no longer lives at her old home")
 	_check(Population.homes().any(func(h): return h["id"] == _home_id and h["kind"] == "house"), "the house counts as a home in the village")
 	HousePanel.instance.close_panel()
@@ -215,6 +218,10 @@ func _walking_home() -> void:
 		var local := _house.global_transform.affine_inverse() * mara.global_position
 		if absf(local.x) < footprint.x * 0.5 - 0.3 and absf(local.z) < footprint.y * 0.5 - 0.6 and mara.visible:
 			through_wall[0] += 1
+	var credits_before := VillageCredits.instance.balance
+	var gift := HomeLife.trade_gift(Population.get_person("mara"))
+	var res: StringName = gift.keys()[0]
+	var res_before := GameState.count(res)
 	var arrived := await _until(func(): return mara.state == Villager.State.INSIDE, 120.0, watch)
 	_check(arrived, "at bedtime Mara walks home and goes in (state %d, at %s)" % [mara.state, mara.get_location_id()])
 	_check(mara.get_location_id() == _home_id, "into her new house, not her old one")
@@ -223,6 +230,28 @@ func _walking_home() -> void:
 	_check(Vector2(mara.global_position.x - threshold.x, mara.global_position.z - threshold.z).length() < 0.5,
 		"she went in through the front door")
 	_check(mara.current_activity.is_sleep(), "to sleep")
+	_check(VillageCredits.instance.balance == credits_before + HomeLife.THANKS_CREDITS and GameState.count(res) == res_before + int(gift[res]),
+		"coming home the first time, she thanks you: +%d credits and %s" % [HomeLife.THANKS_CREDITS, GameState.cost_text(gift)])
+	credits_before = VillageCredits.instance.balance
+	HomeLife.instance.arrived_inside(mara, _home_id)
+	_check(VillageCredits.instance.balance == credits_before, "only once")
+	# Happier at home.
+	SocialLife.instance._update_happiness(mara, Population.get_person("mara"))
+	var happy := Population.get_person("mara").happiness
+	var keep := Population.get_person("mara").home
+	Population.get_person("mara").home = "home_mara"
+	SocialLife.instance._update_happiness(mara, Population.get_person("mara"))
+	var happy_old := Population.get_person("mara").happiness
+	Population.get_person("mara").home = keep
+	_check(happy >= happy_old + HomeLife.HOUSE_HAPPINESS["house_medium"] - 0.01 or happy >= 100.0, "she's happier in the house you gave her (%.0f vs %.0f)" % [happy, happy_old])
+	# A gift every few days.
+	res_before = GameState.count(res)
+	var day0 := WorldClock.day
+	HomeLife.instance._on_day_changed(day0 + 1)
+	_check(GameState.count(res) == res_before, "no gift the next day")
+	HomeLife.instance._on_day_changed(day0 + HomeLife.GIFT_EVERY_DAYS)
+	_check(GameState.count(res) == res_before + int(gift[res]), "after %d days she leaves you a gift from her work" % HomeLife.GIFT_EVERY_DAYS)
+	_record["gift_day"] = WorldClock.day
 
 
 # --- Sleeping -----------------------------------------------------------------------------

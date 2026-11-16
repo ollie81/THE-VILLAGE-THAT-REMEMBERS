@@ -37,6 +37,23 @@ const VISIT_AFFECTION := 3.0
 const INVITE_AFFECTION := 6.0
 const SEATS := ["chair", "stool", "settle", "bench_seat"]
 
+## What giving a house brings:
+## - friendship: a big boost with the new owner (and their household);
+const GIVE_AFFECTION := 15.0
+const GIVE_AFFECTION_FAMILY := 8.0
+## - a thank-you when they first come home: credits and something from their trade;
+const THANKS_CREDITS := 15
+## - happier people (added to their daily happiness, by house size);
+const HOUSE_HAPPINESS := {"house": 6.0, "house_medium": 8.0, "house_large": 10.0, "manor": 12.0}
+## - and every few days, a small gift from their work.
+const GIFT_EVERY_DAYS := 3
+const TRADE_GIFTS := {
+	"farmer": {&"food": 4}, "fisher": {&"food": 4}, "cook": {&"food": 5}, "herbalist": {&"herbs": 3},
+	"woodcutter": {&"wood": 6}, "builder": {&"wood": 4, &"stone": 2}, "stonemason": {&"stone": 5},
+	"craftsman": {&"wood": 3, &"stone": 2}, "trader": {&"food": 2, &"herbs": 2}, "weaver": {&"herbs": 2, &"food": 2},
+}
+const DEFAULT_GIFT := {&"food": 2, &"wood": 2}
+
 ## Lines for home life, picked so the same person doesn't repeat themselves.
 const WELCOME_PLAYER := {
 	"close": ["You're here! Come in, come in.", "I was hoping you'd drop by.", "Sit anywhere, you know you're welcome."],
@@ -83,6 +100,8 @@ func _ready() -> void:
 		StructureManager.instance.structure_moved.connect(func(_s): register_all())
 		StructureManager.instance.structure_removed.connect(_on_structure_removed)
 	Population.housing_changed.connect(register_all)
+	Population.house_given.connect(_on_house_given)
+	WorldClock.day_changed.connect(_on_day_changed)
 	register_all()  # before the villagers are placed
 
 
@@ -216,6 +235,71 @@ func _on_structure_removed(structure) -> void:
 		GameManager.notify("%s moved back to their old home." % ", ".join(moved.map(func(p): return p.first_name)))
 
 
+# --- What a house brings --------------------------------------------------------------------
+
+static func trade_gift(person: Person) -> Dictionary:
+	return TRADE_GIFTS.get(person.profession, DEFAULT_GIFT) if person else DEFAULT_GIFT
+
+
+func _on_house_given(record: Dictionary, person: Person) -> void:
+	var home_id := Population.cottage_home_id(record)
+	for id in Population.residents_of(home_id):
+		var villager = GameManager.get_villager(StringName(String(id)))
+		if villager == null:
+			continue
+		var boost := GIVE_AFFECTION if String(id) == person.id else GIVE_AFFECTION_FAMILY
+		villager.mind.adjust_opinion(GameManager.PLAYER_ID, boost, boost * 0.6)
+		villager.mind.record_interaction(GameManager.PLAYER_ID, "gave_house", WorldClock.day, WorldClock.time_of_day)
+		GameManager.opinion_changed.emit(villager, villager.mind.get_affection(GameManager.PLAYER_ID), villager.mind.get_trust(GameManager.PLAYER_ID))
+	var owner = GameManager.get_villager(StringName(person.id))
+	if owner:
+		owner.say("A house of our own? Thank you! I'll never forget this.")
+
+
+## The first time the new owner comes home, they thank you: credits and
+## something from their trade (once per household and house).
+func _thank_for_house(villager, home_id: String) -> void:
+	var record := Population.house_record(home_id)
+	if record.is_empty() or not Population.is_given_house(record) or String(Population.home_owners.get(home_id, "")) != String(villager.data.id):
+		return
+	var thanked: Array = record.get("thanked", []) if record.get("thanked", []) is Array else []
+	if thanked.has(String(villager.data.id)):
+		return
+	thanked.append(String(villager.data.id))
+	record["thanked"] = thanked
+	var gift := trade_gift(villager.person)
+	_give(gift)
+	if VillageCredits.instance:
+		VillageCredits.instance.earn(THANKS_CREDITS, "house_thanks_%s_%s" % [home_id, String(villager.data.id)])
+	GameManager.notify("%s settled into the house and left you a thank-you: +%d Village Credits and %s." % [
+		villager.data.display_name, THANKS_CREDITS, GameState.cost_text(gift)])
+
+
+## Every few days each household in a house you gave leaves a little
+## something from their work.
+func _on_day_changed(day: int) -> void:
+	if StructureManager.instance == null:
+		return
+	for record: Dictionary in GameState.structures:
+		if not Population.is_given_house(record) or not bool(record.get("complete", false)):
+			continue
+		var home_id := Population.cottage_home_id(record)
+		var owner := Population.get_person(String(Population.home_owners.get(home_id, "")))
+		if owner == null or not owner.is_resident() or day - int(record.get("gift_day", day)) < GIFT_EVERY_DAYS:
+			continue
+		record["gift_day"] = day
+		var gift := trade_gift(owner)
+		_give(gift)
+		GameManager.notify("%s left you a gift from their %s: %s." % [owner.first_name, Professions.label(owner.profession).to_lower() + "'s work", GameState.cost_text(gift)])
+
+
+static func _give(items: Dictionary) -> void:
+	CreditRewards.quiet = true
+	for r in items:
+		GameState.add(r, int(items[r]))
+	CreditRewards.quiet = false
+
+
 # --- Beds -----------------------------------------------------------------------------------
 
 ## The bed `person_id` sleeps in, in the house `home_id` (a furniture record),
@@ -302,6 +386,8 @@ func override_activity(villager, desired: VillagerActivity) -> VillagerActivity:
 ## A villager just went inside `home_id` (through the door, out of sight).
 func arrived_inside(villager, home_id: String) -> void:
 	var id := String(villager.data.id)
+	if villager.person and villager.person.home == home_id:
+		_thank_for_house(villager, home_id)
 	if invites.has(id) and String(invites[id]["home"]) == home_id and not bool(invites[id]["arrived"]):
 		invites[id]["arrived"] = true
 		villager.mind.adjust_opinion(GameManager.PLAYER_ID, INVITE_AFFECTION, INVITE_AFFECTION * 0.5)

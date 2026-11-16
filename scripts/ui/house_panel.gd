@@ -236,6 +236,12 @@ func _refresh() -> void:
 				_refresh())
 			grid.add_child(b)
 	_list.add_child(UiTheme.label("Give this house to a villager", 21, UiTheme.ACCENT))
+	var perks := UiTheme.label("They'll be close friends with you (+%d), happier at home, thank you with %d Village Credits and something from their trade when they move in, and leave you a gift every %d days." % [
+		int(HomeLife.GIVE_AFFECTION), HomeLife.THANKS_CREDITS, HomeLife.GIFT_EVERY_DAYS], 16, UiTheme.MUTED)
+	perks.name = "Perks"
+	perks.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	perks.custom_minimum_size = Vector2(780, 0)
+	_list.add_child(perks)
 	for person: Person in Population.eligible_for_house():
 		if residents.has(person):
 			continue
