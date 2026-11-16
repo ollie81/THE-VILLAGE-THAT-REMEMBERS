@@ -7,3 +7,6 @@
 *.aab
 export_credentials.cfg
 /build/
+
+# AdMob IDs are written here by CI from secrets; never commit real IDs.
+/config/admob.cfg

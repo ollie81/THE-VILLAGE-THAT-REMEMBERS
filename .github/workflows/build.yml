@@ -99,8 +99,36 @@ jobs:
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
 
+      - name: AdMob settings (real IDs only from secrets; test IDs otherwise)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+        run: |
+          mkdir -p config
+          {
+            echo "[units]"
+            echo "rewarded=\"${ADMOB_REWARDED_ID}\""
+            echo "interstitial=\"${ADMOB_INTERSTITIAL_ID}\""
+            echo "banner=\"${ADMOB_BANNER_ID}\""
+          } > config/admob.cfg
+          if echo "$ADMOB_APP_ID" | grep -Eq '^ca-app-pub-[0-9]+~[0-9]+$'; then
+            sed -i "s|^const APPLICATION_ID := \".*\"|const APPLICATION_ID := \"${ADMOB_APP_ID}\"|" addons/admob/android/config.gd
+            echo "Using your AdMob App ID from secrets."
+          else
+            echo "No ADMOB_APP_ID secret: using Google's test App ID."
+          fi
+          grep -c "ca-app-pub" addons/admob/android/config.gd
+
       - name: Import project
         run: godot --headless --path . --import || true
+
+      - name: Install the Android build template (needed for the AdMob SDK)
+        run: |
+          godot --headless --path . --install-android-build-template --quit || true
+          test -f android/build/build.gradle
+          ls android/build | head
 
       - name: Stamp the build
         env:
@@ -116,6 +144,17 @@ jobs:
           godot --headless --path . --export-debug "Android" build/android/TheVillageThatRemembers.apk
           ls -la build/android
           test -s build/android/TheVillageThatRemembers.apk
+
+      - name: Check the Google Mobile Ads SDK is in the APK
+        run: |
+          APK=build/android/TheVillageThatRemembers.apk
+          unzip -l "$APK" | grep "classes" || true
+          N=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "com/google/android/gms/ads" || true)
+          echo "Mobile Ads SDK references in the app code: $N"
+          test "$N" -gt 0
+          P=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "poingstudios" || true)
+          echo "AdMob plugin references: $P"
+          test "$P" -gt 0
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

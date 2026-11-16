@@ -70,3 +70,7 @@ environment/defaults/default_clear_color=Color(0.55, 0.7, 0.85, 1)
 [audio]
 
 general/text_to_speech=true
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg")

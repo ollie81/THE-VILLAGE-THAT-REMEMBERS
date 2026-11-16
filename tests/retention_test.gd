@@ -337,8 +337,9 @@ func _stories() -> void:
 # --- Rewarded ads -------------------------------------------------------------------
 
 func _ads() -> void:
-	_check(not ResourceLoader.exists(AdRewards.ADMOB_API + "MobileAds.gd") and AdRewards.provider == AdRewards.Provider.SIMULATED,
-		"the AdMob plugin isn't installed: debug builds use a simulated ad")
+	_check(ResourceLoader.exists(AdRewards.ADMOB_API + "MobileAds.gd"), "the AdMob plugin (Google Mobile Ads SDK) is installed")
+	_check(not Engine.has_singleton("PoingGodotAdMob") and AdRewards.provider == AdRewards.Provider.SIMULATED,
+		"on a computer (no Android SDK), debug builds use a simulated ad")
 	_check(AdRewards.rewarded_unit_id(true) == AdRewards.TEST_REWARDED_UNIT_ID, "debug builds always use Google's test ad unit")
 	_check(AdRewards.PRODUCTION_REWARDED_UNIT_ID != "" or AdRewards.rewarded_unit_id(false) == AdRewards.TEST_REWARDED_UNIT_ID,
 		"release builds use test ads until a real unit ID is supplied")

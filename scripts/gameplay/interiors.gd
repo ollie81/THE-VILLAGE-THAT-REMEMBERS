@@ -206,6 +206,9 @@ func leave() -> void:
 	left.emit(home)
 	await _fade_to(0.0)
 	_busy = false
+	# A natural pause (just stepped outside): an interstitial may show here if
+	# one is due (AdRewards keeps them rare and never during play).
+	AdRewards.maybe_show_interstitial(&"left_house")
 
 
 ## Upright, still, no leftover sitting, lying or action pose.
@@ -661,7 +664,8 @@ func _sleep(actor, bed: FurniturePiece = null) -> void:
 	actor.model.set_animation(&"sleep")
 	await get_tree().create_timer(1.0).timeout
 	await _fade_to(1.0)
-	if PlayerController.is_night():
+	var overnight := PlayerController.is_night()
+	if overnight:
 		actor.sleep_until_morning(true)
 	else:
 		WorldClock.advance(2.0)
@@ -672,6 +676,8 @@ func _sleep(actor, bed: FurniturePiece = null) -> void:
 	_place_player_standing(Vector3(beside.x, ROOM_ORIGIN.y + 0.05, beside.z), bed.global_rotation.y + PI * 0.5)
 	await _fade_to(0.0)
 	_busy = false
+	if overnight:
+		AdRewards.maybe_show_interstitial(&"woke_up")
 
 
 ## A clear spot next to a bed (either side, or the foot), in world space.
