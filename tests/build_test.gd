@@ -300,8 +300,8 @@ func _run() -> void:
 	await _frames(10)
 
 	# --- The player speaks their answers ------------------------------------------------------
-	_check(DialoguePanel.is_spoken_answer("I'll keep watch with you tonight.") and not DialoguePanel.is_spoken_answer("Pay them a compliment.")
-		and not DialoguePanel.is_spoken_answer("Be kind..."), "answers in words are spoken; actions aren't")
+	_check(Conversation.kind_of({"text": "I'll keep watch with you tonight.", "reply": []}) == "say" and Conversation.kind_of({"text": "Pay them a compliment.", "action": "deed"}) == "do"
+		and Conversation.kind_of({"text": "Be kind...", "action": "kind"}) == "menu", "answers in words are spoken; actions and menus aren't (by what they do, not their wording)")
 	var dialogue: DialoguePanel = _main.find_child("DialoguePanel", true, false)
 	var talk_to = GameManager.get_villager(&"nia")
 	talk_to.global_position = player.global_position + Vector3(1.5, 0, 0)
@@ -315,7 +315,7 @@ func _run() -> void:
 		guard += 1
 	var spoken := -1
 	for i in dialogue._conversation.choices.size():
-		if DialoguePanel.is_spoken_answer(dialogue._conversation.choice_texts()[i]):
+		if Conversation.kind_of(dialogue._conversation.choices[i]) == "say":
 			spoken = i
 			break
 	if spoken >= 0:

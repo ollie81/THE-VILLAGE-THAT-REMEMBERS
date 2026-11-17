@@ -226,7 +226,9 @@ func _physics_process(frame_delta: float) -> void:
 			return
 		if is_instance_valid(_talk_partner):
 			_face_towards(_talk_partner.global_position, delta)
-		model.set_animation(&"talk")
+		# Listening; the dialogue panel makes them talk (mouth and gestures)
+		# only while it's their line, so two people never speak at once.
+		model.set_animation(&"idle")
 		return
 
 	_decision_timer -= delta

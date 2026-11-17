@@ -13,6 +13,18 @@ var choices: Array = []
 var topic_id: String = ""
 ## Shown after a topic's reply (e.g. "Could you help me with something?").
 var followup: Array = []
+## A yes/no question the villager is waiting on ("" if none).
+var pending_question: String = ""
+## Set by a typed goodbye (or an insult too far): the conversation ends
+## after the villager's last line.
+var ending: bool = false
+
+## What a choice is, from what it does (never guessed from its words):
+##   "say"  words the player speaks (shown as "You", spoken, mouth moves)
+##   "do"   something the player does (narrated, not spoken)
+##   "menu" opens or leaves a list of answers (nothing is said)
+const DO_ACTIONS := ["deed"]
+const MENU_ACTIONS := ["kind", "unkind", "more", "back"]
 
 var _villager
 var _actor_id: String
@@ -33,6 +45,57 @@ func next_line() -> String:
 
 func has_choices() -> bool:
 	return lines.is_empty() and not choices.is_empty()
+
+
+static func kind_of(choice: Dictionary) -> String:
+	if choice.has("kind"):
+		return String(choice["kind"])
+	var action := String(choice.get("action", ""))
+	if action in DO_ACTIONS:
+		return "do"
+	if action in MENU_ACTIONS:
+		return "menu"
+	return "say"
+
+
+## How a "do" choice reads as narration: "You pay Nia a compliment."
+static func narration(choice: Dictionary, villager_name: String) -> String:
+	var t := String(choice.get("text", "")).strip_edges()
+	if t == "":
+		return ""
+	t = t.substr(0, 1).to_lower() + t.substr(1)
+	t = t.replace(" them ", " %s " % villager_name).replace(" them.", " %s." % villager_name).replace(" them:", " %s:" % villager_name)
+	return "You " + t
+
+
+## The player typed something. Returns { ok, error, said }: the villager's
+## answer is queued as lines (see TalkBrain). Nothing typed: not ok.
+func say_typed(text: String) -> Dictionary:
+	var said := TalkBrain.clean(text)
+	if said == "":
+		return {"ok": false, "error": "Type something to say first.", "said": ""}
+	if _villager == null:
+		return {"ok": false, "error": "There's nobody to talk to.", "said": said}
+	var special := choices.any(func(c): return String(c.get("action", "")) in ["welcome", "turn_away", "ask_stay"]) or topic_id == "apology"
+	var keep := choices.duplicate()
+	var answer := TalkBrain.respond(_villager, said, self)
+	for line in answer["lines"]:
+		lines.append(String(line))
+	if answer["choices"] != null:
+		choices = answer["choices"]
+	elif bool(answer["end"]):
+		choices = []
+		ending = true
+	elif special:
+		choices = keep
+	else:
+		choices = DialogueService.menu_for(_villager)
+	if String(answer["intent"]) == "apology" and topic_id == "apology" and not _villager.mind.is_hostile(_actor_id):
+		topic_id = ""
+		choices = DialogueService.menu_for(_villager)
+	followup = []
+	GameManager.opinion_changed.emit(_villager, 0.0, 0.0)
+	return {"ok": true, "error": "", "said": said, "intent": answer["intent"]}
 
 
 func choice_texts() -> PackedStringArray:
