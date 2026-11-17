@@ -52,13 +52,17 @@ static func footprint(type: StringName, yaw: float) -> Vector2:
 
 
 ## Where someone sits on a seat (local), facing +Z, and the seat's height.
+## Where the hips go on a seat (local) and the seat's height: on seats with
+## a backrest, close enough in front of it for the back to rest against it.
 static func seat(type: StringName) -> Array:
 	match type:
-		&"settle", &"bench_seat":
-			return [Vector3(0, 0, 0.08), 0.48]
+		&"settle":
+			return [Vector3(0, 0, -0.1), 0.48]
+		&"bench_seat":
+			return [Vector3(0, 0, -0.08), 0.48]
 		&"stool":
 			return [Vector3.ZERO, 0.46]
-	return [Vector3(0, 0, 0.05), 0.47]
+	return [Vector3(0, 0, -0.1), 0.47]
 
 
 ## The look, as a MeshBuilder (local, facing +Z, standing on y = 0), plus

@@ -748,7 +748,7 @@ func _start_doing(villager) -> void:
 			var seat: Vector3 = piece.global_transform * (s[0] as Vector3)
 			villager.global_position = Vector3(seat.x, Interiors.ROOM_ORIGIN.y, seat.z)
 			villager.rotation.y = piece.global_rotation.y
-			villager.model.position = Vector3(0, villager.model.seat_offset(float(s[1])), 0)
+			villager.model.position = villager.model.seat_pose(float(s[1]))
 
 
 func _doing(villager, agent: Dictionary, delta: float) -> void:

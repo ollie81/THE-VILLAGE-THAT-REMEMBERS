@@ -582,8 +582,8 @@ func _resolve_location(activity: VillagerActivity) -> String:
 
 
 func _travel_to(location_id: String, exclude_spot: int = -1) -> void:
-	if model.position.y != 0.0:
-		model.position.y = 0.0
+	if model.position != Vector3.ZERO:
+		model.position = Vector3.ZERO
 		model.set_talking(false)
 	navigation.release_spot(_location_id, _spot_index, data.id)
 	_location_id = location_id
@@ -688,9 +688,9 @@ func _process_performing(delta: float) -> void:
 		elif animation == &"idle":
 			model.set_talking(false)
 		animation = &"sit"
-		model.position.y = model.seat_offset(float(VillageLayout.get_locations()["plaza_seats"]["seat_height"]))
-	elif model.position.y != 0.0:
-		model.position.y = 0.0
+		model.position = model.seat_pose(float(VillageLayout.get_locations()["plaza_seats"]["seat_height"]))
+	elif model.position != Vector3.ZERO:
+		model.position = Vector3.ZERO
 		model.set_talking(false)
 	model.set_animation(animation)
 	_perform_timer -= delta

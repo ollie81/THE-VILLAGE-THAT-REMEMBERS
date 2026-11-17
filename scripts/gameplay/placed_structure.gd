@@ -566,7 +566,7 @@ func use(actor: Node = null) -> String:
 			return "home"
 		&"bench":
 			if actor and actor.has_method("sit"):
-				actor.sit({"position": global_transform * Vector3(0, 0, 0.12), "yaw": rotation.y, "height": 0.53})
+				actor.sit({"position": global_transform * Vector3(0, 0, -0.1), "yaw": rotation.y, "height": 0.53})
 			else:
 				_notify("You sit for a while and watch the village go by.")
 			return "rest"

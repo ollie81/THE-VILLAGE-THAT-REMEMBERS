@@ -376,6 +376,16 @@ func hip_clearance() -> float:
 	return SEAT_CLEARANCE * scale.y
 
 
+## The sitting clip puts the hips 33 cm behind the feet point (measured on
+## both bodies), so the model moves forward by that much: the hips land on
+## the seat point, not behind it (in the backrest).
+const SIT_HIPS_BEHIND := 0.33
+
+
+func seat_pose(seat_height: float) -> Vector3:
+	return Vector3(0, seat_offset(seat_height), SIT_HIPS_BEHIND * scale.z)
+
+
 func seat_offset(seat_height: float) -> float:
 	return seat_height + hip_clearance() - _sit_hips * scale.y
 

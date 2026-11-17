@@ -111,7 +111,7 @@ static func saved_appearance() -> CharacterAppearance:
 func set_appearance(look: CharacterAppearance) -> void:
 	var old := model
 	var yaw := old.rotation.y if old else 0.0
-	var offset_y := old.position.y if old else 0.0
+	var offset := old.position if old else Vector3.ZERO
 	var animation: StringName = old._state if old and old._state != &"" else &"idle"
 	model = CharacterModel.create(look)
 	model.name = "Model"
@@ -120,7 +120,7 @@ func set_appearance(look: CharacterAppearance) -> void:
 		old.queue_free()
 	add_child(model)
 	model.rotation.y = yaw
-	model.position.y = offset_y
+	model.position = offset
 	model.set_animation(animation)
 	if combat:
 		combat._sword = null
@@ -248,7 +248,7 @@ func sit(seat: Dictionary = {}) -> void:
 		var at: Vector3 = seat["position"]
 		global_position = Vector3(at.x, VillageLayout.get_walk_height(at.x, at.z), at.z)
 		model.rotation.y = float(seat["yaw"])
-		model.position.y = model.seat_offset(float(seat["height"]))
+		model.position = Basis(Vector3.UP, model.rotation.y) * model.seat_pose(float(seat["height"]))
 
 
 ## Lies down. At night they fall asleep and wake in the morning.
@@ -279,7 +279,7 @@ func stand_up() -> void:
 		global_position += step
 	pose = &""
 	_seat = {}
-	model.position.y = 0.0
+	model.position = Vector3.ZERO
 
 
 func _process_pose(delta: float) -> void:

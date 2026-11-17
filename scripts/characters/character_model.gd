@@ -326,6 +326,13 @@ func set_talking(talking: bool) -> void:
 
 ## How far to raise the model so the sit pose rests on a seat this high
 ## (children's hips are lower; the whole model is scaled by height).
+## Where the model goes (its own space, facing +Z) so the hips are on the
+## seat point at `seat_height`. The drawn bodies sit with the hips over their
+## feet point; see AssetCharacter for the others.
+func seat_pose(seat_height: float) -> Vector3:
+	return Vector3(0, seat_offset(seat_height), 0)
+
+
 func seat_offset(seat_height: float) -> float:
 	var hips := (_proportions.map_height(HumanoidRig.HIPS_HEIGHT) if _proportions else HumanoidRig.HIPS_HEIGHT) \
 		- 0.47 * (_proportions.leg if _proportions else 1.0)
