@@ -39,9 +39,22 @@ const INTENTS := [
 	["ask_name", "\\b(what s your name|what is your name|who are you|your name)\\b"],
 	["ask_activity", "\\b(what are you doing|what re you doing|what are you up to|what you up to|where are you going|are you busy|you busy)\\b"],
 	["ask_job", "\\b(your job|your work|your trade|what do you do|how s work|how is work|what is your job|do you work|for a living)\\b"],
+	["ask_question", "\\b(ask me something|ask me a question|ask me anything|any questions|got a question|question for me)\\b"],
+	["ask_story", "(?<!funny )\\b(story|stories|tale|tales)\\b"],
+	["ask_childhood", "\\b(childhood|when you were (young|little|a child|small|a kid)|growing up|as a child|as a kid|where did you grow up)\\b"],
+	["ask_background", "\\b(where are you from|where do you come from|where did you come from|why did you come|how did you get here|how did you end up|before you came|tell me about yourself|about yourself|your past|what brought you)\\b"],
 	["ask_family", "\\b(family|wife|husband|partner|children|kids|son|daughter|parents|mother|father|mum|mom|dad|married|baby|brother|sister)\\b"],
 	["ask_news", "\\b(news|what s new|whats new|gossip|heard anything|anything new|what s happening|what happened|anything happen|any news)\\b"],
 	["ask_worries", "\\b(worried|worry|scared|afraid|problem|trouble|upset|something wrong|what s wrong|whats wrong|bothering you|are you sad|feeling down|unhappy)\\b"],
+	["ask_hopes", "\\b(dream|dreams|hope|hopes|ambition|ambitions|future|wish|your plans|want to be|one day)\\b"],
+	["ask_home", "\\b(your house|your home|where do you live|furniture|your room|your bed|your kitchen)\\b"],
+	["ask_animals", "\\b(animal|animals|pet|pets|dog|dogs|cat|cats|horse|horses|chicken|chickens|cow|cows|goat|goats|sheep|bird|birds)\\b"],
+	["ask_nature", "\\b(nature|tree|trees|forest|flower|flowers|river|plants|woods|outdoors|countryside)\\b"],
+	["ask_seasons", "\\b(season|seasons|spring|summer|autumn|winter)\\b"],
+	["ask_friends", "\\b(friend|friends|best friend|friendship)\\b"],
+	["ask_disagree", "\\b(argue|argument|arguments|disagree|fall out|fell out|get along|get on with|quarrel)\\b"],
+	["ask_skills", "\\b(good at|skill|skills|talent|talents|what can you do)\\b"],
+	["ask_times", "\\b(mornings|evenings|morning person|night owl|early riser|your day|typical day|daily life)\\b"],
 	["ask_village", "\\b(village|this place|live here|like it here|this town|around here)\\b"],
 	["ask_likes", "\\b(favou?rite|what do you like|do you like|hobby|hobbies|for fun|what makes you happy|you enjoy|do you love)\\b"],
 	["weather", "\\b(weather|raining|rain|sunny|sun|cold|hot|storm|windy|snow)\\b"],
@@ -319,21 +332,23 @@ static func _after(n: String, phrases: Array, words: int) -> String:
 
 # --- Who's talking --------------------------------------------------------------------
 
+## Which voice they use: founders their own, everyone else the base voice of
+## their personality style (DialogueLibrary.style_for).
+const STYLE_VOICE := {"warm": "warm", "blunt": "blunt", "shy": "shy", "lively": "lively", "dreamy": "warm",
+	"anxious": "shy", "proud": "lively", "wry": "blunt", "child": "child"}
+
+
 static func style_of(villager) -> String:
 	var id := String(villager.data.id)
 	if VOICES.has(id):
 		return id
 	var person: Person = villager.person
-	if person and person.age() < 13:
-		return "child"
-	var p: Dictionary = person.personality if person and not person.personality.is_empty() else villager.data.personality
-	if float(p.get("agreeableness", 0.5)) < 0.4:
-		return "blunt"
-	if float(p.get("extraversion", 0.5)) > 0.65:
-		return "lively"
-	if float(p.get("extraversion", 0.5)) < 0.35:
-		return "shy"
-	return "warm"
+	if person == null:
+		var p: Dictionary = villager.data.personality
+		if float(p.get("agreeableness", 0.5)) < 0.4:
+			return "blunt"
+		return "warm"
+	return String(STYLE_VOICE.get(DialogueLibrary.style_for(person), "warm"))
 
 
 ## A line of `kind` in this villager's voice, not the one they said last.
@@ -347,6 +362,37 @@ static func voice_line(villager, kind: String) -> String:
 			lines = named
 	var line := LineBank._fresh(villager, lines)
 	return fill(villager, line)
+
+
+## Topics typed questions lead to, in this villager's own library.
+const TOPIC_PATHS := {
+	"ask_childhood": ["topics/childhood"],
+	"ask_background": ["topics/background", "topics/personality"],
+	"ask_hopes": ["topics/hopes", "topics/ambitions"],
+	"ask_home": ["topics/home", "topics/furniture"],
+	"ask_animals": ["topics/animals"],
+	"ask_nature": ["topics/nature"],
+	"ask_seasons": ["topics/seasons"],
+	"ask_friends": ["topics/friendship"],
+	"ask_disagree": ["topics/disagreements"],
+	"ask_skills": ["topics/skills"],
+}
+
+
+## A line of `kind` from their voice or from their own library at `paths`,
+## whichever they haven't said lately.
+static func mixed_line(villager, kind: String, paths: Array) -> String:
+	var voice: Dictionary = VOICES[style_of(villager)]
+	var lines: Array = (voice.get(kind, VOICES["warm"].get(kind, [])) as Array).duplicate()
+	for p in paths:
+		lines.append_array(DialogueLibrary.pool(villager, String(p)))
+	if lines.is_empty():
+		return voice_line(villager, kind)
+	if kind in ["greeting", "farewell"] and known_name(villager) != "":
+		var named := lines.filter(func(l): return String(l).contains("{you}"))
+		if not named.is_empty():
+			lines = named
+	return fill(villager, LineBank._fresh(villager, lines))
 
 
 static func fill(villager, line: String) -> String:
@@ -448,6 +494,17 @@ static func _respond_one(villager, text: String, conversation = null) -> Diction
 	mind.memory.add("typed", me, WorldClock.day, WorldClock.time_of_day, intent)
 	mind.record_interaction(me, "talk", WorldClock.day, WorldClock.time_of_day)
 
+	# A question they asked is waiting: these words are the answer.
+	var waiting := String(conversation.pending_question) if conversation and conversation.get("pending_question") != null else ""
+	if waiting.begins_with(DialogueLibrary.ANSWER_PREFIX):
+		conversation.pending_question = ""
+		if intent not in ["farewell", "insult", "apology", "ask_question"]:
+			var q := DialogueLibrary.question(villager, waiting.substr(DialogueLibrary.ANSWER_PREFIX.length()))
+			if not q.is_empty():
+				out["intent"] = "answer"
+				lines.append(DialogueLibrary.answer(villager, q, "", text))
+				return out
+
 	# Someone who dislikes you only listens to an apology.
 	if hostile and intent not in ["apology", "farewell"]:
 		lines.append(voice_line(villager, "cool"))
@@ -455,7 +512,7 @@ static func _respond_one(villager, text: String, conversation = null) -> Diction
 
 	match intent:
 		"greeting":
-			lines.append(voice_line(villager, "greeting"))
+			lines.append(mixed_line(villager, "greeting", ["greetings/" + DialogueLibrary.time_key(WorldClock.time_of_day)]))
 			if WorldClock.time_of_day >= 22.0 or WorldClock.time_of_day < 5.0:
 				lines.append("It's late, though. Shouldn't you be asleep?")
 		"farewell":
@@ -463,10 +520,15 @@ static func _respond_one(villager, text: String, conversation = null) -> Diction
 			out["end"] = true
 		"how_are_you":
 			lines.append(_how_are_you(villager))
+			var mood := DialogueLibrary.mood_key(villager)
+			if mood != "":
+				var extra := DialogueLibrary.line(villager, "mood/" + mood)
+				if extra != "":
+					lines.append(extra)
 		"ask_name":
 			lines.append(_name_line(villager))
 		"ask_job":
-			lines.append(voice_line(villager, "job"))
+			lines.append(mixed_line(villager, "job", ["topics/work"]))
 		"ask_activity":
 			var doing := String(villager.get_activity_description()).to_lower()
 			lines.append(("Right now? %s." % doing.rstrip(".")) if doing != "" else "Nothing much. Just thinking.")
@@ -481,17 +543,38 @@ static func _respond_one(villager, text: String, conversation = null) -> Diction
 		"ask_worries":
 			lines.append(_worry_line(villager))
 		"ask_likes":
-			lines.append(voice_line(villager, "likes"))
+			lines.append(mixed_line(villager, "likes", ["topics/hobbies"]))
 		"ask_village":
-			lines.append(voice_line(villager, "village"))
+			lines.append(mixed_line(villager, "village", ["topics/village"]))
+		"ask_story":
+			var told := DialogueLibrary.story(villager)
+			if told.is_empty():
+				lines.append(voice_line(villager, "joke"))
+			else:
+				lines.append_array(told)
+		"ask_question":
+			var q := DialogueLibrary.next_question(villager)
+			if q.is_empty():
+				lines.append("[happy]I've asked you everything I wanted to, for now. Your turn to ask me something!")
+			else:
+				lines.append(fill(villager, String(q["ask"])))
+				out["choices"] = DialogueLibrary.ask(villager, q)
+				if conversation:
+					conversation.pending_question = DialogueLibrary.ANSWER_PREFIX + String(q["id"])
+		"ask_childhood", "ask_background", "ask_hopes", "ask_home", "ask_animals", "ask_nature", "ask_seasons", \
+				"ask_friends", "ask_disagree", "ask_skills", "ask_times":
+			var said := DialogueLibrary.line_any(villager, TOPIC_PATHS[intent] if intent != "ask_times" else [
+				"topics/mornings" if WorldClock.time_of_day < 14.0 else "topics/evenings", "activity/" + DialogueLibrary.activity_key(villager)])
+			lines.append(said if said != "" else voice_line(villager, "unknown"))
 		"ask_person":
 			lines.append(_person_line(villager, String(u["about"])))
 		"weather":
-			lines.append(_weather_line())
+			var w := DialogueLibrary.line(villager, "weather/" + DialogueLibrary.weather_key())
+			lines.append(w if w != "" else _weather_line())
 		"ask_time":
 			lines.append("It's about %s. %s" % [_clock(), "Getting late." if WorldClock.time_of_day >= 20.0 else ""])
 		"joke":
-			lines.append(voice_line(villager, "joke"))
+			lines.append(mixed_line(villager, "joke", ["topics/funny"]))
 		"thanks":
 			lines.append(voice_line(villager, "thanks"))
 			if times_today(villager, "thanks") <= 1:
@@ -621,7 +704,7 @@ static func _name_line(villager) -> String:
 static func _family_line(villager) -> String:
 	var person: Person = villager.person
 	if person == null:
-		return voice_line(villager, "family")
+		return mixed_line(villager, "family", ["topics/family"])
 	var bits: Array = []
 	var partner := Population.get_person(person.partner)
 	if partner:
@@ -634,7 +717,7 @@ static func _family_line(villager) -> String:
 	if not kids.is_empty():
 		bits.append("%s %s" % ["my little one" if kids.size() == 1 else "my children", " and ".join(kids)])
 	if bits.is_empty():
-		return voice_line(villager, "family")
+		return mixed_line(villager, "family", ["topics/family"])
 	return "[happy]There's %s. They're my whole world." % " and ".join(bits)
 
 
@@ -654,7 +737,7 @@ static func _worry_line(villager) -> String:
 		var ask := RequestBoard.instance.reminder_for(villager)
 		if ask != "":
 			return ask
-	return voice_line(villager, "worries")
+	return mixed_line(villager, "worries", ["topics/worries"])
 
 
 static func _person_line(villager, other_id: String) -> String:
@@ -668,6 +751,13 @@ static func _person_line(villager, other_id: String) -> String:
 	if person and (person.children.has(other_id) or person.parents.has(other_id)):
 		return "[happy]%s is family. Of course I care about them." % name_
 	var feeling: float = villager.mind.get_affection(other_id)
+	var own := DialogueLibrary.opinion(villager, other_id)
+	if own != "" and feeling > -15.0:
+		if own.contains(name_):
+			return own
+		# Say who they mean: "Tomas? He's like a grandfather to me."
+		var tag := own.substr(0, own.find("]") + 1) if own.begins_with("[") else ""
+		return "%s%s? %s" % [tag, name_, own.substr(tag.length())]
 	if feeling >= 40.0:
 		return "[happy]%s? One of my closest friends." % name_
 	if feeling >= 12.0:

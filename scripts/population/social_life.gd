@@ -62,6 +62,11 @@ func spend_time(a, b, hours: float) -> void:
 	b.mind.adjust_opinion(String(pa.id), gain, gain * 0.6)
 	a.mind.record_interaction(String(pb.id), "time_together", WorldClock.day, WorldClock.time_of_day)
 	b.mind.record_interaction(String(pa.id), "time_together", WorldClock.day, WorldClock.time_of_day)
+	# They talk about the player, too: things they were really told.
+	if rng.randf() < 0.5:
+		DialogueLibrary.share(a, b)
+	if rng.randf() < 0.5:
+		DialogueLibrary.share(b, a)
 	var ab: float = a.mind.get_affection(String(pb.id))
 	var ba: float = b.mind.get_affection(String(pa.id))
 	if ab >= ROMANCE_AFFECTION and ba >= ROMANCE_AFFECTION and Population.can_partner(pa, pb) \

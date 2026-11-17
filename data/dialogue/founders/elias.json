@@ -1,0 +1,461 @@
+{
+	"id": "elias",
+	"greetings": {
+		"morning": [
+			"[happy]Good morning{you}. The dew's still on the wheat. That's the best hour of the day, I think.",
+			"[happy]Morning, friend. Have you eaten? You should eat. I've a heel of bread in my pocket if you need it.",
+			"Ah, you're up early too. The cows like company at this hour. So do I."
+		],
+		"afternoon": [
+			"[happy]Good afternoon{you}. Sit in the shade with me a moment. The sun's fierce today.",
+			"Afternoon. I was just thinking about you, and here you are. Funny how that happens.",
+			"[happy]Hello again. The beans are climbing nicely. I know, I talk about beans a lot."
+		],
+		"evening": [
+			"[happy]Evening{you}. There's stew at the fire tonight if you're hungry. There's always enough.",
+			"Good evening. I love this hour. The work's done and nobody's in a hurry anymore.",
+			"[happy]The light's going golden over the fields. Stay a while and watch it with me."
+		],
+		"night": [
+			"[worried]You're out late, friend. Is everything all right? You can always knock on my door.",
+			"It's past dark{you}. I couldn't sleep either. I was listening for the fox by the henhouse.",
+			"Late night. The stars are good company, but they don't talk back much."
+		]
+	},
+	"weather": {
+		"rain": [
+			"[happy]Rain! The fields have been thirsty. Listen to it. That's the sound of next month's bread.",
+			"I know most people grumble at rain. I always say a quiet thank you instead.",
+			"[laughing]My boots are full of water and I don't mind one bit."
+		],
+		"clear": [
+			"[happy]A clear day. Good for the hay. I'll be turning it this afternoon if you want to help.",
+			"Dry spell, though. I'm watching the sky like an old dog watching a door.",
+			"[happy]Look at that sky. Not a cloud. My grandmother would've called it a gift."
+		],
+		"storm": [
+			"[worried]A storm's rolling in. I need to get the animals under cover. Will you be safe?",
+			"Thunder makes the cows nervous. I sing to them. Badly, but they don't seem to mind."
+		]
+	},
+	"activity": {
+		"work": [
+			"I'm weeding, slowly. Weeds and worries are alike. Pull them early and they don't take root.",
+			"[happy]Out in the field. You can walk with me if you like. I don't mind slowing down."
+		],
+		"gather": [
+			"Picking the early beans. Here, try one. Sweet, aren't they?",
+			"Gathering eggs. The brown hen hides hers. Every morning is a little treasure hunt."
+		],
+		"rest": [
+			"[happy]Just resting my legs. Old knees, young heart. Well, middling heart.",
+			"Taking a moment. Even fields lie fallow sometimes."
+		],
+		"socialize": [
+			"[happy]Sharing lunch. Here, there's plenty. There's always plenty if people share.",
+			"Sitting with the others. I like to hear how everyone's day went. It reminds me we're not alone."
+		],
+		"trade": [
+			"Trading some barley for cloth. Sera always gives me a fair price. Well, a Sera price.",
+			"At the market. I always buy one thing I don't need, just to keep the traders smiling."
+		],
+		"explore": [
+			"Walking the field edges. I like to see where the hares have been.",
+			"Just wandering. Sometimes the best ideas come when your feet are busy and your head isn't."
+		],
+		"sleep": [
+			"Mm... is it morning already? No? Then let an old farmer sleep, friend."
+		]
+	},
+	"mood": {
+		"tired": [
+			"[sad]I'm a little worn out today. The harvest asks a lot of you.",
+			"Forgive me if I'm slow. I was up before dawn with a sick calf.",
+			"[worried]I'm tired, but it's the honest kind. The kind a good meal fixes."
+		],
+		"worried": [
+			"[worried]I can't stop thinking about the stores. Do we have enough put by? I keep counting sacks.",
+			"[worried]Something's troubling me, but it's not your burden to carry. Unless you'd like to listen.",
+			"I worry, friend. It's my one bad habit. Well, that and talking to the turnips."
+		],
+		"happy": [
+			"[happy]I'm in fine spirits today. The first lambs of the season were born last night. Both healthy.",
+			"[laughing]Today's a good day. Nia says my bread finally rose properly. High praise from a scientist.",
+			"[happy]My heart's full today. I can't say why. Some days are just kind to you."
+		],
+		"busy": [
+			"I'm a bit busy, friend, but never too busy for a kind word. Walk with me?",
+			"The hay won't wait for anyone, I'm afraid. Talk to me while I rake?"
+		]
+	},
+	"relationship": {
+		"stranger": [
+			"[happy]You're welcome here, truly. Whatever brought you, I hope you find what you're looking for.",
+			"New faces are a blessing. I hope you'll stay long enough for me to learn your story."
+		],
+		"friend": [
+			"[happy]You know, I always feel a bit better after you've been by.",
+			"You've become part of my days, friend. I'd miss you if you stopped coming."
+		],
+		"close": [
+			"[happy]You're like family to me now. I set a place for you at supper sometimes, without thinking.",
+			"I don't have much, but whatever I have, half of it is yours if you ever need it.",
+			"[happy]When I count my blessings at night, you're one of them. I hope that's not too strange to say."
+		],
+		"wary": [
+			"[sad]I want to think well of you. Help me do that.",
+			"I've forgiven worse. But I haven't forgotten."
+		]
+	},
+	"topics": {
+		"childhood": [
+			"I grew up on a farm three valleys over. Seven of us children and one cow named Patience. She earned it.",
+			"[happy]My first job was scaring crows. I was five. The crows were not scared. I've been losing to crows ever since.",
+			"We were poor, but my mother made sure nobody who came to our door left hungry. I suppose I took that with me.",
+			"I used to fall asleep in the hayloft listening to the rain on the roof. Still the best sound I know."
+		],
+		"family": [
+			"My parents are gone now, rest them. My brothers and sisters are scattered like seeds. I write to the ones who write back.",
+			"[sad]I had a wife once. Her name was Lene. A fever took her the year before I came here. I don't speak of it much.",
+			"[happy]My little sister sends me pressed flowers in her letters. I keep them in my almanac.",
+			"I never had children of my own. But I've helped raise half the children in this village, one meal at a time."
+		],
+		"background": [
+			"After Lene passed, I couldn't stay where every field reminded me of her. Tomas wrote that they needed a farmer. I came.",
+			"The soil here was stubborn the first year. Rocks everywhere. Mara called them my 'harvest'. She wasn't wrong.",
+			"I brought three sacks of seed and one good hoe. Everything I have now grew from those."
+		],
+		"work": [
+			"Farming teaches you that most things can't be hurried. You plant, you tend, you wait. Then you share.",
+			"I rotate the fields so the soil can rest. People need rest too. I tell them, they don't listen.",
+			"[happy]The first green shoots in spring still make me want to dance. I don't. But I want to.",
+			"A good farmer feeds the soil, not just the crops. A good neighbour feeds the village, not just himself.",
+			"Every grain of wheat is a little promise. I try to keep as many of them as I can."
+		],
+		"skills": [
+			"I can tell when rain's coming by the smell of the air. Like wet stone and new leaves.",
+			"I know every cow in the village by her moo. Don't laugh. It's a real skill.",
+			"[happy]I make a good loaf, if I say so myself. It took me twenty years. Bread's patient. So am I."
+		],
+		"hobbies": [
+			"[happy]I whittle little birds in the evenings. I'm not very good. The children say they look like potatoes with beaks.",
+			"I keep a weather journal. Forty years of rain and sun, written down. It's very boring and I love it.",
+			"I like to sit by the pond and watch the dragonflies. Some days that's the whole hobby."
+		],
+		"ambitions": [
+			"[happy]I'd like to plant an orchard. Apples, pears, plums. Something that'll feed people long after I'm gone.",
+			"My dream is a full granary every winter, and nobody ever too proud to come and take what they need.",
+			"I'd love to teach someone young the farm. Pass it on, the way it was passed to me."
+		],
+		"home": [
+			"My house is small, but the kitchen's big. That's where the living happens.",
+			"[happy]There's always a pot on my stove. If you smell soup, come in. The door's never locked.",
+			"I've a seed cupboard by the hearth. Every drawer labelled in my mother's handwriting. Well, I copied it. But still."
+		],
+		"furniture": [
+			"Tomas made my table. It seats eight if everyone breathes in. It's seated twelve on festival nights.",
+			"My chair by the fire has a dip in the cushion exactly my shape. Thirty years of evenings.",
+			"[happy]A good table is the heart of a home. Anything else is just somewhere to put your coat."
+		],
+		"village": [
+			"[happy]This village is like a field. Every person is a different crop, and we all need each other.",
+			"When someone here is sick, there's soup at their door before nightfall. That's the kind of place this is.",
+			"We're not rich in coin, but we're rich in neighbours. I'd take that trade every time."
+		],
+		"friendship": [
+			"Friendship is like bread. It takes time, a bit of warmth, and you should always share it.",
+			"A true friend tells you when you've got flour on your nose. Gently.",
+			"[happy]I think everyone needs at least one person who'll sit with them in silence. I try to be that person."
+		],
+		"disagreements": [
+			"Mara and I disagreed about where to put the new fence. We moved it three times. The cows had opinions too.",
+			"[sad]I try not to quarrel. But when someone takes more than their share of the stores, I can't stay quiet.",
+			"Tomas thinks I'm too generous. I think he's not generous enough with his compliments. We're both a little right."
+		],
+		"animals": [
+			"[happy]The cows have names. Buttercup, Mabel, Old Rosa. Old Rosa is the boss. Everyone knows it, even the bull.",
+			"I don't eat the hens that lay. Retired hens get a nice corner of the yard. Nia calls it 'the hen hospice'.",
+			"The barn cats keep the mice out of the grain. I pay them in cream. It's an arrangement."
+		],
+		"nature": [
+			"[happy]The soil's alive, you know. Worms, beetles, roots. A spoonful of good earth holds more life than a city.",
+			"I always leave the field edges wild. The bees need somewhere to live too.",
+			"The river floods some springs. It's frightening, but it leaves the best soil behind. There's a lesson in that."
+		],
+		"seasons": [
+			"[happy]Spring's my favourite. Everything trying again, no matter what the winter did.",
+			"Summer's hard work and long evenings. Autumn's the reward. Winter's for rest and stories.",
+			"Every season has its own smell. Spring is wet earth. Autumn is apples and smoke."
+		],
+		"mornings": [
+			"I like to watch the mist lift off the fields. It's like the land waking up and stretching.",
+			"[happy]First thing every morning I check the hens, then the sky, then the bread. In that order."
+		],
+		"evenings": [
+			"[happy]Evenings are for supper and company. Nobody should eat alone if they don't want to.",
+			"I sit on my step after dark and listen to the crickets. They're the village's night watch."
+		],
+		"events": [
+			"[happy]I love the harvest festival. Everyone brings something, and somehow it always becomes a feast.",
+			"[worried]When the monsters came last time, I hid the children in the root cellar. I'd do it again.",
+			"Every birth in this village, I bake a loaf with the baby's name pressed in the crust. It's a silly custom. I keep it."
+		],
+		"worries": [
+			"[worried]I worry about a bad harvest. One bad year and the whole village goes hungry.",
+			"[worried]I worry about the ones who don't ask for help. Pride feeds nobody.",
+			"I worry I'm getting old. My hands ache in the mornings now."
+		],
+		"hopes": [
+			"[happy]I hope this village is still here in a hundred years, and someone's still baking bread at dawn.",
+			"I hope the children here grow up knowing they were loved by a whole village, not just their families.",
+			"I'd like to see the orchard bloom. Even just once."
+		],
+		"surprises": [
+			"[surprised]Someone left a basket of mushrooms on my doorstep this morning. No note. I think it was Nia.",
+			"[surprised]Old Rosa had twins. At her age! I nearly fell over."
+		],
+		"funny": [
+			"[laughing]I once spent a whole morning chasing a runaway pig. It was hiding behind me the entire time.",
+			"[laughing]Sera tried to milk a cow once. She was sitting on the wrong side. The cow looked at me like I'd betrayed her.",
+			"[laughing]I made bread with salt instead of sugar last spring. Tomas ate three slices and said it was 'character-building'."
+		]
+	},
+	"opinions": {
+		"mara": [
+			"[happy]Mara works harder than anyone I know. I leave food by her workbench. Otherwise she forgets to eat.",
+			"Mara pretends to be made of oak. She's not. I've seen her cry over a sparrow with a broken wing.",
+			"Mara built the bridge twice. The first time she cried. The second time I helped. We don't talk about it, but we both remember."
+		],
+		"nia": [
+			"[happy]Nia fixed my bad shoulder with willow bark tea. She's going to be a great healer one day.",
+			"Nia asks me about the soil and writes down everything I say. Nobody's ever wanted to learn from me before.",
+			"She's young, and she worries she's not clever enough. She's the cleverest of all of us."
+		],
+		"tomas": [
+			"Tomas is my oldest friend here. He's grumpy, but he made my mother's spoon into a new handle when it broke. Without being asked.",
+			"[happy]Tomas and I play stones by the fire most evenings. He wins. I think he cheats. I've never caught him.",
+			"He's lost a lot, Tomas. So have I. We understand each other without saying much."
+		],
+		"sera": [
+			"[laughing]Sera tells the best stories in the valley. About half are true. I don't mind which half.",
+			"Sera brings a bit of the wide world with her. I'm a homebody. It's good to have someone who isn't.",
+			"[happy]She pretends she'll leave any day. I've noticed she keeps putting it off."
+		]
+	},
+	"player": {
+		"achievement": [
+			"[happy]I heard you {thing}. Well done, friend. Truly. I'm proud of you.",
+			"You {thing}? Look at you. When you first came, you didn't know a hoe from a rake."
+		],
+		"gift": [
+			"[happy]Oh, friend. You shouldn't have. But I'm so glad you did.",
+			"[surprised]A gift, for me? I'll treasure it. And I'll bake you something in return. No arguing."
+		],
+		"house": [
+			"[happy]Your house looks lovely. Plant something by the door. A home needs something growing.",
+			"I walked past your place this morning. Smoke from the chimney. It warmed my heart to see it."
+		],
+		"discovery": [
+			"[happy]You found {thing}? I've lived here years and never been. Tell me what it's like.",
+			"Exploring again? Be careful out there. And come back hungry, I'll have soup on."
+		]
+	},
+	"life": {
+		"new_home": [
+			"[happy]My new house has a window facing the fields. I can watch the wheat from my bed. I'm spoiled.",
+			"New walls, same old pot of soup. Some things move with you."
+		],
+		"partner": [
+			"[happy]I never thought I'd share my table again after Lene. Life surprises you, if you let it.",
+			"Having someone to bake for every morning... I'd forgotten how good that feels."
+		],
+		"child": [
+			"[happy]My little one sleeps in a basket by the hearth while I bake. Best company I've ever had.",
+			"I'm teaching my child the names of the cows. They've already got favourites."
+		],
+		"friend": [
+			"[happy]I came here with a broken heart and three sacks of seed. Now look how many friends I have.",
+			"There are more chairs at my table every year. I take that as a good sign."
+		],
+		"grief": [
+			"[sad]I baked their favourite loaf this morning, without thinking. Then I remembered.",
+			"[sad]Grief is like a field in winter. It looks dead, but something's waiting underneath. That's what I tell myself."
+		]
+	},
+	"stories": [
+		[
+			"Shall I tell you about the first harvest here? It's a happy one.",
+			"We'd planted late and everyone said it wouldn't come in. Rocks, frost, crows. All against us.",
+			"Then one morning I walked out and the whole field was gold. Swaying. I stood there and cried like a child.",
+			"[happy]We had a feast that night. Five people, one loaf each. I've never tasted better bread."
+		],
+		[
+			"This one's about Lene. I don't tell it often.",
+			"She used to sing to the bread while it rose. Said it made it lighter.",
+			"After she passed, I tried it. Felt foolish. Kept doing it anyway.",
+			"[happy]Nia says it's nonsense, scientifically. But my bread's never been better. So who knows?"
+		],
+		[
+			"[laughing]Here's a silly one.",
+			"The first winter, a wolf followed me home from the woodlot. I was terrified. I walked faster. It walked faster.",
+			"I got to my door and turned around to face it, ready to fight.",
+			"[laughing]It was Tomas's dog. Wanted my sausages. I gave it two. We've been friends ever since."
+		],
+		[
+			"Do you want to hear why I always share?",
+			"When I was a boy, one winter we ran out of food. Completely. My mother sat us down and said we'd have to wait.",
+			"That night, a neighbour knocked with a sack of potatoes. Didn't say a word. Just left it and walked off.",
+			"[happy]I never found out who. So I've been paying it back to everyone ever since."
+		]
+	],
+	"questions": [
+		{
+			"id": "elias_food",
+			"ask": "Tell me, friend, what's your favourite thing to eat? I like to know what to cook for people.",
+			"free": true,
+			"options": {
+				"bread": [
+					"bread",
+					"loaf"
+				],
+				"stew": [
+					"stew",
+					"soup"
+				],
+				"fruit": [
+					"apple",
+					"fruit",
+					"berries",
+					"pear",
+					"plum"
+				],
+				"fish": [
+					"fish",
+					"trout"
+				],
+				"sweet": [
+					"cake",
+					"honey",
+					"sweet",
+					"pie"
+				]
+			},
+			"react": {
+				"bread": "[happy]Bread! You've come to the right farmer. I'll save you the first loaf tomorrow.",
+				"stew": "[happy]Stew's good for the soul. There's always a pot at the fire in the evenings.",
+				"fruit": "[happy]Then you'll love my orchard, when I finally plant it. I'll name a tree after you.",
+				"fish": "Fish? I'm hopeless at catching them. But I'll trade some barley for a trout for you.",
+				"sweet": "[laughing]A sweet tooth! I'll remember that. Honey cakes at harvest festival, then.",
+				"other": "[happy]{answer}? I'll see what I can do. I'll remember that."
+			},
+			"recall": "I haven't forgotten you like {answer}. I've been thinking about how to make it."
+		},
+		{
+			"id": "elias_family",
+			"ask": "Do you have family somewhere, friend? People who miss you?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"parents",
+					"family",
+					"brother",
+					"sister",
+					"mother",
+					"father",
+					"mum",
+					"dad"
+				],
+				"no": [
+					"no",
+					"nobody",
+					"alone",
+					"none",
+					"not anymore"
+				]
+			},
+			"react": {
+				"yes": "[happy]Then write to them. People who miss you deserve to know you're well.",
+				"no": "[sad]Then we'll be your family here. That's how it works in this village.",
+				"other": "Families come in all shapes. Whatever yours is, you're welcome at my table."
+			},
+			"recall": "You told me about your family. I think of them sometimes when I bake. I hope they're well."
+		},
+		{
+			"id": "elias_happy",
+			"ask": "Are you happy here, friend? Truly?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"very",
+					"happy",
+					"love it",
+					"of course"
+				],
+				"no": [
+					"no",
+					"not",
+					"unhappy",
+					"sad",
+					"lonely"
+				],
+				"mostly": [
+					"mostly",
+					"getting there",
+					"sometimes",
+					"bit",
+					"kind of",
+					"i think"
+				]
+			},
+			"react": {
+				"yes": "[happy]That's the best thing anyone's said to me all week.",
+				"no": "[sad]Then let's change that. Come to supper. Sometimes it starts with supper.",
+				"mostly": "[happy]Mostly is a fine place to be. Most of life is mostly.",
+				"other": "That's a hard question. You don't have to answer it today."
+			},
+			"recall": {
+				"yes": "You told me you were happy here. Every time I see you smile, I remember that.",
+				"no": "You said you weren't happy here yet. I've been hoping to change that. Is it any better?",
+				"mostly": "You said you were mostly happy here. I'm working on the 'mostly'.",
+				"other": "I still think about what you said, about being happy here."
+			}
+		},
+		{
+			"id": "elias_animal",
+			"ask": "If you could have any animal at all, which would it be?",
+			"free": true,
+			"options": {
+				"dog": [
+					"dog",
+					"puppy"
+				],
+				"cat": [
+					"cat",
+					"kitten"
+				],
+				"horse": [
+					"horse",
+					"pony"
+				],
+				"cow": [
+					"cow"
+				],
+				"chicken": [
+					"chicken",
+					"hen"
+				]
+			},
+			"react": {
+				"dog": "[happy]A dog. Loyal, warm, always pleased to see you. Very sensible.",
+				"cat": "[laughing]A cat? They own you, not the other way round. Ask my barn cats.",
+				"horse": "[happy]A horse! Good for the soul and the plough both.",
+				"cow": "[laughing]A cow! A friend after my own heart. I'll introduce you to Old Rosa.",
+				"chicken": "[happy]Hens are underrated. Each one has her own personality.",
+				"other": "{answer}? I've never had one of those. You'll have to tell me about them."
+			},
+			"recall": "You said you'd love a {answer}. I keep an eye out for one for you."
+		}
+	]
+}

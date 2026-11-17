@@ -71,6 +71,12 @@ static func perform(villager, deed: String, thing: String = "") -> Array[String]
 			trust = 3.0
 			remembered = "gave me %s" % GIFT_NAMES[resource]
 			lines.append(LineBank.pick(villager, "gift_love" if loved else "gift_ok", {"thing": GIFT_NAMES[resource]}))
+			# The first gift you give them, they answer in their own words too.
+			if not villager.mind.memory.has_detail("mentioned", GameManager.PLAYER_ID, "player:gift"):
+				villager.mind.memory.add("mentioned", GameManager.PLAYER_ID, WorldClock.day, WorldClock.time_of_day, "player:gift")
+				var own := DialogueLibrary.line(villager, "player/gift")
+				if own != "":
+					lines.append(own)
 			GameState.increment(&"gifts")
 			if Festival.instance:
 				Festival.instance.note_gift()

@@ -230,7 +230,17 @@ static func pick(villager, situation: String, fill: Dictionary = {}) -> String:
 	var line := _fresh(villager, lines)
 	var values := {"player": "friend", "name": villager.data.display_name}
 	values.merge(fill, true)
-	return line.format(values)
+	return capitalize_first(line.format(values))
+
+
+## "[happy]something to eat!" -> "[happy]Something to eat!" (after any tag).
+static func capitalize_first(line: String) -> String:
+	var at := 0
+	if line.begins_with("["):
+		at = line.find("]") + 1
+	if at < 0 or at >= line.length():
+		return line
+	return line.substr(0, at) + line.substr(at, 1).to_upper() + line.substr(at + 1)
 
 
 ## The least recently used of `lines` for this speaker.

@@ -1,0 +1,453 @@
+{
+	"id": "mara",
+	"greetings": {
+		"morning": [
+			"[happy]Morning{you}. I've been up since before the birds. Somebody has to beat them.",
+			"Early riser, are you? Good. The best work gets done before the village wakes up.",
+			"[happy]Morning. Coffee? No, we haven't got coffee. Hot water and willpower, then."
+		],
+		"afternoon": [
+			"Afternoon{you}. Half the day's gone and I've only fixed three things. Shameful.",
+			"[happy]Ah, good. You can hold the other end of this plank while we talk.",
+			"Afternoon. If you've come to tell me to rest, don't. If you've come to help, grab a nail."
+		],
+		"evening": [
+			"[happy]Evening{you}. Hammer's down, boots are off in spirit if not in fact.",
+			"Evening. This is the only hour of the day my shoulders stop arguing with me.",
+			"[happy]You caught me resting. Don't tell anyone. I have a reputation."
+		],
+		"night": [
+			"[surprised]What are you doing up? Can't sleep either? The wind's rattling the north shutters again.",
+			"It's late{you}. If something's broken, it can wait till morning. Probably.",
+			"Night owl, eh? I check the fences at night sometimes. Old habit."
+		]
+	},
+	"weather": {
+		"rain": [
+			"[worried]Rain. Every drop is a leak I haven't found yet.",
+			"Rain's good for one thing: it shows you where the roof is lying to you.",
+			"[laughing]I'm soaked to the bone and the timber's swelling. Lovely day, isn't it?"
+		],
+		"clear": [
+			"[happy]Dry weather. Perfect for tarring roofs. Want to help? It's very fun. That's a lie.",
+			"Clear skies. Wood cuts clean, glue sets fast. Days like this I could build a cathedral.",
+			"[happy]Good light today. You can see every crooked line. Which is good and bad."
+		],
+		"storm": [
+			"[worried]Storm's coming. I'm going round every house to check the shutters. You should stay inside.",
+			"Hear that wind? Old buildings talk in storms. I listen for the ones that sound scared."
+		]
+	},
+	"activity": {
+		"work": [
+			"Can't stop long. This beam won't raise itself, and I won't let Tomas see it crooked.",
+			"[happy]Mind the saw. I'm in the middle of something and it's actually going well, for once."
+		],
+		"gather": [
+			"Hauling timber. Ask me how my back is. Actually, don't.",
+			"Collecting offcuts. You'd be amazed what you can build from what other people throw away."
+		],
+		"rest": [
+			"I'm resting. Officially. Unofficially I'm planning the next roof.",
+			"[happy]Feet up. Don't let me catch you telling anyone I sat down."
+		],
+		"socialize": [
+			"[laughing]I'm being sociable. Elias insists. Apparently grunting at people doesn't count.",
+			"Lunch at the fire. Best part of the day, though I'd never admit it to the others."
+		],
+		"trade": [
+			"Buying nails. Sera's prices are criminal, but she does carry good iron.",
+			"Haggling. Badly. I'm better at building than bargaining."
+		],
+		"explore": [
+			"Just walking. I like to see the village from outside it now and then. Spot the sagging roofs.",
+			"Looking for good oak. The woods past the river have some fine old trees."
+		],
+		"sleep": [
+			"Mm? It's the middle of the night. Unless something's on fire, come back tomorrow."
+		]
+	},
+	"mood": {
+		"tired": [
+			"[sad]I'm worn thin today. Too many jobs and not enough hands.",
+			"Don't mind me. I'm running on stubbornness and stale bread.",
+			"[worried]If I sit down I won't get up again, so I'm standing. Talk fast."
+		],
+		"worried": [
+			"[worried]Something's not right. I can feel it like a crack in a wall you can't see yet.",
+			"[worried]Sorry. Head's elsewhere. Thinking about whether we're ready for winter.",
+			"I keep counting what could go wrong. It's a builder thing. And a Mara thing."
+		],
+		"happy": [
+			"[happy]Good day today. Everything I touched stayed where I put it.",
+			"[laughing]I'm in a good mood, so ask me for favours now. It won't last.",
+			"[happy]Finished the fence by the pasture. Straight as an arrow. I may frame it."
+		],
+		"busy": [
+			"Busy. Very busy. Talk while I work, if you can keep up.",
+			"I've got three jobs and two hands. Make it quick, unless you're offering a third hand."
+		]
+	},
+	"relationship": {
+		"stranger": [
+			"You're new. I like to know who's in my village. What can you do with your hands?",
+			"We'll get on fine if you don't lean on anything I've just built."
+		],
+		"friend": [
+			"[happy]You're alright, you know. You show up when it counts.",
+			"I trust you with my good saw. That's not a small thing."
+		],
+		"close": [
+			"[happy]You're one of the few people I'd let help me with a roof. That's practically a marriage proposal around here.",
+			"I don't say this much, so listen: I'm glad you're here.",
+			"[laughing]You've seen me covered in tar and swearing at a ladder. We're past formalities."
+		],
+		"wary": [
+			"I'm watching you. Prove me wrong.",
+			"You've got a lot of making up to do."
+		]
+	},
+	"topics": {
+		"childhood": [
+			"I grew up in a mill town downriver. My father fixed the waterwheels. I learned to climb before I learned to read.",
+			"When I was small I built a treehouse so ugly the birds refused to nest in it. I was so proud of it.",
+			"[laughing]I broke my arm falling off a roof when I was nine. Climbed straight back up the week the splint came off.",
+			"My mother wanted me to be a seamstress. I sewed my sleeve to my skirt on the first day. That settled that."
+		],
+		"family": [
+			"My father taught me that a house is a promise you make to people you'll never meet. He's gone now. I keep his square.",
+			"I've two brothers somewhere east. We write when we remember. We mostly don't remember.",
+			"[sad]My mother still thinks I'll come home and marry a miller. I send her drawings of the houses instead.",
+			"Tomas is the nearest thing to family I've got here. He'd hate that I said it."
+		],
+		"background": [
+			"I came here with Tomas when this place was a clearing and a stubborn idea. We put up the first walls together.",
+			"I left the mill town because nobody would hire a woman to build anything bigger than a henhouse. Here, I build what's needed.",
+			"First winter here, the snow came early and we slept five to a hut. I swore every house after would be warm."
+		],
+		"work": [
+			"People think building is about strength. It's about patience. And spite, a little. Spite is very good for finishing things.",
+			"A good joint doesn't need nails. A bad one needs a miracle.",
+			"Every house in this village leans a hair to the east. That's the wind. I build them leaning west so they end up straight.",
+			"I check every beam twice and every promise three times. Beams don't lie, people sometimes do.",
+			"[happy]The best part of a build is the first night someone sleeps under it and doesn't know they're safe because of you."
+		],
+		"skills": [
+			"I can frame a cottage in four days with two helpers who listen, or nine days with two who don't.",
+			"I can tell what wood is by the sound it makes when you knock it. Oak sounds smug. Pine sounds cheerful.",
+			"[laughing]I can also throw a hammer and hit a post at twenty paces. Not useful. Very satisfying."
+		],
+		"hobbies": [
+			"I carve little houses out of offcuts. The children use them for games. Don't tell them I made them.",
+			"[happy]I walk the bridge at sunset and count the boards. Forty-one. It's always forty-one. I still count.",
+			"I collect old hinges. Every one has a story. Mostly the story is 'rusted'."
+		],
+		"ambitions": [
+			"[happy]I want to build a proper hall. Big enough for the whole village to eat under one roof in winter.",
+			"One day I'll build a stone bridge. One that'll still be standing when nobody remembers my name. That's the dream.",
+			"I want this to be a town people walk towards, not past."
+		],
+		"home": [
+			"My house is the plainest one in the village. A builder's house always is. No time to fuss over your own.",
+			"I've got a workbench where most people keep a table. I eat standing up. Elias despairs of me.",
+			"My roof has never leaked. Not once. I check it after every storm anyway, out of pride."
+		],
+		"furniture": [
+			"A chair should hold you up without you noticing it. If you notice a chair, it's failed.",
+			"I made my bed from the first oak we felled here. It creaks like an old dog. I wouldn't change it.",
+			"[laughing]Tomas makes the pretty furniture. I make the furniture that survives a winter. We argue about which matters more."
+		],
+		"village": [
+			"Every board here has a story. That fence? Elias and I put it up in a hailstorm because the cows wouldn't wait.",
+			"[happy]When I came, there was mud and a fire. Now there are streets, if you squint. I squint a lot.",
+			"This place is held together by stubborn people and good joinery. Mostly the people."
+		],
+		"friendship": [
+			"I don't make friends quickly. I make them like I make walls: slowly, and they stay up.",
+			"A friend is someone who holds the ladder without being asked.",
+			"[happy]I'm loyal to a fault. Ask anyone. Actually, don't ask Sera, she'll make up a story."
+		],
+		"disagreements": [
+			"Tomas and I argued for a week about whether to use pegs or nails on the storehouse. We used both. Neither of us is happy.",
+			"[angry]Sera once sold my good chisel to a passing tinker. 'It looked unloved,' she said. It was in my toolbox!",
+			"I tell people when they're wrong. Some of them thank me for it. Eventually."
+		],
+		"animals": [
+			"Animals are fine. Animals don't argue about where the door should go.",
+			"There's a fox that watches me work from the woodline. I call him Foreman. He never helps either.",
+			"[laughing]Elias's goat ate my measuring string once. I measured that roof by eye. It's still standing. The goat looked smug for a month."
+		],
+		"nature": [
+			"The river decides where we build, not me. You learn to listen to water or it teaches you the hard way.",
+			"I love a good tree. Mostly so I can cut it down and turn it into something useful. Then I plant two more. Fair's fair.",
+			"Nia says every plant has a purpose. Most of the ones I meet seem to exist to grow in my foundations."
+		],
+		"seasons": [
+			"Spring is for fixing what winter broke. Summer is for building new. Autumn's for panic. Winter's for regret.",
+			"[happy]Autumn's my favourite. Cold enough to work hard, warm enough not to freeze doing it.",
+			"Winter is when you find out who built their house properly. I like being right in winter."
+		],
+		"mornings": [
+			"Mornings are honest. The light shows you exactly what you did wrong yesterday.",
+			"I like to walk the village at dawn and listen for doors that stick. A sticking door is a cry for help."
+		],
+		"evenings": [
+			"Evenings by the fire are where the best plans get made and the worst songs get sung.",
+			"[happy]I sit by my window in the evening and watch the smoke from every chimney. Each one's a house still standing."
+		],
+		"events": [
+			"Festivals are nice. People dance on floors I laid. That's my kind of applause.",
+			"[worried]When the raids come, I'm on the walls with a hammer. It's the only tool I need for monsters and nails alike.",
+			"Every time someone new moves in I measure them for a house in my head. Can't help it."
+		],
+		"worries": [
+			"[worried]I worry I'm the only one who knows how half these buildings are put together. If I fell off a roof tomorrow, who'd fix them?",
+			"[worried]The storehouse roof has one winter left in it. Maybe two if the gods like us.",
+			"I worry about the children playing on the timber stack. I've told them a hundred times. They're children. They hear 'climb'."
+		],
+		"hopes": [
+			"[happy]I hope someone young wants to learn the trade. I'd teach them everything. Even the swearing.",
+			"I hope one day nobody in this village has to sleep cold. Then I'll retire. Maybe.",
+			"I'd like to see a second street. Then a market square. Then a town hall. Then I'll sit down."
+		],
+		"surprises": [
+			"[surprised]Elias brought me lunch yesterday without me asking. Nobody's done that since my mother.",
+			"[surprised]I found a swallow's nest in the rafters of the storehouse. I built around it. Don't tell anyone I'm soft."
+		],
+		"funny": [
+			"[laughing]Tomas once lectured me for an hour on the right way to hold a chisel. He was holding it upside down the whole time.",
+			"[laughing]I nailed my own coat to a wall once. Stood there for ten minutes pretending I meant to be leaning on it.",
+			"[laughing]Sera tried to help me build a fence. She painted it instead. Bright red. The cows won't go near it."
+		]
+	},
+	"opinions": {
+		"elias": [
+			"[happy]Elias is the best of us. He'd give you his last loaf and ask if you wanted butter.",
+			"Elias is too soft for his own good. That's why we all keep an eye on him.",
+			"If Elias ever gets angry, run. I've seen it once. A crow learned a lesson that day."
+		],
+		"nia": [
+			"Nia's clever. Too clever. She asked me why wood floats and I had to admit I didn't know.",
+			"[laughing]Nia patched my hand once with something green and smelly. Healed in a day. Smelled for a week.",
+			"She asks a hundred questions a day. Forty of them are good. That's a better rate than most."
+		],
+		"tomas": [
+			"Tomas taught me everything. He'll tell you so, often.",
+			"[happy]Tomas grumbles like a rusty gate, but he made every child in this village a toy. By hand.",
+			"Don't let Tomas fool you. He's the softest old man you'll ever meet. Just don't touch his tools."
+		],
+		"sera": [
+			"[laughing]Sera could sell sand to a desert. She sold me a hammer I already owned.",
+			"Sera's trouble. The good kind, mostly. Like a loose plank you get fond of.",
+			"I don't believe half of Sera's stories. The other half, I've seen her do. That's what worries me."
+		]
+	},
+	"player": {
+		"achievement": [
+			"[happy]Heard you {thing}. Not bad. Not bad at all.",
+			"So you {thing}. You keep surprising me. I don't like surprises, but I like that one."
+		],
+		"gift": [
+			"[surprised]For me? You didn't have to. I'll use it. That's the best thanks I know.",
+			"[happy]A gift? Nobody gives builders gifts. They give us lists of things to fix."
+		],
+		"house": [
+			"[happy]I saw your house. The corners are true. I checked. Twice.",
+			"Your house is standing. That's the main thing. The second thing is it's actually nice. Don't let it go to your head."
+		],
+		"discovery": [
+			"You found {thing}? I've been meaning to go out there and check it's still standing.",
+			"[happy]Exploring, eh? Bring me back a nice piece of oak next time."
+		]
+	},
+	"life": {
+		"new_home": [
+			"[happy]My new house still smells of fresh sawdust. Best smell in the world.",
+			"I've built a hundred homes and never lived in a new one till now. It's strange. Good strange."
+		],
+		"partner": [
+			"[happy]I never thought I'd share a roof with anyone. Turns out I like the company. Don't spread that around.",
+			"Having someone to come home to changes how you build. You build for two."
+		],
+		"child": [
+			"[happy]My little one already has a hammer. A wooden one. Tomas made it. They hit everything with it.",
+			"I'm teaching my child to measure twice. They mostly measure the cat."
+		],
+		"friend": [
+			"[happy]I've got more friends here than I ever had back home. Funny what a few years of roofs will do.",
+			"I keep a list of people I'd trust with my life. It's getting longer. That's new."
+		],
+		"grief": [
+			"[sad]I made the coffin myself. It's the hardest thing I've ever built. It was the best one, too.",
+			"[sad]Some days I walk past their door and nearly knock."
+		]
+	},
+	"stories": [
+		[
+			"Want to hear about the first winter? Fine. Sit.",
+			"Five of us, one hut, and snow up to the window. Tomas told the same story every night for a month.",
+			"By the end we could recite it with him. We still do, at festivals. He pretends to be annoyed.",
+			"[happy]That's when I knew we'd make it. People who can laugh at the same bad story can survive anything."
+		],
+		[
+			"I'll tell you about the bridge.",
+			"The first one washed away in the spring flood. I'd built it too low. My fault.",
+			"I sat on the bank and cried for an hour. Then Elias sat next to me and didn't say anything for another hour.",
+			"[happy]Then we built the second one. Higher. It's still there. Every time I cross it, I remember both of those hours."
+		],
+		[
+			"Here's one I don't tell often.",
+			"Back in the mill town, I built a whole barn on my own, in secret, at night, to prove I could.",
+			"The owner came out in the morning, saw it, and asked which man had built it.",
+			"[angry]I said, 'The one standing in front of you.' He laughed. I left the next week. Best decision I ever made."
+		],
+		[
+			"[laughing]This one's about Sera.",
+			"When she first arrived she tried to sell me a 'magic level' that was always straight.",
+			"It was a plank with a line painted on it. I bought it. I still use it to prop the door open.",
+			"[happy]She's never let me forget it. I've never let her forget I paid in buttons."
+		]
+	],
+	"questions": [
+		{
+			"id": "mara_build",
+			"ask": "Here's a question. If you could build anything at all, what would it be?",
+			"free": true,
+			"options": {
+				"house": [
+					"house",
+					"home",
+					"cottage"
+				],
+				"tower": [
+					"tower",
+					"castle",
+					"fort"
+				],
+				"bridge": [
+					"bridge"
+				],
+				"boat": [
+					"boat",
+					"ship"
+				]
+			},
+			"react": {
+				"house": "[happy]A house. Good answer. The best things are the simple ones.",
+				"tower": "[laughing]A tower? Ambitious. I like ambitious. I'd want to check the foundations first.",
+				"bridge": "[happy]A bridge! Now we're talking. Bridges bring people together. Literally.",
+				"boat": "A boat? Hm. Same skills, wetter consequences.",
+				"other": "{answer}? Never built one of those. Yet."
+			},
+			"recall": "You told me you'd build {answer}, given the chance. I've been thinking about how I'd do it."
+		},
+		{
+			"id": "mara_hands",
+			"ask": "Are you good with your hands? Honestly.",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"good",
+					"very",
+					"i am",
+					"sure"
+				],
+				"no": [
+					"no",
+					"not",
+					"bad",
+					"terrible",
+					"nope"
+				],
+				"learning": [
+					"learning",
+					"trying",
+					"bit",
+					"little",
+					"sometimes"
+				]
+			},
+			"react": {
+				"yes": "[happy]Good. I'll put you to work then. Don't make me regret it.",
+				"no": "[laughing]Honest, at least. Hands can learn. Pride can't.",
+				"learning": "[happy]That's the right answer. Everyone's learning. Even me. Don't tell Tomas.",
+				"other": "That's not a yes or a no, but I'll take it."
+			},
+			"recall": {
+				"yes": "You said you're good with your hands. I've got a job that needs them, when you're ready.",
+				"no": "You said you're not much use with your hands. Nobody is, at first. Offer's open.",
+				"learning": "You said you're still learning with your hands. How's it going? Show me sometime.",
+				"other": "I haven't forgotten what you said about working with your hands."
+			}
+		},
+		{
+			"id": "mara_season",
+			"ask": "Which season do you like best? I'm curious. Don't say winter, it's a trick.",
+			"free": true,
+			"options": {
+				"spring": [
+					"spring"
+				],
+				"summer": [
+					"summer"
+				],
+				"autumn": [
+					"autumn",
+					"fall"
+				],
+				"winter": [
+					"winter"
+				]
+			},
+			"react": {
+				"spring": "Spring. Fixing season. You'll fit right in.",
+				"summer": "[happy]Summer. Long days, dry wood. Good choice.",
+				"autumn": "[happy]Autumn! Same as me. I knew there was a reason I liked you.",
+				"winter": "[laughing]Winter. I said don't say winter. You're as stubborn as me.",
+				"other": "{answer}? That's not a season I've heard of, but alright."
+			},
+			"recall": "You like {answer} best, you said. Not my pick, but I respect it."
+		},
+		{
+			"id": "mara_stay",
+			"ask": "Are you planning to stay? In the village, I mean. For good.",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"stay",
+					"of course",
+					"forever",
+					"sure"
+				],
+				"no": [
+					"no",
+					"leave",
+					"not",
+					"going"
+				],
+				"maybe": [
+					"maybe",
+					"perhaps",
+					"don t know",
+					"dont know",
+					"not sure",
+					"see"
+				]
+			},
+			"react": {
+				"yes": "[happy]Good. Then I'll build things that last for you.",
+				"no": "[sad]Hm. Well. Make the most of it while you're here.",
+				"maybe": "Maybe's honest. Stay long enough and the place grows on you. Like moss.",
+				"other": "That's not an answer. But I suppose that's an answer."
+			},
+			"recall": {
+				"yes": "You said you'd stay. I'm holding you to it.",
+				"no": "You said you might not stay. I hope we've changed your mind.",
+				"maybe": "You said maybe, about staying. Still maybe? I'll take maybe.",
+				"other": "I remember what you said about staying."
+			}
+		}
+	]
+}

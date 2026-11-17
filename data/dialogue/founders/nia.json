@@ -1,0 +1,448 @@
+{
+	"id": "nia",
+	"greetings": {
+		"morning": [
+			"[happy]Morning{you}! Did you know dew forms because the ground cools faster than the air? I worked that out at dawn!",
+			"[laughing]You're up! Good! I need someone to tell me if this leaf smells like lemon or soap.",
+			"Oh, morning! Sorry, I've been awake for hours. The night-blooming flowers closed and I wanted to see how."
+		],
+		"afternoon": [
+			"[happy]Hi{you}! Perfect timing. I've got mud on my hands and an idea in my head.",
+			"Afternoon! Have you noticed the bees are all going one direction today? Where do you think they're going?",
+			"[happy]Hello hello! I just pressed my fortieth kind of flower. Forty! Out of how many, though?"
+		],
+		"evening": [
+			"[happy]Evening{you}! The moths are coming out. Did you know some of them only visit one kind of flower?",
+			"Oh, is it evening already? I forgot to eat again. Elias is going to scold me.",
+			"[happy]Hi! I love dusk. The garden smells completely different. Like it's breathing out."
+		],
+		"night": [
+			"[surprised]You're up late too? I'm watching the glow-moss. It only glows after midnight! Isn't that strange?",
+			"It's so late{you}! Can't sleep? Try chamomile. Or counting seeds. I do both.",
+			"Shh, listen. That's an owl. I've been trying to find its nest for a week."
+		]
+	},
+	"weather": {
+		"rain": [
+			"[happy]Rain! Everything smells green. Do you think rain has a smell, or is it the earth?",
+			"I put out three bowls to measure the rain. Science! Also I wanted to see which bowl the frogs liked.",
+			"[laughing]My notes are getting soggy. Worth it. The mushrooms will come up tomorrow."
+		],
+		"clear": [
+			"[happy]Sunny! The flowers are all turned the same way. They follow the sun. Like a little crowd.",
+			"Dry day. I need to water the seedlings. Want to help? You can name one.",
+			"[happy]Such a bright day. Perfect for drying herbs. The whole house will smell like mint."
+		],
+		"storm": [
+			"[surprised]Lightning! Did you know it's hotter than the sun? Well, I read that. I'd like to test it. Safely.",
+			"[worried]The wind's going to flatten my foxgloves. I've staked them, but staking isn't science, it's hope."
+		]
+	},
+	"activity": {
+		"work": [
+			"I'm grinding willow bark. It's for Tomas's knees. Don't tell him, he thinks it's tea.",
+			"[happy]Mixing a salve! Beeswax, calendula and a secret ingredient. Okay, the secret's more calendula."
+		],
+		"gather": [
+			"Picking water mint. Careful where you step, there's a frog here I've named Professor.",
+			"[happy]Collecting seeds. Each one's a tiny packed lunch for a baby plant. Isn't that lovely?"
+		],
+		"rest": [
+			"[happy]I'm resting. Well, I'm reading. Reading's resting for brains. Mostly.",
+			"Just sitting. I'm watching an ant carry a crumb ten times its size. I'm cheering for it."
+		],
+		"socialize": [
+			"[happy]Chatting! I asked everyone what their favourite plant is. Mara said 'firewood'.",
+			"Lunch at the fire. Sera's telling a story and I'm fact-checking it in my head."
+		],
+		"trade": [
+			"[happy]Buying jars. You can never have too many jars. I have too many jars.",
+			"Trading remedies for honey. Fair trade: I fix their coughs, the bees fix my mood."
+		],
+		"explore": [
+			"Exploring! There's a plant near the old ruins I've never seen in any book.",
+			"[happy]Just wandering. I find more when I'm not looking. Isn't that annoying?"
+		],
+		"sleep": [
+			"Mmh... five more minutes... was I dreaming about roots again?"
+		]
+	},
+	"mood": {
+		"tired": [
+			"[sad]I'm so tired. I stayed up reading about mosses. Then I read about the people who read about mosses.",
+			"My eyes keep closing mid-sentence. Sorry. What were we... oh, right. You.",
+			"[worried]I think I forgot to sleep. Is that possible? I think I did it."
+		],
+		"worried": [
+			"[worried]One of my remedies didn't work and I don't know why. Did I measure wrong? Was it the moon? Was it me?",
+			"[worried]I keep worrying I'll make someone sick by mistake. I check everything three times. Then once more.",
+			"Sorry, my head's buzzing. There's something wrong with the pond and I can't figure out what."
+		],
+		"happy": [
+			"[laughing]I figured it out! The mint wilts because of the shade from the new fence! Mystery solved!",
+			"[happy]I'm so happy today. A seed I planted in spring finally sprouted. I'd given up on it!",
+			"[happy]Everything's interesting today. Even the dirt. Especially the dirt."
+		],
+		"busy": [
+			"I'm in the middle of three experiments and one of them is bubbling. Talk fast?",
+			"So busy! Hold this jar? Don't shake it. Please don't shake it."
+		]
+	},
+	"relationship": {
+		"stranger": [
+			"[happy]You're new! Where are you from? What plants grow there? Do you have strange mushrooms?",
+			"Hi! Sorry, I ask a lot of questions. I'll try to ask fewer. I won't manage, but I'll try."
+		],
+		"friend": [
+			"[happy]I like talking to you. You never sigh when I explain things.",
+			"You're one of my favourite people to show new plants to. You actually look."
+		],
+		"close": [
+			"[happy]You're my best friend here. Is that okay to say? I'm saying it.",
+			"I named a flower after you. It's a weed, technically. But it's a very determined weed.",
+			"[happy]I tell you things I don't tell anyone. Like that I'm scared I'm not clever enough. There, I said it again."
+		],
+		"wary": [
+			"[worried]I don't really understand why you were unkind. I want to understand. Can you explain?",
+			"I'm being careful around you. I hope I don't have to be forever."
+		]
+	},
+	"topics": {
+		"childhood": [
+			"I grew up in the city beyond the hills. Stone streets, no gardens. I grew beans in a teacup on the windowsill.",
+			"[happy]When I was six I tried to dig to the other side of the world. I got as far as a worm. I named him Bertram.",
+			"My parents are scholars. Our house was all books and no dirt. I used to sneak out to the park just to touch the grass.",
+			"[laughing]I once fed my mother's houseplant ink to see if the flowers would turn blue. They died. Very blue, though."
+		],
+		"family": [
+			"My mother studies old languages and my father studies stars. They wanted me to study something proper. I study weeds.",
+			"[sad]They write every month asking when I'll come back to the city. I don't know how to tell them this is home now.",
+			"I have a little brother, Pim. He's twelve and wants to be a sailor. I send him dried seahorses I trade from Sera.",
+			"My grandmother was a herbalist. She's the only one who understood. I have her old notebook. It's my favourite thing."
+		],
+		"background": [
+			"I came here because my grandmother's notes mentioned a herb that only grows in this valley. I found it in my first week!",
+			"I was supposed to stay a month for research. That was three years ago. Oops.",
+			"The others thought I was a bit odd at first. Then I cured Elias's cough and suddenly I was 'our Nia'."
+		],
+		"work": [
+			"Every plant is a little medicine cabinet. You just have to learn which drawer is which. And which drawers bite.",
+			"Feverfew for headaches, willow for aches, mint for stomachs, and chamomile for when everything's too much.",
+			"[happy]I keep a notebook of every remedy and whether it worked. Some pages just say 'no' in big letters.",
+			"Medicine is half knowing things and half knowing what you don't know. I'm very good at the second half.",
+			"I test everything on myself first. That's why I was purple for a day last spring. Don't ask."
+		],
+		"skills": [
+			"I can name every plant in the village by leaf alone. Well, almost every plant. There's one I'm still arguing with.",
+			"[happy]I can make a salve that stops itching in seconds. It smells terrible. But seconds!",
+			"I'm good at noticing things. Like that you've got a burr on your sleeve. There. Got it."
+		],
+		"hobbies": [
+			"[happy]I press flowers. I have a book of them, one for every day I've lived here. Some days I cheat and use leaves.",
+			"I draw maps of where things grow. My map of the pond has more detail than Mara's map of the village.",
+			"I collect interesting stones. Not pretty ones. Interesting ones. There's a difference. I can explain the difference."
+		],
+		"ambitions": [
+			"[happy]I want to write a proper book of every plant in this valley. With drawings! A real book!",
+			"One day I'd like to cure something nobody else could. Even something small. Even hiccups.",
+			"I'd love a glass house for growing things that hate the cold. Mara says glass is expensive. I say science is priceless."
+		],
+		"home": [
+			"My house smells like twenty different herbs. Visitors either love it or sneeze.",
+			"[laughing]There are bunches of herbs hanging from every beam. Tall people have to duck. Mara ducks a lot.",
+			"My windowsills are full of seedlings. I've run out of windowsills. I'm eyeing the roof."
+		],
+		"furniture": [
+			"My favourite furniture is my drying rack. Is that furniture? I'm counting it.",
+			"[happy]I have a bookshelf that's mostly jars. And a jar shelf that's mostly books. It works for me.",
+			"Tomas made me a little stool so I can reach the top shelves. He carved a mushroom on it. I nearly cried."
+		],
+		"village": [
+			"[happy]This village has forty-three kinds of plant within a short walk. I counted. Then I found forty-four.",
+			"Everyone here has a skill. Mara builds, Elias grows, Tomas makes, Sera talks. I mix. We're a whole recipe.",
+			"I love that people here bring me strange plants to identify. Mostly they're weeds. I love them anyway."
+		],
+		"friendship": [
+			"I think friendship is like a garden. You have to keep showing up, even when nothing seems to be growing.",
+			"[happy]Good friends are like good soil. You don't notice them until you see how well everything grows.",
+			"I'm not always good at friends. I get distracted. But I always come back."
+		],
+		"disagreements": [
+			"Mara and I argued about whether moss counts as a plant. It does! She said it 'looks like a rug'. That's not a reason!",
+			"[worried]Tomas doesn't trust my remedies. He trusts 'the old ways'. My remedies are the old ways, just written down properly!",
+			"Sera and I had a fight once about whether her 'dragon scale' was a dragon scale. It was a fish scale. A big fish. Still a fish."
+		],
+		"animals": [
+			"[happy]There's a frog in the pond I've named Professor. He sits on the same lily pad every day. Very dedicated.",
+			"Did you know bees dance to tell each other where the flowers are? I tried dancing to tell Elias where the mushrooms were. He didn't get it.",
+			"I'd love a cat, but it'd knock over all my jars. Professor the frog is a safer friend."
+		],
+		"nature": [
+			"[happy]Have you ever looked at a leaf really closely? Like, really closely? There are little rivers in it.",
+			"The forest is full of mushrooms. Some will heal you, some will kill you, and some will make you see colours. I only pick the first kind.",
+			"Everything's connected. The bees need the flowers, the flowers need the rain, the rain needs the sea. It makes my head spin."
+		],
+		"seasons": [
+			"[happy]Spring is the best! Everything's new and I don't know what half of it is yet!",
+			"Autumn's when I harvest seeds. It feels like collecting promises.",
+			"Winter's when I read and plan. And sneeze. Mostly sneeze."
+		],
+		"mornings": [
+			"I check the dew every morning. Different plants hold it differently. I'm writing a whole chapter on it.",
+			"[happy]Mornings smell like possibility. And wet grass. Mostly wet grass."
+		],
+		"evenings": [
+			"[happy]In the evening I write down everything I learned that day. Some days it's a lot. Some days it's 'frogs exist'.",
+			"Evenings are for brewing tea and reading by the fire. The perfect experiment."
+		],
+		"events": [
+			"[happy]Festivals are fun! I make everyone a little sprig of something to wear. It's mint, mostly. Mint grows like gossip.",
+			"[worried]When the monsters came, I set up a healing corner in the storehouse. I was so scared my hands shook. But I did it.",
+			"When a baby's born, I make a little sachet of lavender for the cradle. For calm sleep. And to cover other smells."
+		],
+		"worries": [
+			"[worried]What if I'm not as clever as everyone thinks? What if one day I get it really wrong?",
+			"[worried]I worry about my parents. They're getting older and I'm so far away.",
+			"I worry that I'll never finish my book. There are too many plants and not enough me."
+		],
+		"hopes": [
+			"[happy]I hope someday a child reads my plant book and decides to become a herbalist too.",
+			"I hope my parents come and visit. I'd show them the garden. Maybe they'd understand.",
+			"I'd love to find a plant nobody's ever written down. I'd name it after Grandmother."
+		],
+		"surprises": [
+			"[surprised]I found a four-leaf clover today! Then another! Then a five-leaf one! I think the field's mutating. Isn't that exciting?",
+			"[surprised]Tomas asked me for a remedy. Tomas! Voluntarily! I nearly dropped my mortar."
+		],
+		"funny": [
+			"[laughing]I once mixed up sugar and dried mustard in Elias's tea. He drank the whole thing to be polite. His eyes watered for an hour.",
+			"[laughing]I chased a butterfly halfway to the windmill before I realised I'd left my shoes by the pond.",
+			"[laughing]Sera told the travelling tinker I was a witch. He bought six remedies and left very fast. I should thank her, really."
+		]
+	},
+	"opinions": {
+		"mara": [
+			"[happy]Mara's brilliant. She can look at a hill and see a house. I look at a hill and see forty plants.",
+			"Mara pretends she doesn't need anyone. But she always comes to me when she cuts herself. Which is weekly.",
+			"I think Mara's the bravest person here. She just goes and does the scary things. I'd make a list first."
+		],
+		"elias": [
+			"[happy]Elias is the kindest person alive. Scientifically. I've done no studies, but I'm sure.",
+			"Elias taught me about soil. He says 'listen to it'. I tried. It didn't say anything. But I knew what he meant.",
+			"He always saves me the end of the loaf. He knows it's my favourite. I never told him. He just noticed."
+		],
+		"tomas": [
+			"Tomas is grumpy, but he's grumpy like a hedgehog. Spiky outside, soft inside.",
+			"[happy]Tomas tells the best stories about the old days. I write them down when he's not looking.",
+			"He calls my remedies 'potions'. I call his furniture 'sticks'. It's our thing."
+		],
+		"sera": [
+			"[laughing]Sera's stories make no sense and I love every one of them. She once told me the moon is a big cheese. I almost checked.",
+			"Sera brought me seeds from the coast. She pretends it was a bargain. I know she paid too much.",
+			"She's my favourite person to go exploring with. She talks the whole way, but she notices things I miss."
+		]
+	},
+	"player": {
+		"achievement": [
+			"[happy]You {thing}?! That's amazing! How did you do it? Tell me everything. Step by step.",
+			"I heard you {thing}! I'm writing that down. You're going in my notebook."
+		],
+		"gift": [
+			"[happy]For me? Oh! I'm going to keep this forever. Or study it. Possibly both.",
+			"[surprised]A gift! Nobody brings me gifts. Except weeds. I love weeds too, but this is better."
+		],
+		"house": [
+			"[happy]Your house is lovely! Can I plant some herbs by your door? Mint keeps the flies away. And it smells nice.",
+			"I saw your house! You should put a window box on it. I'll give you seeds."
+		],
+		"discovery": [
+			"[happy]You found {thing}?! Were there any strange plants? Any at all? Please say yes.",
+			"You went exploring without me? Next time take me! I'll bring jars."
+		]
+	},
+	"life": {
+		"new_home": [
+			"[happy]My new house has so many windowsills! I've already filled them all. I need a bigger house.",
+			"Moving all my jars took four days. Only two broke. That's a scientific triumph."
+		],
+		"partner": [
+			"[happy]They listen to me talk about moss. For hours! I think that's love. It must be.",
+			"I have someone to show all my discoveries to now. Every single one. They're very patient."
+		],
+		"child": [
+			"[happy]My little one already knows what mint smells like! They pull faces at feverfew, though. Fair.",
+			"I'm teaching my child to name the flowers. They call everything 'pretty'. Which is accurate."
+		],
+		"friend": [
+			"[happy]When I came here I didn't know anyone. Now people bring me their coughs AND their gossip. That's belonging.",
+			"I used to eat lunch alone with a book. Now I eat with friends. The book's a bit jealous."
+		],
+		"grief": [
+			"[sad]I keep thinking if I'd known one more remedy, maybe... Elias says I can't think like that. I try not to.",
+			"[sad]I pressed a flower from their garden. It's in my book now. It's the page I open the most."
+		]
+	},
+	"stories": [
+		[
+			"Do you want to hear how I found the valley herb? It's a good story. I promise it has excitement.",
+			"Grandmother's notebook said it grows 'where the water sings and the stones sleep'. Very helpful, Grandmother.",
+			"I searched every stream for a week. On the last day I slipped, fell in the river, and landed right next to it.",
+			"[laughing]So technically I found it with my face. Science is a lot of falling in rivers, it turns out."
+		],
+		[
+			"This is a story about Tomas. A nice one. Don't tell him I told you.",
+			"Last winter he had a terrible fever. He wouldn't let anyone help. Too proud.",
+			"I sat outside his door all night with willow tea, and every hour I just said 'it's here when you want it'.",
+			"[happy]At dawn the door opened a crack and a hand came out for the cup. We've never mentioned it since."
+		],
+		[
+			"[laughing]Okay, the purple story. Fine.",
+			"I was testing a dye from elderberries and I wanted to see if it stained skin. It did. All of it.",
+			"I was purple for a day. Mara called me 'plum'. Sera tried to sell tickets to see me.",
+			"[happy]But now I know: elderberry stains skin. Science! I wrote it down in very big letters."
+		],
+		[
+			"Can I tell you something a bit sad?",
+			"Before I came here, I never really fitted anywhere. In the city I was too strange. At school I was too quiet.",
+			"The first night here, Elias put a bowl of soup in front of me and said 'eat, we're glad you came'. Just like that.",
+			"[happy]I think that's the moment this became home. One bowl of soup. Isn't it funny what matters?"
+		]
+	],
+	"questions": [
+		{
+			"id": "nia_plant",
+			"ask": "Ooh, question! What's your favourite plant? Or flower? Or tree? Any green thing!",
+			"free": true,
+			"options": {
+				"rose": [
+					"rose",
+					"roses"
+				],
+				"sunflower": [
+					"sunflower"
+				],
+				"oak": [
+					"oak",
+					"tree",
+					"trees"
+				],
+				"lavender": [
+					"lavender"
+				],
+				"mint": [
+					"mint"
+				],
+				"daisy": [
+					"daisy",
+					"daisies"
+				]
+			},
+			"react": {
+				"rose": "[happy]Roses! Beautiful AND you can make tea from the hips. Very practical romance.",
+				"sunflower": "[happy]Sunflowers follow the sun all day! Did you know that? I bet you did. That's why you picked it.",
+				"oak": "[happy]Oaks! They can live a thousand years. Imagine what they've seen.",
+				"lavender": "[happy]Lavender! For calm and sleep. You have a peaceful heart, I think.",
+				"mint": "[laughing]Mint! It grows everywhere and you can never get rid of it. Like me!",
+				"daisy": "[happy]Daisies close at night! Like they're going to sleep. That's my favourite fact.",
+				"other": "[happy]{answer}! I'll look that up. Or find one. Or both!"
+			},
+			"recall": "You said your favourite was {answer}. I've been looking for some to press for you."
+		},
+		{
+			"id": "nia_curious",
+			"ask": "Have you ever wondered why the sky is blue? I have a theory. Do you want to hear it?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"sure",
+					"please",
+					"tell me",
+					"okay"
+				],
+				"no": [
+					"no",
+					"not",
+					"later",
+					"nope"
+				]
+			},
+			"react": {
+				"yes": "[happy]The air is full of tiny bits that scatter blue light more than red! I think. I'm mostly sure. Isn't that wonderful?",
+				"no": "[laughing]That's fair. Nobody ever wants to hear it. I'll tell the frogs.",
+				"other": "I'll take that as a maybe. I'll save the theory for later!"
+			},
+			"recall": "Remember when I told you about the sky? I've got a new theory about sunsets now."
+		},
+		{
+			"id": "nia_read",
+			"ask": "Do you like reading? I could lend you a book. I have so many. Too many.",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"love",
+					"sure",
+					"like"
+				],
+				"no": [
+					"no",
+					"not",
+					"don t",
+					"dont",
+					"nope",
+					"rarely"
+				]
+			},
+			"react": {
+				"yes": "[happy]I'll lend you my grandmother's favourite. Be careful, it's held together with thread and hope.",
+				"no": "That's alright! I'll just tell you what's in them instead. That's probably worse, isn't it.",
+				"other": "Well, my door's open if you ever want one."
+			},
+			"recall": {
+				"yes": "You told me you love reading. I've picked out a book for you!",
+				"no": "You said you don't read much. I found a book with pictures. Lots of pictures. No pressure!",
+				"other": "I've picked out a book for you, just in case."
+			}
+		},
+		{
+			"id": "nia_explore",
+			"ask": "Where's the most interesting place you've been in the valley? I want to go everywhere.",
+			"free": true,
+			"options": {
+				"lake": [
+					"lake"
+				],
+				"ruins": [
+					"ruins",
+					"ruin"
+				],
+				"windmill": [
+					"windmill",
+					"mill"
+				],
+				"forest": [
+					"forest",
+					"woods"
+				],
+				"pond": [
+					"pond"
+				],
+				"watchtower": [
+					"tower",
+					"watchtower"
+				]
+			},
+			"react": {
+				"lake": "[happy]The forest lake! I bet there are water plants there I've never seen.",
+				"ruins": "[surprised]The old ruins? There's a plant growing in the stones there I can't name. It's driving me mad.",
+				"windmill": "[happy]The windmill! The grass around it is full of clover. The bees love it.",
+				"forest": "The woods? Be careful. But tell me what mushrooms you saw. Please.",
+				"pond": "[laughing]The pond! That's where Professor lives. Did you say hello?",
+				"watchtower": "The watchtower! You can see the whole valley from up there. I want to map it.",
+				"other": "{answer}? I've never been! I'm going to go. You have to show me."
+			},
+			"recall": "You said {answer} was the most interesting place. I went! You were right!"
+		}
+	]
+}

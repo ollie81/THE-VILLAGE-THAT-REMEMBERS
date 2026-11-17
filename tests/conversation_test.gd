@@ -200,7 +200,9 @@ func _panel_typing() -> void:
 	_panel.advance()
 	_panel.advance()
 	await _frames(2)
-	_check(_panel._name_label.text == "Sera" and (_panel._text_label.text.contains("trade") or _panel._text_label.text.contains("Trader")), "Sera answers what you asked: %s" % _panel._text_label.text)
+	var job_lines: Array = (TalkBrain.VOICES["sera"]["job"] as Array) + DialogueLibrary.pool(GameManager.get_villager(&"sera"), "topics/work")
+	var said: String = _panel._text_label.text
+	_check(_panel._name_label.text == "Sera" and job_lines.any(func(l): return RegEx.create_from_string("^\\[[a-z]+\\]").sub(String(l), "") == said), "Sera answers what you asked (about her work): %s" % said)
 	var guard := 0
 	while not _panel._choice_box.visible and guard < 10:
 		_panel.advance()

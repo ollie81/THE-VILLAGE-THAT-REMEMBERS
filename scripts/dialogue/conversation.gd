@@ -13,7 +13,8 @@ var choices: Array = []
 var topic_id: String = ""
 ## Shown after a topic's reply (e.g. "Could you help me with something?").
 var followup: Array = []
-## A yes/no question the villager is waiting on ("" if none).
+## A yes/no question the villager is waiting on ("" if none), or one of
+## their own questions ("q:<id>"), answered by a button or by typing.
 var pending_question: String = ""
 ## Set by a typed goodbye (or an insult too far): the conversation ends
 ## after the villager's last line.
@@ -187,6 +188,12 @@ func _do_action(choice: Dictionary) -> void:
 			else:
 				lines.append("[angry]After how you've treated me? No. I'm going.")
 			choices = DialogueService.closing_menu()
+		"answer":
+			var q := DialogueLibrary.question(_villager, String(choice.get("question", "")))
+			pending_question = ""
+			if not q.is_empty():
+				lines.append(DialogueLibrary.answer(_villager, q, String(choice.get("answer", ""))))
+			choices = DialogueService.menu_for(_villager)
 		"visitor_more":
 			lines.append_array(PersonGenerator.visitor_details(_villager.person))
 			choices = DialogueService.visitor_menu(false)

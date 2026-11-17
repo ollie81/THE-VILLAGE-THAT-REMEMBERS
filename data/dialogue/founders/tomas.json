@@ -1,0 +1,458 @@
+{
+	"id": "tomas",
+	"greetings": {
+		"morning": [
+			"Good morning{you}. The kettle's on. It's always on. One of life's few certainties.",
+			"Morning. You're up with the sun. I respect that. The sun and I have an understanding.",
+			"Ah, morning. My knees told me it would rain. My knees have been wrong before. Rarely."
+		],
+		"afternoon": [
+			"Good afternoon{you}. Pull up that stool. I made it. It won't let you down.",
+			"Afternoon. The light's good for fine work at this hour. Mind you don't stand in it.",
+			"Ah. Company. Good. The shavings and I have run out of things to say to each other."
+		],
+		"evening": [
+			"Good evening{you}. The day's work is done. Now comes the best part: thinking about it.",
+			"Evening. Sit. Have some tea. It's strong. Like the old days. Like me, some days.",
+			"The evenings are long now. I don't mind. A long evening is a gift to an old man."
+		],
+		"night": [
+			"It's late{you}. Old men don't sleep much. What's your excuse?",
+			"Night. The village is quiet. You can hear the wood settling in the walls. Like old bones.",
+			"Still up? Sit, then. The night is better for stories than for sleeping."
+		]
+	},
+	"weather": {
+		"rain": [
+			"Rain. My joints have been complaining about it since yesterday. They're very reliable.",
+			"Rain is good for the wood. It shows you which joints are true and which are pretending.",
+			"I like the rain. It sends everyone indoors, and indoors is where the conversations happen."
+		],
+		"clear": [
+			"A fine clear day. Good for drying timber. Bad for staying indoors, which is my favourite thing.",
+			"Clear skies. The young ones will be out working. I'll be in here, supervising. From a distance.",
+			"Sun on the bench. On days like this, I almost feel young. Almost."
+		],
+		"storm": [
+			"A storm. I've seen worse. I've seen roofs fly. We rebuilt them. We always do.",
+			"Hear that thunder? My father said it was the mountains arguing. I've never found a better explanation."
+		]
+	},
+	"activity": {
+		"work": [
+			"I'm carving a chair leg. It takes as long as it takes. Hurry and it shows.",
+			"At the bench. Speak softly, please. This joint is delicate and so is my temper."
+		],
+		"gather": [
+			"Choosing wood. You can't rush this. Every piece has a grain, and every grain has a temper.",
+			"Collecting good oak. Good oak is like a good friend. Rare, and worth waiting for."
+		],
+		"rest": [
+			"Resting my eyes. Not sleeping. An important distinction.",
+			"Sitting. At my age, sitting is an achievement."
+		],
+		"socialize": [
+			"At the fire with the others. I tell the stories. They pretend they haven't heard them.",
+			"Lunch. Elias keeps giving me extra bread. He thinks I don't notice. I notice."
+		],
+		"trade": [
+			"Buying beeswax. Sera tries to sell me something new every time. I tell her: old things work.",
+			"Haggling with Sera. She's quick. I'm patient. Patience usually wins."
+		],
+		"explore": [
+			"Taking a slow walk. I like to see the old trees. We're about the same age.",
+			"Walking. Doctor's orders. Well, Nia's orders. Same thing, she tells me."
+		],
+		"sleep": [
+			"Hm? Who's there? It's the middle of the night. Unless the village is burning, tomorrow."
+		]
+	},
+	"mood": {
+		"tired": [
+			"I'm weary today. Not in the body. In the years.",
+			"Forgive an old man for being slow. The mornings are harder than they used to be.",
+			"My hands won't do what I tell them today. Some days they remember. Some days they don't."
+		],
+		"worried": [
+			"Something weighs on me. Old men carry things. It's how we stay on the ground.",
+			"I've been thinking about the young ones. Who'll keep the old ways when I'm gone?",
+			"Hm. My mind keeps going back to things I can't change. A bad habit at any age."
+		],
+		"happy": [
+			"I finished the cradle for the new family. Best joint I've cut in ten years. I'm almost pleased.",
+			"I'm in good spirits. The tea is strong and the day is quiet. That's all a man needs.",
+			"Mara asked my advice today. Willingly. I'm going to mark the date."
+		],
+		"busy": [
+			"I'm in the middle of something. Talk if you must, but don't jog the bench.",
+			"Busy. A good kind of busy. The kind where your hands know what they're doing."
+		]
+	},
+	"relationship": {
+		"stranger": [
+			"Another new face. Welcome. Mind your manners and the steps, and we'll get on.",
+			"You don't know me yet. Give it time. I'm an acquired taste, like strong tea."
+		],
+		"friend": [
+			"You're alright. You listen. Most young people only wait for their turn to talk.",
+			"I've started saving the good chair for you. Don't tell Mara, she'll want it."
+		],
+		"close": [
+			"You've become dear to me. At my age I don't say that lightly. I don't say much lightly.",
+			"If I had a grandchild, I'd want them to be like you. Stubborn. Curious. Kind, when it matters.",
+			"I'm going to leave you something when I go. A good chisel. It's the highest compliment I know."
+		],
+		"wary": [
+			"Respect is earned, slowly. You spent yours quickly.",
+			"I'm watching. Old eyes, but they still see."
+		]
+	},
+	"topics": {
+		"childhood": [
+			"I grew up in a woodcutters' village high in the mountains. Snow half the year. We carved toys to pass the winters.",
+			"My first carving was a horse. It looked like a dog. My father kept it on the mantel until the day he died.",
+			"When I was a boy, we had no school. We had the old men by the fire. That was school enough.",
+			"I was a quiet child. I liked watching hands at work more than playing games. Some things never change."
+		],
+		"family": [
+			"My wife, Agnes. Forty years. She said my furniture was the only thing more stubborn than me. She passed many winters ago.",
+			"I have a son, Bram. He went to the city to be a clerk. He writes when he remembers. I keep every letter.",
+			"Mara is the closest thing to a daughter I have. She'd box my ears for saying it.",
+			"My grandfather built the first bridge in our mountain village. I think about him when I see Mara's bridge."
+		],
+		"background": [
+			"After Agnes died, the house was too quiet. I packed my tools and walked until the quiet stopped following me.",
+			"I found this valley with Mara. She was young and angry at the world. I was old and tired of it. We built a village to spite both.",
+			"The first thing I made here was a bench by the fire. People needed somewhere to sit and talk. That's how villages start."
+		],
+		"work": [
+			"Wood remembers. Every knot, every storm the tree lived through. A good craftsman listens to that.",
+			"A chair is a promise to hold someone up. I don't make promises I can't keep.",
+			"The young ones want to finish fast. I want to finish once. There's a difference.",
+			"I've made cradles for babies and coffins for their grandparents. The wood doesn't care. I do.",
+			"My father said: measure with your eyes, cut with your patience, finish with your heart. I've never found better advice."
+		],
+		"skills": [
+			"I can cut a dovetail joint with my eyes closed. I don't, because I'd like to keep my fingers.",
+			"I can tell the age of a tree from the sound of its wood. This one was older than me. Respect.",
+			"I can sharpen a chisel so fine it'll split a hair. A grey hair, these days."
+		],
+		"hobbies": [
+			"I carve little animals for the children. A bear, a fox, an owl. They lose them. I make more.",
+			"I play stones with Elias by the fire. I win. He says I cheat. I say experience isn't cheating.",
+			"I keep bees, a little. They're like good workers. Busy, quiet, and they sting when they're disrespected."
+		],
+		"ambitions": [
+			"At my age, ambition is a big word. I'd like to teach someone to do what I do. Properly.",
+			"I'd like to build one last great thing. A table for the whole village. One long table for every feast.",
+			"I want to live long enough to see the children I carved toys for carve toys of their own."
+		],
+		"home": [
+			"My house is small and full of shavings. Agnes would despair. I like it.",
+			"Every piece of furniture in my house was made by my hands. Some of them badly. I keep those to stay humble.",
+			"I have a rocking chair by the window. I've worn a groove in the floor rocking in it. Forty thousand evenings, maybe."
+		],
+		"furniture": [
+			"A good table should last a hundred years. A good chair should feel like it was made for you. Mine were.",
+			"People think furniture is just wood. It's where we sit when we're tired, eat when we're hungry, sleep when we're sad.",
+			"Mara makes furniture that survives. I make furniture that's worth surviving for. We argue about which matters more."
+		],
+		"village": [
+			"I remember this place as a clearing with a fire. Now look. Streets. Houses. Children. It's the best thing I've ever helped make.",
+			"A village is like a table. Every leg matters. Take one away and the whole thing wobbles.",
+			"The young ones don't remember how hard the first winters were. Good. That means we did our job."
+		],
+		"friendship": [
+			"Friends are like good joints. They hold without glue. They hold because they fit.",
+			"At my age, you count your friends on one hand. I need both hands now. That's this village.",
+			"A friend tells you the truth, even when it splinters."
+		],
+		"disagreements": [
+			"Mara and I argued about pegs and nails for a week. I was right. She'll say she was. We both know.",
+			"I tell Nia her potions are guesswork. She tells me my methods are older than dirt. We're both a bit right.",
+			"Sera once tried to sell me my own chair. I still haven't forgiven her. I've stopped being angry. That's different."
+		],
+		"animals": [
+			"I had a dog once. Old Bracken. Followed Elias home once and frightened him half to death. Good dog.",
+			"The bees know me now. They don't sting. Mostly. We've reached an arrangement, like old neighbours.",
+			"Animals don't lie. That's why they're better company than most people. Present company excepted."
+		],
+		"nature": [
+			"The old oak by the river was a sapling when my grandfather was a boy. Somewhere, I hope, a sapling is growing for my grandchildren.",
+			"Trees grow slow and live long. People could learn from that.",
+			"Every spring the valley comes back to life. At my age, you take that personally."
+		],
+		"seasons": [
+			"Winter's for carving by the fire. Spring's for mending. Summer's for sitting in the shade watching others work.",
+			"Autumn is the season of old men. Everything slowing down, turning gold. I don't mind it.",
+			"I've seen sixty-one winters. Each one longer. Each one ended. That's worth remembering in the dark months."
+		],
+		"mornings": [
+			"I start every morning the same: kettle, window, bench. Habit is just wisdom that stopped arguing.",
+			"In the mornings I sharpen my tools. A dull tool and a dull mind both make crooked work."
+		],
+		"evenings": [
+			"Evenings by the fire are for stories. I tell the same ones. The children correct me now.",
+			"In the evenings I sit with my tea and think about Agnes. It's a good kind of sad."
+		],
+		"events": [
+			"Festivals. Too loud. Too much dancing. I love them, and I'll deny I said that.",
+			"When the monsters came, I stood in my doorway with a mallet. I'm old, not useless.",
+			"I carve a little wooden token for every child born here. Their name and the year. Some keep them. Some lose them. That's life."
+		],
+		"worries": [
+			"My eyes are going. Fine work is getting harder. I don't know what a craftsman is without his eyes.",
+			"I worry the old skills will die with me. Nobody wants to learn slowly anymore.",
+			"I worry about Mara. She works like there's no tomorrow. One day there won't be, and she'll have forgotten to live."
+		],
+		"hopes": [
+			"I hope someone keeps my tools sharp after I'm gone.",
+			"I hope Bram comes home someday. Even for a visit. I'd show him what we built.",
+			"I'd like to sit in that long table I mean to build, at a feast, with everyone. And then I could rest."
+		],
+		"surprises": [
+			"Nia left a pot of honey at my door with a note: 'for your knees'. Honey doesn't help knees. I ate it anyway.",
+			"A child brought me a carving she'd made. A bird. It was terrible. It was the best gift I've had in years."
+		],
+		"funny": [
+			"I fell asleep at the bench once and woke up with a chisel mark on my cheek. Mara laughed for three days.",
+			"Sera once convinced a traveller I was a famous royal carpenter. He paid triple. I didn't correct him. I'm not proud. Well, a little.",
+			"I told the same story at three festivals in a row. Last year the children told it for me, word for word. I was furious and touched."
+		]
+	},
+	"opinions": {
+		"mara": [
+			"Mara is the finest builder I've known, and I've known a few. Don't tell her. She'll get unbearable.",
+			"She works too hard and laughs too little. When she does laugh, the whole village stops to listen.",
+			"I taught Mara to hold a chisel. Now she teaches me things. That's how it should be."
+		],
+		"elias": [
+			"Elias is a good man. Too good. People take advantage. I keep an eye out for him.",
+			"We sit by the fire most nights. We don't talk much. We don't need to.",
+			"He lost his wife too. We don't speak of it. We understand each other."
+		],
+		"nia": [
+			"Nia's clever. Too clever by half. She'll be famous one day. I'll say I knew her.",
+			"She sat outside my door all night once when I was ill. I've never told her how much that meant.",
+			"Her potions taste like a ditch in autumn. They work. Don't tell her I said they work."
+		],
+		"sera": [
+			"Sera talks too much and sells too hard. And the village would be duller than an old knife without her.",
+			"She tried to sell me my own chair. I'll never forget it. I'll never let her forget it.",
+			"Under all that noise, Sera's lonely, I think. People who keep moving often are."
+		]
+	},
+	"player": {
+		"achievement": [
+			"I heard you {thing}. Good. Well done. Don't let it go to your head.",
+			"So you {thing}. You've got your hands on the right tools, then. Keep them sharp."
+		],
+		"gift": [
+			"A gift? For me? Hm. Thank you. I'll put it where I can see it.",
+			"You didn't need to. But I'm glad you did. Old men don't get many gifts."
+		],
+		"house": [
+			"I saw your house. The doorframe's true. That's the most important part. Doors are where people come home.",
+			"Your house is coming along. Make sure you put good furniture in it. Not that cheap rubbish."
+		],
+		"discovery": [
+			"You found {thing}? I went there once, years ago. My knees won't take me back.",
+			"Exploring. Good. A young person should see the world. Then come back and sit by the fire and tell me about it."
+		]
+	},
+	"life": {
+		"new_home": [
+			"A new house, at my age. The doors stick and the floors creak. I've never been happier.",
+			"I moved my rocking chair first. Everything else could wait."
+		],
+		"partner": [
+			"I thought that part of my life was over. Agnes would laugh at me. Then she'd tell me to be happy.",
+			"Two cups of tea in the morning again. I'd forgotten how much I missed making the second one."
+		],
+		"child": [
+			"A little one, at my age. I carve them toys. They chew them. That's how I know they're well-made.",
+			"I'm teaching my little one the names of the woods. Oak, ash, elm. They point at everything and say 'tree'. Fair enough."
+		],
+		"friend": [
+			"I came here an old man with nobody. Now I can't walk to the fire without four people stopping me. Insufferable. Wonderful.",
+			"Every winter, more chairs by my fire. I keep making more."
+		],
+		"grief": [
+			"Another one gone. I've buried too many friends. The wood doesn't get easier to cut.",
+			"I made the box myself. Oak. The best I had. They deserved the best I had."
+		]
+	},
+	"stories": [
+		[
+			"Sit. I'll tell you about the first winter. The real version.",
+			"Five of us in one hut. Snow to the window. Mara was furious at the world. Elias was grieving. Nia hadn't come yet.",
+			"Every night I told the same story, about a fox who outsmarted the winter. They complained. I kept telling it.",
+			"By spring, Mara was telling it too. That's when I knew we'd be a village, not just people sharing a fire."
+		],
+		[
+			"I'll tell you about Agnes. Briefly. It's still hard.",
+			"She made fun of my furniture for forty years. Said it was 'built to survive the end of the world'.",
+			"When she was ill, I made her a rocking chair. Light, pretty, nothing like my usual work.",
+			"She sat in it every day until the end. It's by my window now. I don't sit in it. It's hers."
+		],
+		[
+			"Here's a lesson from my father. He was a woodcutter.",
+			"When I was eight, I cut a log badly and cried because it was ruined.",
+			"He picked it up, turned it over, and carved a spoon from the good side. Gave it to my mother. She used it for years.",
+			"There's always a good side. You just have to be patient enough to turn it over."
+		],
+		[
+			"Do you know why I carve toys for the children?",
+			"In my mountain village, one winter, a fever took many of the little ones. My little sister among them.",
+			"I was twelve. I carved a doll for her grave. Then I carved one for every family that had lost a child.",
+			"I've never stopped. Every toy is a small promise: not this one. Not this time."
+		]
+	],
+	"questions": [
+		{
+			"id": "tomas_patience",
+			"ask": "Tell me something. Are you a patient person?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"very",
+					"i am",
+					"patient"
+				],
+				"no": [
+					"no",
+					"not",
+					"impatient",
+					"nope",
+					"never"
+				],
+				"trying": [
+					"trying",
+					"learning",
+					"sometimes",
+					"bit",
+					"working on"
+				]
+			},
+			"react": {
+				"yes": "Good. Patience is the root. Everything else grows from it.",
+				"no": "Hm. Honest, at least. Patience can be learned. Slowly. Ironically.",
+				"trying": "That's the right answer. Nobody's patient. We all just keep trying.",
+				"other": "That's not an answer. But it's an honest non-answer, which is something."
+			},
+			"recall": {
+				"yes": "You told me you're a patient one. I've been watching. I believe it.",
+				"no": "You said patience isn't your strength. You've been more patient than you think.",
+				"trying": "You said you're trying to be patient. I've been watching. You're doing well.",
+				"other": "I've been thinking about what you said about patience."
+			}
+		},
+		{
+			"id": "tomas_old_ways",
+			"ask": "Do you think the old ways are worth keeping? The young ones say no.",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"worth",
+					"keep",
+					"of course",
+					"important"
+				],
+				"no": [
+					"no",
+					"not",
+					"new",
+					"change",
+					"progress"
+				],
+				"both": [
+					"both",
+					"some",
+					"mix",
+					"depends",
+					"balance"
+				]
+			},
+			"react": {
+				"yes": "Good. Not all of them. But the good ones. The ones that work.",
+				"no": "Hm. Spoken like a young person. Come back when your knees hurt.",
+				"both": "Wise answer. Keep what works. Change what doesn't. My father said the same, more or less.",
+				"other": "That's a thoughtful sort of silence. I'll take it."
+			},
+			"recall": {
+				"yes": "You said you value the old ways. Come by sometime, and I'll show you a few.",
+				"no": "You said the old ways aren't for you. I've been chewing on that. You might have a point.",
+				"both": "You said there's room for old and new. I've been chewing on that. I think you're wise.",
+				"other": "I've been chewing on what you said about the old ways."
+			}
+		},
+		{
+			"id": "tomas_wood",
+			"ask": "If you had to pick one wood for the rest of your life, which would it be? Choose carefully.",
+			"free": true,
+			"options": {
+				"oak": [
+					"oak"
+				],
+				"pine": [
+					"pine"
+				],
+				"ash": [
+					"ash"
+				],
+				"birch": [
+					"birch"
+				],
+				"walnut": [
+					"walnut"
+				],
+				"cherry": [
+					"cherry"
+				]
+			},
+			"react": {
+				"oak": "Oak. The right answer. Strong, slow, honest. Like a good friend.",
+				"pine": "Pine? Soft. Cheap. Smells nice. I suppose there's a place for it. A small place.",
+				"ash": "Ash. Flexible and tough. Good for tool handles. A practical choice. I approve.",
+				"birch": "Birch. Pretty bark. Bit weak. Like a handsome man with no opinions.",
+				"walnut": "Walnut! Now you're talking. Dark and rich. You have expensive taste.",
+				"cherry": "Cherry. It goes red with age. Like my face when Sera overcharges me.",
+				"other": "{answer}? I don't know that one. Bring me some. I'll tell you what it's good for."
+			},
+			"recall": "You picked {answer}, I remember. I set some aside for you."
+		},
+		{
+			"id": "tomas_teach",
+			"ask": "Would you want to learn to carve? I could teach you. Slowly. Very slowly.",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"please",
+					"i d love",
+					"sure",
+					"teach"
+				],
+				"no": [
+					"no",
+					"not",
+					"busy",
+					"later",
+					"nope"
+				]
+			},
+			"react": {
+				"yes": "Good. Lesson one: keep your fingers behind the blade. Lesson two is next year.",
+				"no": "Hm. Well. The offer stands. Like a good chair.",
+				"other": "Think about it. I'm not going anywhere. Well. Not soon."
+			},
+			"recall": {
+				"yes": "You said you'd like to learn carving. The knife's sharpened and waiting.",
+				"no": "You said carving's not for you. The offer's still open. It always will be.",
+				"other": "The offer to teach you carving still stands."
+			}
+		}
+	]
+}

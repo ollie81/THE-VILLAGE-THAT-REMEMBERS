@@ -1,0 +1,1680 @@
+{
+	"warm": {
+		"greetings": {
+			"morning": [
+				"[happy]Good morning{you}! I saved you a seat by the well, if you want to sit a minute.",
+				"[happy]Morning! Did you sleep? You look rested. It suits you."
+			],
+			"afternoon": [
+				"[happy]There you are{you}! I was just thinking it'd be nice to see a friendly face.",
+				"Afternoon! Come, tell me how your day's going. Properly, not just 'fine'."
+			],
+			"evening": [
+				"[happy]Evening{you}. The light's soft tonight, isn't it? Sit with me.",
+				"Hello, you. Long day? Mine too. Let's not talk about work."
+			],
+			"night": [
+				"[worried]You're up late{you}. Is everything alright? I can make something warm."
+			]
+		},
+		"weather": {
+			"rain": [
+				"[happy]Rain's good for the soul. And for the gardens. Mostly the gardens.",
+				"Wet one today. Come stand under the eaves with me, there's room."
+			],
+			"clear": [
+				"[happy]What a day! Everyone's smiling. It's catching.",
+				"Lovely and clear. I keep finding reasons to be outside."
+			],
+			"storm": [
+				"[worried]Stay close to the houses tonight, will you? I'd worry about you out there."
+			]
+		},
+		"mood": {
+			"tired": [
+				"[sad]I'm worn out today. But seeing you helps, honestly.",
+				"Bit tired. Nothing a cup of something hot won't mend."
+			],
+			"worried": [
+				"[worried]I'm fretting over nothing, probably. Talk to me about something nice?",
+				"[worried]Something's been sitting heavy on me. It'll pass. Things do."
+			],
+			"happy": [
+				"[happy]I'm in such a good mood today. Everything feels possible.",
+				"[laughing]I can't stop smiling and I don't even know why. Isn't that lovely?"
+			],
+			"busy": [
+				"Busy, busy! But never too busy for you. Walk with me?"
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"[happy]We haven't really talked yet, have we? Let's fix that.",
+				"I'm still learning everyone's names. Yours is one I'd like to remember."
+			],
+			"friend": [
+				"[happy]You've become a real friend to me. I hope you know that.",
+				"It's funny, I feel like I've known you for years."
+			],
+			"close": [
+				"[happy]If I ever need anything, you're the first person I'd come to. That's the truth.",
+				"You're family to me now. Don't argue, it's decided."
+			],
+			"wary": [
+				"[sad]I want to trust you. You're making it hard just now."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working away. It's nicer with company, though."
+			],
+			"gather": [
+				"Picking up what I can. Every little bit helps the village."
+			],
+			"rest": [
+				"[happy]Just resting my feet. Join me?"
+			],
+			"socialize": [
+				"[happy]Catching up with everyone. I love this part of the day."
+			],
+			"trade": [
+				"Doing a bit of swapping. Fair for everyone, that's how I like it."
+			],
+			"explore": [
+				"Having a little wander. You notice so much more when you walk slowly."
+			],
+			"sleep": [
+				"Mm? Oh, hello... is something wrong? No? Goodnight, then."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"The best thing about this place is the people. Truly.",
+				"A good friend is worth more than a full larder. And I like a full larder."
+			],
+			"disagreements": [
+				"I don't like arguing. I'd rather sit down and sort it out over a meal."
+			],
+			"funny": [
+				"[laughing]I waved at someone this morning for a whole minute. It was a scarecrow.",
+				"[laughing]I put salt in my tea instead of honey. I drank it anyway. Out of stubbornness."
+			],
+			"mornings": [
+				"Mornings are full of promise. Even the grey ones."
+			],
+			"evenings": [
+				"Evenings round the fire are when this village feels most like home."
+			],
+			"hopes": [
+				"I hope everyone here feels as welcome as I did. That's my one wish."
+			],
+			"worries": [
+				"[worried]I worry about people who don't say when they're struggling."
+			],
+			"surprises": [
+				"[surprised]Someone left flowers on my doorstep this morning. No note. I'm going to find out who."
+			],
+			"village": [
+				"[happy]This place took me in like I'd always been here.",
+				"Every day I find something new to love about this village."
+			]
+		},
+		"player": {
+			"achievement": [
+				"[happy]I heard you {thing}! I'm so proud of you, honestly."
+			],
+			"gift": [
+				"[happy]For me? Oh, you're too kind. I'll treasure it."
+			],
+			"house": [
+				"[happy]Your house looks so cosy. You've made a real home."
+			],
+			"discovery": [
+				"[surprised]You found {thing}? Tell me everything!"
+			]
+		},
+		"life": {
+			"new_home": [
+				"[happy]A home of my own. I keep touching the door frame just to be sure it's real."
+			],
+			"partner": [
+				"[happy]I never thought I'd find someone here. Life's full of kind surprises."
+			],
+			"child": [
+				"[happy]I look at my little one and my heart doesn't fit in my chest."
+			],
+			"friend": [
+				"[happy]I've made a true friend here. It changes everything."
+			],
+			"grief": [
+				"[sad]I miss them. I keep setting out one cup too many."
+			]
+		},
+		"questions": [
+			{
+				"id": "warm_comfort",
+				"ask": "What makes you feel at home? I'd love to know.",
+				"free": true,
+				"options": {
+					"food": [
+						"food",
+						"cooking",
+						"meal",
+						"bread",
+						"soup"
+					],
+					"people": [
+						"friends",
+						"people",
+						"family",
+						"you"
+					],
+					"fire": [
+						"fire",
+						"warm",
+						"hearth"
+					]
+				},
+				"react": {
+					"food": "[happy]Food! Then I'll cook for you one evening. That's a promise.",
+					"people": "[happy]People. Yes. Walls are just walls without them.",
+					"fire": "A warm fire. You and me both.",
+					"other": "[happy]{answer}. I'll remember that. Maybe I can help with it."
+				},
+				"recall": "You told me {answer} makes you feel at home. I thought of that today."
+			}
+		]
+	},
+	"blunt": {
+		"greetings": {
+			"morning": [
+				"Morning. You're up. Good.",
+				"Morning{you}. Don't stand there, say what you need."
+			],
+			"afternoon": [
+				"Afternoon. Make it quick, I've got things on.",
+				"You again{you}. Fine. What is it?"
+			],
+			"evening": [
+				"Evening. Day's done. Mostly.",
+				"Evening{you}. If you're here to chat, keep it short."
+			],
+			"night": [
+				"It's late. Go to bed. I mean it kindly."
+			]
+		},
+		"weather": {
+			"rain": [
+				"Rain. Mud. Wet boots. Lovely.",
+				"It's raining. Don't stand in it. Basic sense."
+			],
+			"clear": [
+				"Good weather. Use it. It won't last.",
+				"Clear sky. No excuses today."
+			],
+			"storm": [
+				"Storm. Tie things down and stay inside. That's all the advice there is."
+			]
+		},
+		"mood": {
+			"tired": [
+				"I'm tired. Don't ask why. Just tired.",
+				"Slept badly. Talk slowly."
+			],
+			"worried": [
+				"[worried]Something's off. Can't put my finger on it. I don't like that.",
+				"[worried]I've got worries. I'll deal with them. I always do."
+			],
+			"happy": [
+				"Today's alright. Don't make a fuss about it.",
+				"[happy]Good day. Rare. I'm enjoying it quietly."
+			],
+			"busy": [
+				"Busy. Walk and talk or come back later.",
+				"Got a list as long as my arm. You're not on it. Yet."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"Don't know you yet. That's not an insult, it's a fact.",
+				"New, are you? We'll see how you do."
+			],
+			"friend": [
+				"You're alright. I don't say that often.",
+				"I trust you. Don't make me regret it.",
+				"You turned up when it counted. I notice that sort of thing."
+			],
+			"close": [
+				"You're one of the few I'd stand beside in a fight. Take that how you like.",
+				"[happy]I'd do anything for you. Don't repeat that."
+			],
+			"wary": [
+				"[angry]I haven't forgotten. Keep your distance for a bit."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working. Obviously."
+			],
+			"gather": [
+				"Gathering. Somebody has to."
+			],
+			"rest": [
+				"Resting. Earned it."
+			],
+			"socialize": [
+				"Being sociable. Under protest."
+			],
+			"trade": [
+				"Trading. Fair price, no nonsense."
+			],
+			"explore": [
+				"Walking. Clears the head."
+			],
+			"sleep": [
+				"...Go away. Sleeping."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"Friends are people who tell you the truth. Everyone else is just company.",
+				"I don't have many friends. The ones I have are worth it.",
+				"Took me a long time to trust anyone here. Don't waste it."
+			],
+			"disagreements": [
+				"If I've got a problem with you, you'll hear it from me. Not from behind your back.",
+				"Had words with someone last week. We sorted it. Shook hands. Done. That's how it should work."
+			],
+			"funny": [
+				"[laughing]Someone asked me to smile more. So I smiled at them until they left.",
+				"Fell in the river last week. In front of everyone. No, I don't want to talk about it.",
+				"[laughing]A child asked me why I never smile. I told them I'm saving it. They gave me a pebble 'for the savings'. Kept it."
+			],
+			"mornings": [
+				"Mornings are for getting things done before people start talking.",
+				"Up before the birds. Kettle on. Boots on. Day starts when I say it does."
+			],
+			"evenings": [
+				"Evenings I sit and don't talk. Best part of the day.",
+				"Evening means my boots come off and nobody asks me for anything. Bliss."
+			],
+			"hopes": [
+				"I hope people here learn to say what they mean. Saves time.",
+				"I'd like to grow old somewhere quiet, with people I can rely on. Might be here. Don't hold me to it."
+			],
+			"worries": [
+				"[worried]I worry the soft ones here won't cope when things get hard.",
+				"[worried]Winter. Not enough wood stacked. There's never enough wood stacked."
+			],
+			"surprises": [
+				"[surprised]Somebody thanked me today. For being honest. Didn't know what to do with my face.",
+				"[surprised]Somebody left bread on my step. No note. I know who it was. I'll pretend I don't."
+			],
+			"village": [
+				"Village is fine. People talk too much, but they work hard.",
+				"I've lived worse places. That's high praise from me.",
+				"Good people here. Soft, some of them. But good."
+			],
+			"events": [
+				"Festivals. Noise and dancing. I stand at the back and keep an eye on the fire. Someone has to.",
+				"When the monsters come, I don't hide. I grab a stick and stand at the gate. Simple."
+			],
+			"work": [
+				"Work's work. Do it properly, do it once, go home."
+			],
+			"seasons": [
+				"Every season's got a job that needs doing. That's all a season is."
+			]
+		},
+		"player": {
+			"achievement": [
+				"You {thing}. Not bad. Keep going."
+			],
+			"gift": [
+				"For me? ...Thanks. Didn't need to. Glad you did."
+			],
+			"house": [
+				"Your house is solid. That's what matters."
+			],
+			"discovery": [
+				"You found {thing}. Useful? Good."
+			]
+		},
+		"life": {
+			"new_home": [
+				"Got a house. Good roof. That's enough for me."
+			],
+			"partner": [
+				"Found someone who puts up with me. Doesn't happen twice."
+			],
+			"child": [
+				"I've a child now. I'll be strict. Then I'll give in. Everyone does."
+			],
+			"friend": [
+				"I've got a friend here now. Don't make a thing of it."
+			],
+			"grief": [
+				"[sad]They're gone. I don't want to talk. Just stand here a minute."
+			]
+		},
+		"questions": [
+			{
+				"id": "blunt_honest",
+				"ask": "Straight answer. Do you prefer the truth or a kind word?",
+				"options": {
+					"truth": [
+						"truth",
+						"honest",
+						"honesty",
+						"straight"
+					],
+					"kind": [
+						"kind",
+						"nice",
+						"gentle",
+						"kindness"
+					]
+				},
+				"react": {
+					"truth": "Good. Then we'll get on.",
+					"kind": "Hm. I'll try. No promises.",
+					"other": "That's not an answer. But fine."
+				},
+				"recall": "You said you prefer {answer}. I've been trying. Noticed?"
+			}
+		]
+	},
+	"shy": {
+		"greetings": {
+			"morning": [
+				"Oh! Good morning{you}. I, um, didn't see you there.",
+				"[happy]Morning... it's a nice one, isn't it? Sorry. Hello."
+			],
+			"afternoon": [
+				"H-hello{you}. Did you... want something? It's alright if you just wanted to say hi.",
+				"Oh, hello. I was hoping someone would... no, never mind. Hello."
+			],
+			"evening": [
+				"Evening{you}... I like this time. It's quieter.",
+				"Hello. It's, um, nice of you to stop."
+			],
+			"night": [
+				"Oh... you're up too? I couldn't sleep either."
+			]
+		},
+		"weather": {
+			"rain": [
+				"I like the rain... nobody minds if you stay indoors.",
+				"It's raining. The sound helps me think. Is that strange?"
+			],
+			"clear": [
+				"It's so bright today. Everyone's out. It's... a lot.",
+				"[happy]Nice weather. I found a quiet spot by the trees."
+			],
+			"storm": [
+				"[worried]I don't... I don't like storms. Could you stay a minute?"
+			]
+		},
+		"mood": {
+			"tired": [
+				"Sorry, I'm a bit tired. Talking takes a lot out of me.",
+				"I didn't sleep much. I kept thinking about things I said yesterday."
+			],
+			"worried": [
+				"[worried]Did I upset anyone today? I keep wondering.",
+				"[worried]I'm just... worried. It's silly. Never mind."
+			],
+			"happy": [
+				"[happy]Today's been good. Someone remembered my name.",
+				"[happy]I'm happy. Quietly. On the inside, mostly."
+			],
+			"busy": [
+				"Oh, I'm, um, a bit busy. But you can stay. If you want."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"I'm... not very good at meeting people. Sorry.",
+				"Hello. I'm new. I mean, you know that. Sorry."
+			],
+			"friend": [
+				"[happy]I'm glad you talk to me. Not everyone does.",
+				"You're easy to talk to. I don't say that to many people."
+			],
+			"close": [
+				"[happy]I've never told anyone this, but you're my best friend here.",
+				"I don't feel nervous around you anymore. That's... a lot, for me."
+			],
+			"wary": [
+				"[sad]I... I'd rather not talk right now. Sorry."
+			]
+		},
+		"activity": {
+			"work": [
+				"Just working. It's nice to have something to do with my hands."
+			],
+			"gather": [
+				"Collecting things. It's quiet out here."
+			],
+			"rest": [
+				"Resting. Thinking. Mostly thinking."
+			],
+			"socialize": [
+				"I'm with the others. Trying to join in."
+			],
+			"trade": [
+				"I'm trying to trade. I always agree to the first price. I know."
+			],
+			"explore": [
+				"Just walking. I like finding places no one goes."
+			],
+			"sleep": [
+				"Mm... oh! Sorry. Was I snoring? Sorry."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"Making friends is hard for me. Keeping them is easier. I'm loyal.",
+				"I'd rather have one real friend than a crowd."
+			],
+			"disagreements": [
+				"I never know how to say I disagree. So I just... go quiet."
+			],
+			"funny": [
+				"[laughing]I practised saying hello to someone for an hour. Then I said 'goodbye' by mistake.",
+				"[laughing]I hid behind a tree to avoid a conversation. The tree was too thin.",
+				"[laughing]I tried to join a dance once. I bowed to the wrong partner. Then the right one. Then a fence post."
+			],
+			"mornings": [
+				"I like getting up before everyone. The village feels like mine for a little while."
+			],
+			"evenings": [
+				"Evenings I sit at the edge of the fire and listen. It's my favourite thing."
+			],
+			"hopes": [
+				"I hope one day I'll be brave enough to tell a story at the fire."
+			],
+			"worries": [
+				"[worried]I worry people only put up with me."
+			],
+			"surprises": [
+				"[surprised]Someone asked me to sit with them at lunch. On purpose!"
+			],
+			"village": [
+				"People here are patient with me. I'm not used to that.",
+				"I think I could belong here. Maybe. Slowly."
+			],
+			"events": [
+				"At festivals I stand near the musicians. Nobody expects you to talk when there's music."
+			]
+		},
+		"player": {
+			"achievement": [
+				"[happy]You {thing}? That's... that's really amazing."
+			],
+			"gift": [
+				"[surprised]For me? Oh... nobody's... thank you. Really."
+			],
+			"house": [
+				"Your house is lovely. I walk past it sometimes. Not in a strange way."
+			],
+			"discovery": [
+				"You found {thing}? You're so brave."
+			]
+		},
+		"life": {
+			"new_home": [
+				"[happy]My own house. With a door I can close. It's perfect."
+			],
+			"partner": [
+				"[happy]Someone likes me. For me. I still can't quite believe it."
+			],
+			"child": [
+				"[happy]My little one holds my finger when I'm nervous. Or maybe I hold theirs."
+			],
+			"friend": [
+				"[happy]I made a friend. A real one. I'm trying not to cry about it."
+			],
+			"grief": [
+				"[sad]I didn't get to say everything I wanted to. I should have been braver."
+			]
+		},
+		"questions": [
+			{
+				"id": "shy_quiet",
+				"ask": "Do you... like quiet places? Or do you prefer busy ones?",
+				"options": {
+					"quiet": [
+						"quiet",
+						"calm",
+						"peace",
+						"peaceful",
+						"alone"
+					],
+					"busy": [
+						"busy",
+						"crowd",
+						"people",
+						"loud",
+						"lively"
+					]
+				},
+				"react": {
+					"quiet": "[happy]Me too. Maybe I'll show you my secret spot one day.",
+					"busy": "Oh. That's alright. You can tell me all about the busy places.",
+					"other": "That's... a good answer. I think."
+				},
+				"recall": "You said you like {answer} places. I found one I think you'd like."
+			}
+		]
+	},
+	"lively": {
+		"greetings": {
+			"morning": [
+				"[laughing]Morning{you}! Isn't it wonderful? Everything is wonderful today!",
+				"[happy]Oh good, you're up! I've got about nine things to tell you."
+			],
+			"afternoon": [
+				"[happy]Hey{you}! Where've you been? I've been looking everywhere!",
+				"[laughing]There you are! Come on, come on, you'll want to hear this!"
+			],
+			"evening": [
+				"[happy]Evening{you}! Fire tonight? Say yes. You're saying yes.",
+				"Oh, perfect timing! We're about to start a game. Are you in?"
+			],
+			"night": [
+				"[laughing]You're awake too? Brilliant! Let's do something! Quietly! Ish!"
+			]
+		},
+		"weather": {
+			"rain": [
+				"[laughing]Rain! Let's jump in puddles! No? Just me? Fine!",
+				"Rainy days are for stories and hot drinks and more stories!"
+			],
+			"clear": [
+				"[happy]Sunshine! Let's race to the river! Go! ...Why aren't you running?",
+				"Beautiful day! I've already been up the hill twice!"
+			],
+			"storm": [
+				"[surprised]Did you hear that thunder? It shook my teeth! Amazing! Terrifying! Amazing!"
+			]
+		},
+		"mood": {
+			"tired": [
+				"[sad]I'm actually tired. It happens once a year. Today's the day.",
+				"I danced too long last night. My legs have filed a complaint."
+			],
+			"worried": [
+				"[worried]I'm trying to be cheerful but something's bothering me and I can't shake it.",
+				"[worried]Everyone's quiet today. I don't like it when everyone's quiet."
+			],
+			"happy": [
+				"[laughing]I'm SO happy! I don't even need a reason!",
+				"[happy]Best day ever! I say that a lot. It's true every time!"
+			],
+			"busy": [
+				"Busy! So busy! Talk fast! Faster! Perfect!"
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"[happy]Ooh, a new friend! I'm deciding we're friends. Done.",
+				"Hi! I don't know you yet but I already like you!"
+			],
+			"friend": [
+				"[happy]You're my favourite person to tell things to!",
+				"[laughing]We should do something ridiculous together! Soon!"
+			],
+			"close": [
+				"[happy]You're my best friend! I tell everyone. Even the chickens.",
+				"I'd follow you anywhere. Even somewhere boring. That's love."
+			],
+			"wary": [
+				"[angry]I'm not even going to pretend to be cheerful right now. You know why."
+			]
+		},
+		"activity": {
+			"work": [
+				"[happy]Working! Fast! I like to get it done so I can play!"
+			],
+			"gather": [
+				"Gathering! I made it a race! I'm winning! Against no one!"
+			],
+			"rest": [
+				"Resting! It's very hard! I keep wanting to get up!"
+			],
+			"socialize": [
+				"[laughing]Talking to everyone at once! It's my favourite!"
+			],
+			"trade": [
+				"Trading! I love haggling! I'm terrible at it! It's fun!"
+			],
+			"explore": [
+				"Exploring! There's a hill I haven't climbed yet!"
+			],
+			"sleep": [
+				"Mmf... five more minutes... is it a party? Wake me if it's a party."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"[happy]The more friends the better! I want to know everyone here!",
+				"My friends are my whole world. Loud, messy, wonderful world!"
+			],
+			"disagreements": [
+				"I fall out with people all the time! Then we make up! It's fine!"
+			],
+			"funny": [
+				"[laughing]I tried to carry five buckets at once! It went badly! Very wet!",
+				"[laughing]I sang the wrong words to the harvest song in front of everyone! Now they're the right words!"
+			],
+			"mornings": [
+				"Mornings! A whole new day! Anything can happen!"
+			],
+			"evenings": [
+				"[happy]Evenings are for music! I don't play, but I clap very well!"
+			],
+			"hopes": [
+				"I hope we have a festival every week! Is that too much? It's not too much!"
+			],
+			"worries": [
+				"[worried]I worry I'm too loud sometimes. People would tell me, right?"
+			],
+			"surprises": [
+				"[surprised]I found a frog in my boot! I've named him! He lives in my boot now!"
+			],
+			"village": [
+				"[happy]I love it here! Everyone's lovely and there's always something happening!",
+				"This village is going to be famous one day! I can feel it!"
+			]
+		},
+		"player": {
+			"achievement": [
+				"[laughing]You {thing}? YES! I'm telling everyone!"
+			],
+			"gift": [
+				"[happy]A present?! For me?! I love it! I love you! I mean, thank you!"
+			],
+			"house": [
+				"[happy]Your house! We should have a party there! Soon!"
+			],
+			"discovery": [
+				"[surprised]You found {thing}?! Take me next time! Please!"
+			]
+		},
+		"life": {
+			"new_home": [
+				"[laughing]A new house! Everyone's invited! Right now!"
+			],
+			"partner": [
+				"[happy]I'm in love! I'm telling the whole village! I already told the whole village!"
+			],
+			"child": [
+				"[laughing]My little one is louder than me! I'm so proud!"
+			],
+			"friend": [
+				"[happy]New best friend! Well, another best friend! You can have lots!"
+			],
+			"grief": [
+				"[sad]It's too quiet without them. I keep trying to fill the quiet. It doesn't work."
+			]
+		},
+		"questions": [
+			{
+				"id": "lively_party",
+				"ask": "If we threw a party, what would it need? Music? Food? Dancing?",
+				"free": true,
+				"options": {
+					"music": [
+						"music",
+						"songs",
+						"singing"
+					],
+					"food": [
+						"food",
+						"cake",
+						"feast"
+					],
+					"dancing": [
+						"dance",
+						"dancing"
+					]
+				},
+				"react": {
+					"music": "[happy]Music! I'll find someone who can play! Not me!",
+					"food": "[laughing]Food! The most important part! Correct!",
+					"dancing": "[happy]Dancing! I'm terrible! Let's do it!",
+					"other": "[laughing]{answer}! Great idea! I'd never have thought of it!"
+				},
+				"recall": "Remember you said a party needs {answer}? I'm planning one! Secretly! Not secretly anymore!"
+			}
+		]
+	},
+	"dreamy": {
+		"greetings": {
+			"morning": [
+				"Morning{you}... I was watching the mist leave the fields. It never says goodbye.",
+				"[happy]Oh, hello. I dreamed the river was singing. Do you think it does?"
+			],
+			"afternoon": [
+				"Hello{you}. The clouds look like ships today. Look, that one's sinking.",
+				"Afternoon... is it afternoon? I lost track. I was thinking about birds."
+			],
+			"evening": [
+				"Evening{you}. The first star's out. I always make a wish. I'm not telling you which.",
+				"Hello. The sky's turning the colour of peaches. I could watch it forever."
+			],
+			"night": [
+				"[happy]You're up too? The night's so big. It makes all my worries feel small."
+			]
+		},
+		"weather": {
+			"rain": [
+				"Rain sounds like a thousand tiny stories being told at once.",
+				"I like to imagine each raindrop has travelled from the sea just to visit us."
+			],
+			"clear": [
+				"Clear skies. Tonight you'll be able to see every star. I'll count them for you.",
+				"[happy]The light today is golden. Everything looks like a memory."
+			],
+			"storm": [
+				"[surprised]A storm! The sky's having an argument with itself."
+			]
+		},
+		"mood": {
+			"tired": [
+				"I'm drifting today. Like a leaf on a pond. A tired leaf.",
+				"I stayed up looking at the moon. It was worth it. Mostly."
+			],
+			"worried": [
+				"[worried]I had an uneasy dream. I can't remember it, but the feeling stayed.",
+				"[worried]Sometimes I worry the world's moving too fast for me to notice it."
+			],
+			"happy": [
+				"[happy]I found a feather this morning, white as snow. It feels like a sign.",
+				"[happy]Today feels like the first page of a good book."
+			],
+			"busy": [
+				"I'm meant to be busy. I keep getting distracted by the sky. Sorry."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"You have an interesting face. Like someone in a story I haven't read yet.",
+				"Hello, stranger. Every stranger is a door. I wonder what's behind yours."
+			],
+			"friend": [
+				"[happy]Talking to you is like sitting by still water. Peaceful.",
+				"You listen when I talk about strange things. That means a lot."
+			],
+			"close": [
+				"[happy]You're in all my best daydreams now. Is that odd? I hope it's not odd.",
+				"If I could give you one thing, it'd be the view from the hill at dawn."
+			],
+			"wary": [
+				"[sad]Something's clouded between us. I can feel it."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working... slowly. I keep stopping to look at things."
+			],
+			"gather": [
+				"Gathering. I found a stone shaped like a heart. It's coming home with me."
+			],
+			"rest": [
+				"Resting. Cloud-watching, if I'm honest."
+			],
+			"socialize": [
+				"Sitting with everyone. Listening to the sound of voices together."
+			],
+			"trade": [
+				"Trading. I always want to give things away instead."
+			],
+			"explore": [
+				"[happy]Wandering. I follow whatever path looks most like a story."
+			],
+			"sleep": [
+				"Mm... I was somewhere with tall trees made of glass... oh. Hello."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"A friend is someone who lets you be strange and calls it wonderful.",
+				"I collect moments with friends the way some people collect coins."
+			],
+			"disagreements": [
+				"When people argue, I try to imagine they're both right. Sometimes they are."
+			],
+			"funny": [
+				"[laughing]I walked into a fence while watching a hawk. The hawk looked very pleased with itself.",
+				"[laughing]I talked to a goose for a long time once. It turned out to be a very still duck."
+			],
+			"mornings": [
+				"Mornings are soft. The world hasn't decided what it wants to be yet."
+			],
+			"evenings": [
+				"Evenings are when the world puts on its best colours, just before it rests."
+			],
+			"hopes": [
+				"I hope one day someone writes a song about this village. I'd hum it forever."
+			],
+			"worries": [
+				"[worried]I worry that I'll forget the small, beautiful things."
+			],
+			"surprises": [
+				"[surprised]A deer looked right at me this morning. We understood each other. I think."
+			],
+			"village": [
+				"This village feels like a place out of a lullaby.",
+				"[happy]I think this valley was waiting for us. Doesn't it feel that way?"
+			]
+		},
+		"player": {
+			"achievement": [
+				"[happy]You {thing}. That's the kind of thing people tell stories about."
+			],
+			"gift": [
+				"[surprised]A gift... I'll keep it by the window so the light can find it."
+			],
+			"house": [
+				"Your house has a good spirit. I can tell from the way the smoke curls."
+			],
+			"discovery": [
+				"[surprised]You found {thing}? Was it beautiful? It must have been."
+			]
+		},
+		"life": {
+			"new_home": [
+				"[happy]My new home has a window facing the sunrise. I asked for that. Nobody thought I was strange."
+			],
+			"partner": [
+				"[happy]We sit and look at the stars and don't need to say anything. That's how I knew."
+			],
+			"child": [
+				"[happy]My child asked me what clouds are made of. I told them: wishes. I'm not sorry."
+			],
+			"friend": [
+				"[happy]I found someone who sees the world a bit like I do. Rare as a white crow."
+			],
+			"grief": [
+				"[sad]I look for them in the sky now. It helps, a little."
+			]
+		},
+		"questions": [
+			{
+				"id": "dreamy_sky",
+				"ask": "When you look at the night sky, what do you think about?",
+				"free": true,
+				"options": {
+					"home": [
+						"home",
+						"family",
+						"past"
+					],
+					"future": [
+						"future",
+						"tomorrow",
+						"dreams"
+					],
+					"nothing": [
+						"nothing",
+						"sleep",
+						"bed"
+					]
+				},
+				"react": {
+					"home": "[sad]Home. Yes. The stars are the same everywhere. That's comforting.",
+					"future": "[happy]The future! The sky is full of it.",
+					"nothing": "[laughing]Nothing? That's the most peaceful answer I've ever heard.",
+					"other": "{answer}... I'll think about that next time I look up."
+				},
+				"recall": "Last night I looked up and thought about what you said. {answer}."
+			}
+		]
+	},
+	"anxious": {
+		"greetings": {
+			"morning": [
+				"[worried]Oh! Morning{you}. Is everything alright? Nothing's on fire? Good. Good.",
+				"Good morning. Did you hear that noise in the night? No? Just me, then."
+			],
+			"afternoon": [
+				"[worried]Hello{you}. Have I done something? You've got a face like... no? Okay. Hello.",
+				"Afternoon! Sorry. I'm a bit jumpy. Too much tea."
+			],
+			"evening": [
+				"Evening{you}. Is it getting dark early? It feels like it's getting dark early.",
+				"[worried]Hello. I've checked my door twice already tonight. Is that normal?"
+			],
+			"night": [
+				"[worried]Why are you out so late? Is something wrong? Should I be worried? I'm worried."
+			]
+		},
+		"weather": {
+			"rain": [
+				"[worried]Rain. The roof held last time. It'll hold this time. Probably.",
+				"I don't mind rain. It's the flooding I mind. Not that it will flood. Will it?"
+			],
+			"clear": [
+				"Nice day. Too nice? No, that's silly. It's a nice day.",
+				"[happy]Sunny and calm. I can actually relax. Briefly."
+			],
+			"storm": [
+				"[worried]Storm! Have you tied everything down? I've tied everything down. Twice."
+			]
+		},
+		"mood": {
+			"tired": [
+				"I lay awake making lists. Then I lay awake worrying about the lists.",
+				"[sad]So tired. I kept checking the fire was out. It was out. It was always out."
+			],
+			"worried": [
+				"[worried]I've been worrying all day. About what? Yes. All of it.",
+				"[worried]What if the harvest fails? What if the well runs dry? What if... sorry."
+			],
+			"happy": [
+				"[happy]I feel calm today! I don't know what to do with it!",
+				"[happy]Nothing's gone wrong all day. I'm trying to enjoy it instead of waiting for something to."
+			],
+			"busy": [
+				"[worried]So much to do. I'll never... no. I will. One thing at a time."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"[worried]Hello. Sorry. I'm new and I keep thinking I'm in the way.",
+				"I'm still learning the rules here. Are there rules? Please tell me if there are rules."
+			],
+			"friend": [
+				"[happy]You make me feel less nervous. That's a real gift.",
+				"When you're around, I stop counting the things that might go wrong."
+			],
+			"close": [
+				"[happy]I trust you more than anyone. I don't even worry about it. Much.",
+				"You're my safe place. Is that too much to say? It's true."
+			],
+			"wary": [
+				"[worried]I keep thinking about what you did. I can't stop thinking about it."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working. Carefully. Very carefully. I've checked it three times."
+			],
+			"gather": [
+				"Gathering. Not too far from the village. Just in case."
+			],
+			"rest": [
+				"Trying to rest. Resting is harder than it looks."
+			],
+			"socialize": [
+				"With the others. Safety in numbers, they say."
+			],
+			"trade": [
+				"[worried]Trading. Is this a fair price? It feels like a fair price. Is it?"
+			],
+			"explore": [
+				"Walking. Only on paths I know."
+			],
+			"sleep": [
+				"[surprised]What? Who's there? Oh, it's you. Is everything alright? Okay. Night."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"Friends are the people who tell you it'll be alright, and then help make it alright.",
+				"I used to think nobody would want a worrier for a friend. I was wrong. I'm glad."
+			],
+			"disagreements": [
+				"[worried]I hate it when people argue. I always think it's my fault, even when I wasn't there."
+			],
+			"funny": [
+				"[laughing]I once packed for a storm that never came. I had nine blankets. In summer.",
+				"[laughing]I hid from a scary noise all night. It was my own cooking pot, rattling in the wind."
+			],
+			"mornings": [
+				"Mornings are good. The night's over and nothing terrible happened."
+			],
+			"evenings": [
+				"[worried]Evenings make me think about everything I didn't finish. But the fire helps."
+			],
+			"hopes": [
+				"I hope one day I'll go a whole week without worrying. I'll throw a party. A careful one."
+			],
+			"worries": [
+				"[worried]Where do I start? The monsters. The winter. The roof. Whether people like me."
+			],
+			"surprises": [
+				"[surprised]I left my door open all day by accident and nothing happened! Nothing!"
+			],
+			"village": [
+				"[happy]It's safe here. Safer than anywhere I've been. I can breathe.",
+				"People here don't laugh at my worries. They help me check the doors."
+			]
+		},
+		"player": {
+			"achievement": [
+				"[surprised]You {thing}? Were you careful? You were careful. Wonderful!"
+			],
+			"gift": [
+				"[surprised]For me? Oh, you shouldn't have. Really. But thank you. Really!"
+			],
+			"house": [
+				"Your house is strong. I checked the beams. Sorry. Habit."
+			],
+			"discovery": [
+				"[worried]You found {thing}? Out there? Alone? Next time take someone!"
+			]
+		},
+		"life": {
+			"new_home": [
+				"[happy]A house with a lock. And a good roof. I slept all night for the first time in months."
+			],
+			"partner": [
+				"[happy]They don't mind my worrying. They just hold my hand until it passes."
+			],
+			"child": [
+				"[worried]I worry about my little one every minute. And love them every second."
+			],
+			"friend": [
+				"[happy]I have a friend who calms me down. I didn't know I needed that so much."
+			],
+			"grief": [
+				"[sad]I always worried I'd lose someone. It doesn't help, worrying first. It still hurts."
+			]
+		},
+		"questions": [
+			{
+				"id": "anxious_fear",
+				"ask": "Can I ask... what scares you? It might help me feel less alone.",
+				"free": true,
+				"options": {
+					"monsters": [
+						"monster",
+						"monsters",
+						"creatures"
+					],
+					"dark": [
+						"dark",
+						"night"
+					],
+					"nothing": [
+						"nothing",
+						"not much",
+						"none"
+					]
+				},
+				"react": {
+					"monsters": "[worried]Me too. But we've got walls now. And each other.",
+					"dark": "The dark. Yes. I keep a candle lit. I'll leave one for you too.",
+					"nothing": "[surprised]Nothing? Teach me. Please.",
+					"other": "{answer}... thank you for telling me. I won't tell anyone."
+				},
+				"recall": "You told me {answer} scares you. I've been keeping an eye out. Just for you."
+			}
+		]
+	},
+	"proud": {
+		"greetings": {
+			"morning": [
+				"Morning{you}. I've finished more before breakfast than most do all day.",
+				"[happy]Ah, good morning. You've come to see good work, I hope."
+			],
+			"afternoon": [
+				"Afternoon{you}. Have you seen what I made yesterday? Everyone's talking about it.",
+				"Hello. You've caught me at my best. I'm always at my best."
+			],
+			"evening": [
+				"Evening{you}. Another fine day's work. I'd expect nothing less from myself.",
+				"Good evening. Admire the sunset. Almost as good as my craftsmanship."
+			],
+			"night": [
+				"Up late? So am I. Excellence doesn't keep regular hours."
+			]
+		},
+		"weather": {
+			"rain": [
+				"Rain doesn't stop me. Lesser workers stay inside.",
+				"My roof doesn't leak. I built it. Draw your own conclusions."
+			],
+			"clear": [
+				"Fine weather. The perfect day to show what I can do.",
+				"[happy]Clear sky. Everyone can see my work clearly. Good."
+			],
+			"storm": [
+				"A storm. My things are secured properly, unlike some people's."
+			]
+		},
+		"mood": {
+			"tired": [
+				"I'm tired. From doing everything twice as well as anyone else.",
+				"Even I need rest sometimes. Rarely. Today."
+			],
+			"worried": [
+				"[worried]What if someone better than me arrives? Not that it's likely. But what if?",
+				"[worried]I made a mistake today. Small. Nobody noticed. I noticed."
+			],
+			"happy": [
+				"[happy]Someone praised my work today. Rightly so. But still, it was nice.",
+				"[laughing]Today I outdid myself. Again. It's becoming a habit."
+			],
+			"busy": [
+				"Busy. Great work takes time. Mine takes slightly less."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"You'll have heard of me, I expect. If not, you will.",
+				"New here? Ask anyone who does the best work. They'll point you to me."
+			],
+			"friend": [
+				"You've good taste. You keep coming back to talk to me.",
+				"[happy]I'll admit, you're more capable than I first thought."
+			],
+			"close": [
+				"[happy]You're the only one I'd let see me fail. Don't make me prove it.",
+				"Between us? You're the one person here I think might be better than me. At some things."
+			],
+			"wary": [
+				"[angry]I don't need anyone who doesn't respect me. Remember that."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working. Perfecting. Watch and learn."
+			],
+			"gather": [
+				"Gathering the finest materials. Only the finest."
+			],
+			"rest": [
+				"Resting. Planning my next masterpiece."
+			],
+			"socialize": [
+				"Being sociable. People like hearing about my work."
+			],
+			"trade": [
+				"Trading. My goods sell themselves, really."
+			],
+			"explore": [
+				"Scouting for materials worthy of me."
+			],
+			"sleep": [
+				"...Hm? Dreaming of a perfect joint. You've interrupted genius. Goodnight."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"A friend should push you to be better. I push everyone. Some of them thank me.",
+				"I don't make friends easily. People find me intimidating. I understand why."
+			],
+			"disagreements": [
+				"When I disagree, I'm usually right. Usually. I'm working on admitting when I'm not."
+			],
+			"funny": [
+				"[laughing]I once bragged I could cross the river on a log. I could not. I said I meant to swim.",
+				"[laughing]I boasted about my soup and then served it without salt. I said it was a modern recipe."
+			],
+			"mornings": [
+				"Mornings are when the best work gets done. Mine, at least."
+			],
+			"evenings": [
+				"Evenings I look back over my work and find something to improve. There's always something."
+			],
+			"hopes": [
+				"I hope one day my name is remembered in this valley. For good work. For lasting work."
+			],
+			"worries": [
+				"[worried]I worry I'm not as good as I tell people. Don't repeat that."
+			],
+			"surprises": [
+				"[surprised]Someone made something better than mine yesterday. I asked them to teach me. That surprised us both."
+			],
+			"village": [
+				"This village is good. With my help, it'll be great.",
+				"People here work hard. Not as hard as me. But hard."
+			]
+		},
+		"player": {
+			"achievement": [
+				"You {thing}? Impressive. I'd have done it faster, but impressive."
+			],
+			"gift": [
+				"A gift? Well. You have good taste. I'll accept it graciously."
+			],
+			"house": [
+				"Your house is decent. With a few changes I could make it excellent."
+			],
+			"discovery": [
+				"You found {thing}? I was going to find that next. Well done anyway."
+			]
+		},
+		"life": {
+			"new_home": [
+				"[happy]My new house is the finest in the village. I'll accept compliments at any time."
+			],
+			"partner": [
+				"[happy]They think I'm wonderful. They're right. But they also love me when I'm not."
+			],
+			"child": [
+				"[happy]My child will be the finest in the valley. And if not, I'll love them the same. Obviously."
+			],
+			"friend": [
+				"I have a friend now who tells me when I'm wrong. Annoying. Valuable."
+			],
+			"grief": [
+				"[sad]All my skill and I couldn't fix this. Nothing I build will fix this."
+			]
+		},
+		"questions": [
+			{
+				"id": "proud_best",
+				"ask": "What are you best at? Everyone's best at something. I'm best at most things.",
+				"free": true,
+				"options": {
+					"building": [
+						"building",
+						"build",
+						"houses"
+					],
+					"fighting": [
+						"fighting",
+						"fight",
+						"monsters"
+					],
+					"nothing": [
+						"nothing",
+						"not sure",
+						"don t know"
+					]
+				},
+				"react": {
+					"building": "Building? We'll see about that. A friendly contest one day.",
+					"fighting": "Fighting! Useful. More useful than I'd like to admit.",
+					"nothing": "Nothing? Nonsense. Give it time. I'll find it for you.",
+					"other": "{answer}? Hm. I may need to learn that from you. Don't gloat."
+				},
+				"recall": "You said you're best at {answer}. I've been practising it. You'll want to watch out."
+			}
+		]
+	},
+	"wry": {
+		"greetings": {
+			"morning": [
+				"Morning{you}. The sun's up, so I suppose we have to be too.",
+				"Ah, another morning. They keep coming. Very persistent."
+			],
+			"afternoon": [
+				"Afternoon{you}. Halfway through the day and nothing's exploded. A triumph.",
+				"Hello. If you're looking for wisdom, you've come to the wrong person. Try the chickens."
+			],
+			"evening": [
+				"Evening{you}. The day's over. Well done us for surviving it.",
+				"Good evening. I'd say 'long day', but they're all the same length. I checked."
+			],
+			"night": [
+				"Up late? Me too. The night's the only time nobody asks me to do anything."
+			]
+		},
+		"weather": {
+			"rain": [
+				"Rain again. The sky's really committed to this.",
+				"It's raining. Good news for the plants. Bad news for my hair. Plants win."
+			],
+			"clear": [
+				"Sunny. Everyone's cheerful. It's exhausting.",
+				"Lovely weather. I've been told to enjoy it, so I'm enjoying it. Look."
+			],
+			"storm": [
+				"Storm's coming. Remind me why we didn't build this village in a cave?"
+			]
+		},
+		"mood": {
+			"tired": [
+				"I'm tired. Not from work. From being awake. Very demanding.",
+				"I'd describe my energy as 'present'. Barely."
+			],
+			"worried": [
+				"[worried]I'm worried, but in an elegant way. You can hardly tell.",
+				"[worried]Something's bothering me. I'll make a joke about it later. Not ready yet."
+			],
+			"happy": [
+				"[happy]I'm happy. Don't spread it around. I have a reputation.",
+				"[laughing]Good day. Suspiciously good. I'm keeping one eye open."
+			],
+			"busy": [
+				"Busy. Or at least, I'm making the face of a busy person. Very convincing."
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"New face. Welcome. Lower your expectations and you'll love it here.",
+				"Hello. I'm the one people warn you about. Mostly for the jokes."
+			],
+			"friend": [
+				"You laugh at my jokes. Either you're kind or you've got terrible taste. I'll take either.",
+				"[happy]You're alright. And I don't say that sarcastically. This time."
+			],
+			"close": [
+				"[happy]I'd tell you how much you mean to me, but I'd have to be sincere. Ugh. Fine. A lot.",
+				"You're the only one I don't make jokes around. Well, fewer jokes."
+			],
+			"wary": [
+				"[angry]I'd make a joke about what you did, but it wasn't funny."
+			]
+		},
+		"activity": {
+			"work": [
+				"Working. Don't look so surprised."
+			],
+			"gather": [
+				"Gathering. Thrilling stuff. Please, contain your envy."
+			],
+			"rest": [
+				"Resting. I'm very good at it. Natural talent."
+			],
+			"socialize": [
+				"Socialising. Under duress, but socialising."
+			],
+			"trade": [
+				"Trading. I'm told I have an honest face. I've worked hard to hide it."
+			],
+			"explore": [
+				"Walking. Mostly to get away from the cheerful people."
+			],
+			"sleep": [
+				"...If this isn't an emergency, I'm going to be very dry about it tomorrow."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"Friends are people who know all your faults and stick around anyway. Brave souls.",
+				"I keep my friends close and my jokes closer."
+			],
+			"disagreements": [
+				"I don't argue. I just say something clever and walk away before anyone can answer."
+			],
+			"funny": [
+				"[laughing]Someone asked me to be serious for one day. I lasted until lunch. Personal best.",
+				"[laughing]I told a joke at a wedding and the goat laughed. Only the goat. I've never felt so understood."
+			],
+			"mornings": [
+				"Mornings. Nature's way of telling you the night was too short."
+			],
+			"evenings": [
+				"Evenings are good. The day can't make any more demands. Officially."
+			],
+			"hopes": [
+				"I hope one day someone finds me charming on purpose."
+			],
+			"worries": [
+				"[worried]I worry people think I don't care. I care. I just hide it under several layers of jokes."
+			],
+			"surprises": [
+				"[surprised]Someone told me I was kind today. I had to sit down."
+			],
+			"village": [
+				"It's a good village. Don't tell anyone I said that. Ruins the mystery.",
+				"Nice place. Busy. Lots of people being nice at each other. I'm adjusting."
+			]
+		},
+		"player": {
+			"achievement": [
+				"You {thing}? Well, now I have to be impressed. How annoying."
+			],
+			"gift": [
+				"A gift? For me? Did you lose a bet? ...Thank you. Genuinely."
+			],
+			"house": [
+				"Your house is nice. It has walls and everything. Very fancy."
+			],
+			"discovery": [
+				"You found {thing}. Great. Now everyone will expect me to go exploring too."
+			]
+		},
+		"life": {
+			"new_home": [
+				"I've got a house. Walls, roof, door. I'm practically royalty."
+			],
+			"partner": [
+				"[happy]Someone loves me. On purpose. I've checked. They're sure."
+			],
+			"child": [
+				"[laughing]I have a child. They already roll their eyes at my jokes. It's beautiful."
+			],
+			"friend": [
+				"I have a friend who laughs at all my jokes. I'm keeping them."
+			],
+			"grief": [
+				"[sad]I haven't got a joke for this. I've looked."
+			]
+		},
+		"questions": [
+			{
+				"id": "wry_joke",
+				"ask": "Honest question. Am I funny? You can lie. Everyone does.",
+				"options": {
+					"yes": [
+						"yes",
+						"yeah",
+						"funny",
+						"very",
+						"hilarious"
+					],
+					"no": [
+						"no",
+						"not",
+						"nope"
+					]
+				},
+				"react": {
+					"yes": "[laughing]See? I knew it. I'll be insufferable now.",
+					"no": "[laughing]Finally, an honest answer. You're my new favourite.",
+					"other": "That's the most diplomatic thing I've heard all week."
+				},
+				"recall": {
+					"yes": "You told me I'm funny. I've been insufferable ever since. You did this.",
+					"no": "You told me I'm not funny. I've been working on new material. It's worse.",
+					"other": "I'm still thinking about whether I'm funny. Probably too much."
+				}
+			}
+		]
+	},
+	"child": {
+		"greetings": {
+			"morning": [
+				"[laughing]Morning{you}! I'm up before everyone! Well, before my parents!",
+				"[happy]Hi! Did you know frogs come out in the morning? I saw six!"
+			],
+			"afternoon": [
+				"[happy]Hi{you}! Do you want to play? You can be the monster!",
+				"Hello! I'm not supposed to talk to you while I'm doing chores. But hi!"
+			],
+			"evening": [
+				"[happy]Evening{you}! I get to stay up till the fire goes out tonight!",
+				"Hi! I'm meant to be going to bed soon. I'm hiding. Don't tell."
+			],
+			"night": [
+				"[surprised]Shh! I'm meant to be asleep! Are you meant to be asleep too?"
+			]
+		},
+		"weather": {
+			"rain": [
+				"[laughing]Rain means puddles! Puddles mean jumping!",
+				"I'm not allowed out in the rain. I went out anyway. I'm very wet."
+			],
+			"clear": [
+				"[happy]Sunny! We're going to the river! Everyone! Probably!",
+				"It's so nice out! I'm going to climb the big tree. Don't tell anyone."
+			],
+			"storm": [
+				"[worried]The thunder's really loud. Is it going to come inside? It's not, right?"
+			]
+		},
+		"mood": {
+			"tired": [
+				"[sad]I'm sleepy. But I don't want to go to bed. Bed is boring.",
+				"I played all day. My legs are noodles now."
+			],
+			"worried": [
+				"[worried]I broke something. I hid it. Will I get in trouble?",
+				"[worried]Monsters can't get in the village, can they? Promise?"
+			],
+			"happy": [
+				"[laughing]I found a beetle that's GREEN! Like, really green! Best day!",
+				"[happy]I got an extra honey cake! Don't tell my brother!"
+			],
+			"busy": [
+				"I'm busy! I'm building a fort! You can come in if you know the password!"
+			]
+		},
+		"relationship": {
+			"stranger": [
+				"Who are you? Are you new? Are you nice? You look nice.",
+				"Hi! I'm not supposed to talk to strangers. But everybody here is nice."
+			],
+			"friend": [
+				"[happy]You're my friend! Grown-up friends are the best because they're tall.",
+				"Will you play with me later? You always say yes. That's why I like you."
+			],
+			"close": [
+				"[happy]You're my best grown-up. Don't tell my parents. Well, you can tell them.",
+				"When I grow up I want to be just like you. But with a dog."
+			],
+			"wary": [
+				"[sad]I don't want to talk to you. You were mean."
+			]
+		},
+		"activity": {
+			"work": [
+				"I'm helping! I'm a very good helper. Mostly."
+			],
+			"gather": [
+				"I'm collecting stuff! Sticks, mostly! And a snail!"
+			],
+			"rest": [
+				"I'm resting. Grown-ups told me to. I'm very bored."
+			],
+			"socialize": [
+				"[laughing]We're playing a game! It has no rules! I made it up!"
+			],
+			"trade": [
+				"I traded a pebble for a button! I think I won!"
+			],
+			"explore": [
+				"I'm exploring! I'm a famous explorer! Very famous!"
+			],
+			"sleep": [
+				"Mmm... is it morning? No? ...Okay. Night night."
+			]
+		},
+		"topics": {
+			"friendship": [
+				"My best friend is a cat. And you. And everyone, really.",
+				"We made a secret club. You can join! The first rule is don't tell anyone about the club."
+			],
+			"disagreements": [
+				"I fell out with my friend because she said dragons aren't real. Dragons ARE real!"
+			],
+			"funny": [
+				"[laughing]I put a frog in my bed so I'd have company! It escaped. Mum found it in the porridge!",
+				"[laughing]I tried to milk a goat. It was a boy goat. Everyone laughed for ages!"
+			],
+			"mornings": [
+				"Mornings are good because there's breakfast!"
+			],
+			"evenings": [
+				"The best bit of the day is stories round the fire! I know all of Sera's stories!"
+			],
+			"hopes": [
+				"When I grow up I want to be a dragon. Or a builder. Probably a builder."
+			],
+			"worries": [
+				"[worried]What if I grow up and I'm boring? Grown-ups are a bit boring."
+			],
+			"surprises": [
+				"[surprised]I found a bird's egg and it HATCHED! It thinks I'm its mum!"
+			],
+			"village": [
+				"This is the best village in the whole world! I've never been to another one, but I know!",
+				"I know every hiding place in the village! Well, nearly every one!"
+			],
+			"work": [
+				"My job is to feed the chickens. I'm the best chicken feeder ever."
+			],
+			"skills": [
+				"I can whistle! Listen! ...Okay, almost whistle."
+			],
+			"animals": [
+				"I want a puppy so much! I'd call it Mister Paws!",
+				"I talk to the chickens. They talk back. In chicken."
+			]
+		},
+		"player": {
+			"achievement": [
+				"[laughing]You {thing}?! That's SO cool! Can I help next time?!"
+			],
+			"gift": [
+				"[surprised]For ME?! Thank you thank you thank you!"
+			],
+			"house": [
+				"Your house is so cool! Can I come in? Can I?"
+			],
+			"discovery": [
+				"[surprised]You found {thing}?! Was there treasure?! Was there a dragon?!"
+			]
+		},
+		"life": {
+			"new_home": [
+				"[laughing]We've got a new house! I've got my own corner!"
+			],
+			"friend": [
+				"[happy]I've got a new friend! We're going to be friends forever!"
+			],
+			"grief": [
+				"[sad]I miss them. Where do people go? Nobody gives me a proper answer."
+			],
+			"partner": [
+				"[laughing]Grown-ups kissing is gross."
+			],
+			"child": [
+				"I'm going to be a big brother or sister! I'm going to teach them everything!"
+			]
+		},
+		"questions": [
+			{
+				"id": "child_animal",
+				"ask": "If you could be any animal, what would you be? I'd be a dragon!",
+				"free": true,
+				"options": {
+					"dragon": [
+						"dragon"
+					],
+					"bird": [
+						"bird",
+						"eagle",
+						"owl"
+					],
+					"cat": [
+						"cat"
+					],
+					"dog": [
+						"dog"
+					],
+					"horse": [
+						"horse"
+					]
+				},
+				"react": {
+					"dragon": "[laughing]A DRAGON! Same! We can be dragons together!",
+					"bird": "A bird! You could fly over everything!",
+					"cat": "A cat! You'd sleep all day! Lucky!",
+					"dog": "[happy]A dog! I'd throw sticks for you!",
+					"horse": "A horse! I'd ride you! Is that weird? That's weird.",
+					"other": "[laughing]{answer}?! That's so silly! I love it!"
+				},
+				"recall": "You said you'd be a {answer}! I told everyone! They all want to be one now!"
+			}
+		]
+	}
+}

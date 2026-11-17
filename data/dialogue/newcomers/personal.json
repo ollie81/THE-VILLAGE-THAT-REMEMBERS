@@ -1,0 +1,49 @@
+{
+	"sheet": {
+		"town_start": ["Bramble", "Ash", "Willow", "Stone", "Thorn", "Mill", "Elder", "Heron", "Fox", "Oak", "Salt", "Moss", "Clover", "Raven", "Wren", "Copper", "Fern", "Hollow"],
+		"town_end": ["mere", "ford", "brook", "wick", "haven", "stead", "dale", "combe", "holt", "bridge", "well", "moor"],
+		"kin": ["sister", "brother", "grandmother", "grandfather", "cousin", "aunt", "uncle", "mother", "father"],
+		"kin_name": ["Agnes", "Bram", "Clem", "Dora", "Edwin", "Fen", "Greta", "Hal", "Ida", "Jory", "Kit", "Lotte", "Milo", "Nell", "Otto", "Pip", "Rosa", "Sim", "Tilly", "Wilf"],
+		"keepsake": ["a little carved bird", "a brass button from my father's coat", "a pebble with a hole right through it", "a ribbon my mother tied in my hair", "a chipped blue cup", "a pressed flower in a book", "a tiny silver bell", "a letter I've never opened", "an old wooden spoon", "a seashell that still sounds like the sea", "a knotted bracelet", "a feather from a heron", "my grandmother's thimble", "a copper coin with a hole in it", "a small painted horse", "a key to a door I'll never see again"],
+		"food": ["honey cakes", "mushroom pie", "plum dumplings", "smoked fish", "barley soup", "apple fritters", "spiced pears", "cheese bread", "berry tarts", "onion stew", "roasted chestnuts", "pancakes with butter", "pickled beetroot", "nut biscuits", "egg custard", "potato cakes"],
+		"fear": ["deep water", "thunder", "spiders", "the dark", "high places", "being forgotten", "wolves", "fire", "small spaces", "being alone", "geese", "the sound of wind in chimneys"],
+		"pet_animal": ["dog", "cat", "goat", "hen", "rabbit", "pony", "duck", "hedgehog"],
+		"pet_name": ["Biscuit", "Pickle", "Turnip", "Button", "Clove", "Sprout", "Pudding", "Bean", "Nutmeg", "Bramble", "Toffee", "Dumpling"],
+		"habit": ["humming while I work", "counting my steps", "talking to plants", "whistling off-key", "collecting odd stones", "drawing in the dirt with a stick", "writing down my dreams", "naming the clouds"],
+		"dream_place": ["the sea cliffs in the far west", "the great city of towers", "the islands where the whales sing", "the hot springs in the mountains", "the desert with the red sand", "the forest of white trees", "the waterfall that never freezes", "the old ruined castle on the moor"]
+	},
+	"lines": {
+		"family": ["My {kin}, {kin_name}, would laugh to see me now. {kin_name} always said I'd never settle anywhere.", "I write to my {kin} {kin_name} every season. Short letters. {kin_name} writes long ones back.", "[sad]I miss my {kin}. {kin_name} used to make me {food} whenever I was sad."],
+		"childhood": ["Back in {home_town}, I had a {pet_animal} called {pet_name}. Best friend I ever had.", "I've had a habit since I was small: {habit}. People find it odd. I find it comforting.", "[laughing]When I was little in {home_town}, I hid in a cupboard for a whole afternoon to avoid a bath. I fell asleep in there."],
+		"home": ["The most precious thing I own is {keepsake}. It's on the shelf by my bed.", "I brought {keepsake} all the way from {home_town}. It's the first thing I unpacked."],
+		"hobbies": ["If you ever want to cheer me up, {food} will do it. Every time.", "My favourite thing to eat is {food}. Nobody makes it like they did in {home_town}, though."],
+		"worries": ["[worried]Don't laugh, but I'm frightened of {fear}. Always have been.", "[worried]I'll tell you a secret: {fear}. That's what scares me. Ever since {home_town}."],
+		"hopes": ["One day I'd love to see {dream_place}. Just once. Just to say I did.", "I've a dream I don't tell many people. I want to see {dream_place} before I'm old."],
+		"background": ["{home_town} is a small place. You won't have heard of it. Lovely, though, in spring.", "If you ever pass through {home_town}, ask for my {kin}. Tell {kin_name} I'm well."],
+		"funny": ["[laughing]My {pet_animal}, {pet_name}, once ate a whole loaf of bread meant for a wedding. We baked another. {pet_name} ate that too.", "[laughing]My {kin} {kin_name} once fell in the pond trying to catch a frog for me. I still have the frog. Well, its great-great-grandchildren."],
+		"animals": ["I still think about {pet_name}, my old {pet_animal}. If I ever get another, I'll call it {pet_name} too."]
+	},
+	"ambitions": {
+		"master_craft": ["I want to be the best at what I do. Not to show off. Well, a little to show off.", "Every day I practise. One day someone will say my name and mean 'the best'.", "I'm getting better. Slowly. But I'm getting there."],
+		"friends": ["I left my friends behind when I came here. I'd like to make new ones. Real ones.", "Making friends as a grown-up is hard. Nobody tells you that.", "[happy]I think I'm making friends here. Am I? I hope so."],
+		"partner": ["I'd like to find someone to share a home with. Someone to talk to at the end of the day.", "Everyone else seems to have someone. I'm not jealous. Much.", "I'm not in a hurry. But I'm keeping my eyes open."],
+		"home": ["All I want is a roof of my own. Four walls and a door I can close.", "I've slept in barns, tents and other people's spare rooms. A home of my own would be everything.", "[happy]Every time I walk past an empty house I imagine it's mine."],
+		"family": ["I want to send for my family once I'm settled. They'd love it here.", "I'm saving up so my family can come. It won't be long now. I hope.", "[happy]I write to my family about this place. They keep asking when they can come."],
+		"see_growth": ["I want to see this place become a proper town. Market days, festivals, the lot.", "I can imagine it already. A square, a bell tower, children everywhere.", "Every new house makes me happier. We're building something."],
+		"wander": ["I'm resting a while. The road will call again someday. It always does.", "I'm not sure I'm the settling kind. But this place is making me wonder.", "I keep my pack by the door. Habit. I haven't touched it in weeks, though."]
+	},
+	"traits": {
+		"Curious": ["I can't help asking questions. Too many, people say. Is that true?", "I want to know how everything works. Clocks, plants, people."],
+		"Traditional": ["I like doing things the way they've always been done. It's worked so far.", "New isn't always better. Sometimes old ways are old because they're good."],
+		"Diligent": ["I don't rest until the job's done properly. Never have.", "I make lists. Then I make lists of my lists."],
+		"Easygoing": ["Whatever happens, happens. No use fretting.", "I take life as it comes. It usually comes back around."],
+		"Outgoing": ["I love meeting new people. Every one of them has a story.", "I'd rather be at the fire with everyone than alone at home."],
+		"Quiet": ["I don't say much. But I notice a lot.", "I like silence. It's not empty. It's full of thinking."],
+		"Kind": ["If someone needs help, I can't walk past. I just can't.", "Being kind costs nothing. And it comes back to you."],
+		"Blunt": ["I say what I think. Some people don't like that. I'd rather be honest.", "Why dress things up? Just say it."],
+		"Anxious": ["I worry. About everything. It's exhausting.", "I always imagine the worst. Then it doesn't happen and I feel silly."],
+		"Calm": ["Panicking never fixed anything. Breathe, then act.", "Not much rattles me. I've seen worse than whatever this is."],
+		"Restless": ["I can't sit still. My feet always want to be somewhere else.", "I get itchy if I stay in one place too long. This place is testing that."],
+		"Homely": ["Give me a warm hearth and a full pot and I'm happy.", "I don't need adventures. Home is the adventure."]
+	}
+}

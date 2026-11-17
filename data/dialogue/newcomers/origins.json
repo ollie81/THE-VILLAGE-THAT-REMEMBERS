@@ -1,0 +1,397 @@
+{
+	"from the coast": {
+		"topics": {
+			"childhood": [
+				"I grew up with salt in my hair and sand in my shoes. Every day of my childhood smelled of the sea.",
+				"We'd race the tide as children. Whoever got wet first did the washing up.",
+				"I learned to swim before I could walk properly. That's how it is on the coast."
+			],
+			"family": [
+				"My family still lives by the harbour in {home_town}. They think inland people are a bit strange.",
+				"My {kin} sends me shells in every letter. I've a jar of them by my bed."
+			],
+			"background": [
+				"I left the coast because the fishing was failing. I miss the sea every single day.",
+				"Inland was meant to be a short adventure. That was a while ago now."
+			],
+			"nature": [
+				"The river's lovely, but I miss waves. Rivers only go one way.",
+				"Gulls used to wake me every morning. Now it's roosters. I'm adjusting."
+			],
+			"hopes": [
+				"One day I'll take someone from here to see the sea. Their face, the first time. That's what I want to see."
+			]
+		},
+		"stories": [
+			[
+				"There was a storm on the coast when I was young. The worst in fifty years.",
+				"Every boat in {home_town} was out. My {kin} included.",
+				"The whole village stood on the cliff with lanterns all night, so they could find their way home.",
+				"[happy]Every single boat came back. We still light lanterns on that night, every year."
+			]
+		]
+	},
+	"from the mountain passes": {
+		"topics": {
+			"childhood": [
+				"I grew up so high up the clouds came through the village. We'd walk through them to school.",
+				"Mountain children learn two things first: where to step, and when to turn back.",
+				"We had goats instead of dogs. They climbed better and complained louder."
+			],
+			"family": [
+				"My family still keeps goats up in {home_town}. They think the valley's too soft for anyone.",
+				"My {kin} could climb anything. I used to follow and get stuck. Often."
+			],
+			"background": [
+				"Mountain winters are long and hard. One year I decided I'd rather be warm.",
+				"I came down the passes with a pack and a pair of boots. The boots didn't survive. I did."
+			],
+			"nature": [
+				"Down here the air's so thick I can taste it. Up there it's thin and sharp like ice.",
+				"I miss the silence of the peaks. The valley's beautiful, but it's never quiet."
+			],
+			"hopes": [
+				"I want to climb the hill behind the village one dawn and see the mountains from here. Just to wave."
+			]
+		},
+		"stories": [
+			[
+				"When I was young, I got lost in a snowstorm on the pass above {home_town}.",
+				"I couldn't see my own hands. I just sat down in the snow and waited.",
+				"A goat found me. Our old nanny goat, Bramble. She'd come looking.",
+				"[happy]I held on to her horns and she walked me home. I've never eaten goat cheese without saying thank you since."
+			]
+		]
+	},
+	"from a river town to the south": {
+		"topics": {
+			"childhood": [
+				"I grew up on a river so wide you couldn't see the other side in the mist.",
+				"We had boats instead of carts. I knew how to row before I knew my letters.",
+				"Every summer the river market came to {home_town}. A hundred boats tied together. A floating town."
+			],
+			"family": [
+				"My family are boat people. My {kin} still runs the ferry in {home_town}.",
+				"We were loud, my family. Big, loud and always on the water."
+			],
+			"background": [
+				"The river flooded and took our house. I decided to try somewhere higher.",
+				"I followed this river upstream. It was a whim. I'm glad I did."
+			],
+			"nature": [
+				"The river here's young and fast. Back home it's old, wide and slow.",
+				"I still dream about water lilies. They covered the river like a blanket in summer."
+			],
+			"hopes": [
+				"I'd love to row back down to {home_town} one day, all the way, and show my {kin} how far I've come."
+			]
+		},
+		"stories": [
+			[
+				"Every spring in {home_town}, we had the lantern race.",
+				"Every child made a paper boat with a candle in it, and we set them on the river at dusk.",
+				"The one that went furthest without sinking won a whole honeycake.",
+				"[laughing]I never won. Not once. My boats sank in about a minute. But I still make one every spring."
+			]
+		]
+	},
+	"from the eastern plains": {
+		"topics": {
+			"childhood": [
+				"I grew up where the land is flat as a table. You could see a storm coming for days.",
+				"We rode horses everywhere. A plains child gets their first horse before their first shoes.",
+				"The grass was taller than me as a child. We'd play hide and seek for hours."
+			],
+			"family": [
+				"My family keep horses out on the plains near {home_town}. Dozens of them.",
+				"My {kin} taught me to read the sky. Out there, the sky is everything."
+			],
+			"background": [
+				"The plains are lovely but lonely. I wanted to live somewhere with neighbours nearby.",
+				"A long drought came. The herds suffered. I came west to find better land."
+			],
+			"nature": [
+				"Hills! I'm still not used to hills. My legs ache all the time.",
+				"I miss the huge skies. Here the hills hold the sky in. It feels cosy, but small."
+			],
+			"hopes": [
+				"I want a horse again. Just one. To ride out at dawn, like I used to."
+			]
+		},
+		"stories": [
+			[
+				"On the plains, there's a night every summer called the Long Watch.",
+				"Everyone in {home_town} lies in the grass and watches the stars fall.",
+				"My {kin} said each falling star is someone, somewhere, making a wish.",
+				"[happy]The first summer here, I lay on the hill and watched. I made a wish about this place. It's coming true."
+			]
+		]
+	},
+	"from a fishing village up north": {
+		"topics": {
+			"childhood": [
+				"Up north, winter nights last forever. We told stories to keep the dark away.",
+				"I grew up mending nets with frozen fingers. Here the summers feel like a gift.",
+				"We had a saying in {home_town}: 'the sea gives, the sea takes, the sea doesn't apologise'."
+			],
+			"family": [
+				"My family are fisherfolk, back to my great-great-grandparents. My {kin} still sails.",
+				"Northern families are quiet. We say a lot without saying anything."
+			],
+			"background": [
+				"The fish went further out every year. In the end, I followed the rivers south instead.",
+				"I wanted to see a summer that lasted more than a month."
+			],
+			"nature": [
+				"The trees here are so green. Up north, everything's grey and blue.",
+				"I saw the northern lights every winter as a child. I miss them more than anything."
+			],
+			"hopes": [
+				"I want to see the lights again someday. Maybe I'll bring someone. Maybe you."
+			]
+		},
+		"stories": [
+			[
+				"One winter in {home_town}, the sea froze right out to the islands.",
+				"We walked across the ice to the island where my {kin} lived. Three hours on the ice.",
+				"Halfway, the lights came out. Green and purple, all across the sky.",
+				"[happy]We just stood there on the frozen sea, all of us, saying nothing. I'll never forget it."
+			]
+		]
+	},
+	"from the city beyond the hills": {
+		"topics": {
+			"childhood": [
+				"I grew up in the city. Streets everywhere, people everywhere, noise everywhere.",
+				"City children play in alleys and rooftops. I'd never seen a cow until I was twelve.",
+				"I could find my way through a thousand streets in {home_town}, but I'd never seen a wild deer."
+			],
+			"family": [
+				"My family run a shop in the city. My {kin} thinks I've gone mad, living in a village.",
+				"City families are scattered. Here everyone eats together. I'm still getting used to it."
+			],
+			"background": [
+				"The city got too loud. Too crowded. I needed to hear myself think.",
+				"I came looking for somewhere I could see the stars. You can't see them in the city."
+			],
+			"nature": [
+				"The first night here, the silence kept me awake. Now I can't sleep without it.",
+				"I'd never picked an apple from a tree before I came here. I cried. Don't laugh."
+			],
+			"hopes": [
+				"I hope I never go back to the city. I hope I visit, though. To brag."
+			]
+		},
+		"stories": [
+			[
+				"In the city, you don't know your neighbours. I lived in one room for years.",
+				"Then one winter I got sick, and nobody came. Not for days.",
+				"When I got better, I packed a bag and walked until the streets ended.",
+				"[happy]Here, I got a cold last month, and four people brought me soup on the first day. Four."
+			]
+		]
+	},
+	"from a farm three valleys away": {
+		"topics": {
+			"childhood": [
+				"I grew up on a farm, just like this valley but three valleys over. Same hills, different cows.",
+				"Farm children work from the moment they can carry a bucket. I didn't mind. Much.",
+				"We had a big old barn at {home_town}. I'd hide in the hay and read when I should've been working."
+			],
+			"family": [
+				"My family still farm the old land. My {kin} took over when our parents got too old.",
+				"There were too many of us for one farm. Someone had to go. I volunteered."
+			],
+			"background": [
+				"The farm went to my {kin}, so I walked over the hills looking for land of my own.",
+				"Three valleys isn't far. But it's far enough to start fresh."
+			],
+			"nature": [
+				"The soil here's different. Darker, richer. My family would be jealous.",
+				"Same birds as home, mostly. It's comforting. Like old friends followed me."
+			],
+			"hopes": [
+				"I want my family to visit and see what I've made here. Just once."
+			]
+		},
+		"stories": [
+			[
+				"Back at {home_town}, we had an old ox called Patience.",
+				"She was slow, grumpy and the strongest animal I've ever seen.",
+				"One spring the cart got stuck in the river with my {kin} on it, and Patience pulled the whole thing out alone.",
+				"[happy]We gave her a crown of flowers. She ate it. Fair enough."
+			]
+		]
+	},
+	"from a caravan that went on without me": {
+		"topics": {
+			"childhood": [
+				"I grew up on the road. Every few weeks, a new place. A wagon was my house.",
+				"Caravan children learn to make friends fast. You never know how long you'll stay.",
+				"I learned to juggle, cook and mend wheels before I was ten."
+			],
+			"family": [
+				"My family travel with the caravan still. My {kin} sends letters from every town they pass.",
+				"Caravan people are your family, whether you're related or not."
+			],
+			"background": [
+				"The caravan stopped near here for repairs. I fell asleep under a tree. When I woke up, they'd gone.",
+				"They didn't forget me, exactly. They just counted wrong. I decided to stay instead of chasing them."
+			],
+			"nature": [
+				"I've seen a hundred valleys. This is the first one I didn't want to leave.",
+				"I used to sleep under the stars every night. A roof still feels strange sometimes."
+			],
+			"hopes": [
+				"One day the caravan will come back this way. I want them to see I've found a home."
+			]
+		},
+		"stories": [
+			[
+				"The caravan had a tradition: every new town, someone tells a story at the fire.",
+				"One night it was my turn. I was eight. I was terrified.",
+				"I made up a tale about a dragon who just wanted a friend. My {kin} cried.",
+				"[happy]I've told it in fifty towns since. I'll tell it here, if you'd like."
+			]
+		]
+	},
+	"from the forest settlements": {
+		"topics": {
+			"childhood": [
+				"I grew up in the deep forest, where the trees are so tall the sun only reaches the ground at noon.",
+				"Forest children learn every bird call. I can still whistle a dozen.",
+				"Our houses in {home_town} were built into the trees. I learned to climb before I learned to walk."
+			],
+			"family": [
+				"My family are forest people. My {kin} knows every path through the woods.",
+				"We were taught to take only what the forest offers freely."
+			],
+			"background": [
+				"The forest settlements are very quiet. I wanted to see more people, more sky.",
+				"Loggers came to our forest. The settlement scattered. I came here."
+			],
+			"nature": [
+				"Open fields still make me nervous. Too much sky. I keep close to the trees.",
+				"I can tell what time it is by which birds are singing."
+			],
+			"hopes": [
+				"I hope the forests here stay wild. I'll fight for that, if I have to."
+			]
+		},
+		"stories": [
+			[
+				"In the forest near {home_town}, there's a tree we called the Grandmother.",
+				"She was so wide it took twelve people holding hands to circle her.",
+				"Every child in the settlement was given a name under her branches.",
+				"[happy]I go to the oldest tree in every forest I find and tell it my name. It feels like being welcomed."
+			]
+		]
+	},
+	"from the salt marshes": {
+		"topics": {
+			"childhood": [
+				"I grew up in the marshes, where the land and water can't decide which is which.",
+				"We walked on stilts through the shallows to get anywhere. I was very good at it.",
+				"We harvested salt in {home_town}. My fingers were always cracked and white."
+			],
+			"family": [
+				"My family still harvest salt. My {kin} can taste the difference between a good batch and a bad one.",
+				"Marsh families are close. We had to be. The land was hard."
+			],
+			"background": [
+				"The sea came in further every year and took the salt pans. We had to leave.",
+				"I wanted ground that stays put under my feet."
+			],
+			"nature": [
+				"Here the ground is solid. I keep stamping on it to check.",
+				"I miss the marsh birds. Thousands of them, rising all at once at dawn."
+			],
+			"hopes": [
+				"I want to bring my family here one day. On solid ground. Where it's safe."
+			]
+		},
+		"stories": [
+			[
+				"Once a year in {home_town}, all the birds of the marsh would gather.",
+				"Millions of them. They'd fly up together at dawn and turn the sky black.",
+				"My {kin} and I would lie on our backs and listen to the sound of their wings. Like rain going up.",
+				"[happy]I've never heard anything like it since. I hope I do again someday."
+			]
+		]
+	},
+	"born_here": {
+		"topics": {
+			"childhood": [
+				"I was born right here. This valley's all I've ever known. I think it's the best place in the world.",
+				"I've been playing by the river since before I could talk. I know every stone.",
+				"The founders watched me grow up. They're like extra parents. Extra strict ones."
+			],
+			"family": [
+				"My parents met here. I'm a real village child. First generation!",
+				"Everyone here's family, in a way. I've got about twenty aunts and uncles who aren't."
+			],
+			"background": [
+				"I've never left the valley. One day I want to see what's beyond the hills. Then come back.",
+				"Being born here means everyone knows everything I've ever done. Everything."
+			],
+			"nature": [
+				"I know every tree in this valley. I've climbed most of them.",
+				"The best fishing spot is by the big rock. Don't tell anyone. Secret."
+			],
+			"hopes": [
+				"I hope this place keeps growing. I want my children to play by the same river."
+			]
+		},
+		"stories": [
+			[
+				"When I was really small, I got lost in the woods past the field.",
+				"I wasn't scared at first. Then it got dark and I was very scared.",
+				"The whole village came looking. With lanterns. Calling my name.",
+				"[happy]When they found me, nobody shouted. They just carried me home. That's when I knew this place was home."
+			]
+		]
+	},
+	"joined_family": {
+		"topics": {
+			"childhood": [
+				"I grew up far away, but my family always talked about one day being together again.",
+				"As a child, I imagined what it'd be like to live near my family. It's better than I imagined.",
+				"I grew up hearing stories about my family, the ones who'd moved away. I always wondered what they were like."
+			],
+			"family": [
+				"My family invited me here. I'd never have found this place without them.",
+				"It's strange, being near family again after so long. Wonderful. Strange.",
+				"Family's a funny thing. You can be apart for years and still argue about the same old things within a day."
+			],
+			"background": [
+				"A letter came asking me to come and live here. I packed that same day.",
+				"I came because family asked. I'm staying because I love it.",
+				"Before the letter came, I lived alone in a small rented room. It was quiet. Too quiet."
+			],
+			"nature": [
+				"Everyone told me about this valley in their letters. It's even prettier than they said."
+			],
+			"hopes": [
+				"I hope I can make this place home for myself, not just because family's here.",
+				"One day, I'd like to be the one who writes the letter. Inviting someone else home."
+			],
+			"seasons": [
+				"My first season here, family showed me everything: the river, the woods, the best spot to watch the sunset."
+			],
+			"evenings": [
+				"Eating supper with family again. I forgot how loud it is. I love how loud it is."
+			],
+			"worries": [
+				"[worried]I worry I'm only here because I'm family. I want people to like me for me."
+			]
+		},
+		"stories": [
+			[
+				"When the letter came asking me to come here, I almost said no.",
+				"I'd been on my own so long. I thought I'd forgotten how to live near family.",
+				"Then I read the last line. 'There's a chair at our table with your name carved on it.'",
+				"[happy]There really was. There still is. I sit in it every night."
+			]
+		]
+	}
+}

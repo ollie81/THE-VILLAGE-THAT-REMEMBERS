@@ -24,6 +24,10 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 			conversation.lines.append(festive)
 	if VillageStories.instance and actor_id == GameManager.PLAYER_ID and mind.memory.count("conversation", actor_id) > 0:
 		conversation.lines.append_array(VillageStories.instance.story_lines(villager))
+	# Their own words about now: news from their life or yours, something
+	# you told them before, or how they are, the weather, what they're doing.
+	if actor_id == GameManager.PLAYER_ID and not mind.is_hostile(actor_id) and mind.memory.count("conversation", actor_id) > 0:
+		conversation.lines.append_array(opening_lines(villager))
 
 	var topic: Dictionary = {}
 	if mind.is_hostile(actor_id):
@@ -43,6 +47,12 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 		conversation.choices = topic["choices"]
 		if topic != ConversationLibrary.APOLOGY:
 			conversation.followup = menu_for(villager)
+	elif actor_id == GameManager.PLAYER_ID and DialogueLibrary.wants_to_ask(villager):
+		# Nothing planned to talk about: they ask you something instead.
+		var q := DialogueLibrary.next_question(villager)
+		conversation.lines.append(TalkBrain.fill(villager, String(q["ask"])))
+		conversation.choices = DialogueLibrary.ask(villager, q)
+		conversation.pending_question = DialogueLibrary.ANSWER_PREFIX + String(q["id"])
 	else:
 		conversation.lines.append_array(_small_talk(villager))
 		conversation.choices = menu_for(villager)
@@ -61,6 +71,27 @@ static func build_conversation(villager, actor_id: String) -> Conversation:
 		menu.append_array(conversation.choices if conversation.choices.size() > 0 else closing_menu())
 		conversation.choices = menu
 	return conversation
+
+
+## What a villager brings up when you come to talk: something another
+## villager told them about you, news from their own life or about what you
+## did (each once), an answer you gave them on an earlier day, and otherwise
+## a line about how they are right now.
+static func opening_lines(villager) -> Array:
+	var out: Array = []
+	var heard := DialogueLibrary.heard_line(villager)
+	if heard != "":
+		out.append(heard)
+	var news := DialogueLibrary.life_news(villager)
+	if news == "":
+		news = DialogueLibrary.player_news(villager)
+	if news == "":
+		news = DialogueLibrary.recall(villager)
+	if news == "":
+		news = DialogueLibrary.situational(villager)
+	if news != "":
+		out.append(news)
+	return out
 
 
 ## Grief comes first; otherwise a baby on the way or a little one at home.
