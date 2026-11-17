@@ -337,7 +337,10 @@ func say(line: String) -> void:
 		_bubble.outline_modulate = Color(0.12, 0.09, 0.06, 0.95)
 		add_child(_bubble)
 	# Shown where the name label sits (the name is hidden while they speak).
-	_bubble.position = Vector3(0, data.appearance.standing_height() + 0.3, 0)
+	# Indoors the camera is much closer: half the size, just above the head.
+	var indoors := Interiors.instance != null and Interiors.instance.is_inside()
+	_bubble.pixel_size = 0.0021 if indoors else 0.0045
+	_bubble.position = Vector3(0, data.appearance.standing_height() + (0.18 if indoors else 0.3), 0)
 	_bubble.text = text
 	_bubble.visible = true
 	name_label.visible = false

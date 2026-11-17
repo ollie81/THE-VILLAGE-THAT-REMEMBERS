@@ -10,3 +10,7 @@ export_credentials.cfg
 
 # AdMob IDs are written here by CI from secrets; never commit real IDs.
 /config/admob.cfg
+
+# Signing keys never go in the repository (CI reads yours from secrets).
+*.keystore
+*.jks
