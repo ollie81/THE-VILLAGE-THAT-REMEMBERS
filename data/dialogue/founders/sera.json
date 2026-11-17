@@ -1,0 +1,431 @@
+{
+	"id": "sera",
+	"greetings": {
+		"morning": [
+			"[laughing]Morning{you}! I've been awake for an hour and I've already sold a bucket. A bucket! To Elias, who owns three.",
+			"[happy]Good morning, sunshine. Don't look at me like that, I've had no breakfast and two ideas.",
+			"Ah, an early bird! Want to buy a worm? Freshly caught. Joking. Mostly joking."
+		],
+		"afternoon": [
+			"[laughing]Afternoon{you}! Business is slow, gossip is fast. Want the gossip? First taste is free.",
+			"[happy]Hello, hello! Come closer, I've got something to show you. It's a rock. But the STORY behind the rock!",
+			"Afternoon! You look like someone who needs a bargain. Or a hug. I sell both. The hug's free."
+		],
+		"evening": [
+			"[happy]Evening{you}! The fire's lit and I've got a brand new story. Well, an old story with a new ending.",
+			"[laughing]Ah, the golden hour! When the light makes even my merchandise look valuable.",
+			"Evening! Pull up a seat. Tonight's tale involves a goat, a duke and a very surprised baker."
+		],
+		"night": [
+			"[surprised]Out late, are we? Up to mischief? Wonderful. Count me in.",
+			"Can't sleep{you}? Neither can I. The road calls loudest at night. I'm ignoring it. Mostly.",
+			"[laughing]Shh! It's the hour of secrets. Tell me one. I'll tell you two. One might be true."
+		]
+	},
+	"weather": {
+		"rain": [
+			"[laughing]Rain! Nobody's shopping, so everyone's gossiping. My favourite weather, honestly.",
+			"Rain means umbrellas, and I happen to have three. Slightly broken. Very affordable.",
+			"[happy]I love the rain. It's the sky telling everyone to stay home and talk to each other."
+		],
+		"clear": [
+			"[happy]Sun's out! Travellers will be on the road. Customers! Strangers! Stories!",
+			"Lovely day. Perfect for selling hats. I don't have hats. Note to self: get hats.",
+			"[happy]Blue sky, warm breeze. On days like this I could walk to the coast and back. I won't. But I could."
+		],
+		"storm": [
+			"[surprised]Storm! I once rode out a storm in a hay cart with a goat named Duchess. Long story. Ask me later.",
+			"[worried]Thunder makes my stall shake. Everything's tied down except my nerves."
+		]
+	},
+	"activity": {
+		"work": [
+			"[laughing]Rearranging the stall. The trick is to put the cheap things in front and the shiny things at eye level.",
+			"Counting coins. Don't distract me. I lose count around forty and have to start again."
+		],
+		"gather": [
+			"Collecting interesting junk. One person's rubbish is another person's 'rare antique from the eastern kingdoms'.",
+			"[happy]Picking up odds and ends. You never know what someone will pay good money for. Last week: a spoon."
+		],
+		"rest": [
+			"[laughing]I'm resting. Resting my voice. Don't tell anyone, it'll ruin my reputation.",
+			"Taking a break. Even a trader has to stop talking sometimes. Very rarely. Like a comet."
+		],
+		"socialize": [
+			"[happy]At the fire! I'm the entertainment. I don't get paid, but I do get the best seat.",
+			"Lunch with the others. I'm telling Tomas about the coast. He's pretending not to listen. He's listening."
+		],
+		"trade": [
+			"[laughing]Open for business! Everything must go! Except that teapot. That teapot is my friend.",
+			"Haggling! It's not about the price. It's about the dance."
+		],
+		"explore": [
+			"[happy]Wandering. Looking for anything I can sell, or anyone I can tell a story to.",
+			"Just walking. Old habit. I like to know every path out of a place. Just in case. Not that I'm leaving."
+		],
+		"sleep": [
+			"[laughing]Mmph... if this is about the goat, it wasn't my fault... oh, it's you. Night!"
+		]
+	},
+	"mood": {
+		"tired": [
+			"[sad]I'm worn out. Talked all day and sold nothing. That's like running all day and not moving.",
+			"I'm tired, but don't worry, I've still got at least one joke left. Somewhere. Let me find it.",
+			"[worried]Long night. I dreamed about the road again. Woke up not sure where I was."
+		],
+		"worried": [
+			"[worried]Business is slow. When business is slow, I get restless. When I get restless, I start packing. Help.",
+			"[worried]I owe a trader in the next valley a few coins. He's not the forgiving type. It's fine. It's fine!",
+			"Don't mind me. I'm worrying, quietly, which is very unusual for me. Enjoy it."
+		],
+		"happy": [
+			"[laughing]Best day! I sold a 'magic' pebble for a whole sack of flour. It's a pebble. It's magic now, I've decided.",
+			"[happy]I'm in a wonderful mood. Ask me anything. I'll answer honestly. Probably.",
+			"[laughing]Today everything's funny. Even Tomas. Especially Tomas."
+		],
+		"busy": [
+			"Busy, busy! Customers to charm, prices to invent. Walk and talk?",
+			"[happy]I've got a buyer coming any moment. Look natural. Look wealthy. Look like you'd pay double."
+		]
+	},
+	"relationship": {
+		"stranger": [
+			"[happy]A new face! Welcome! I'm Sera, the best trader in this valley, and also the only one.",
+			"You're new? Then you don't know my prices yet. Perfect. Let's be friends before you find out."
+		],
+		"friend": [
+			"[happy]You know, you're one of the few people who laughs at my jokes. The real laugh. Not the polite one.",
+			"I'd give you a discount. A small one. A friendship discount. Don't tell anyone, they'll all want one."
+		],
+		"close": [
+			"[happy]You're my favourite person in this village. Don't tell Nia. Actually, she knows. She's okay with it.",
+			"I've told you things I've never told anyone. Even the true stories. Especially the true stories.",
+			"[happy]If I ever go back on the road, you're coming with me. I've decided. You get no say."
+		],
+		"wary": [
+			"[angry]I've been swindled by better, but never by a friend. Fix it.",
+			"I'm keeping my good stock locked up while you're around. Just so you know."
+		]
+	},
+	"topics": {
+		"childhood": [
+			"[laughing]I grew up in a river market. My mother sold fish and my father sold fishing stories. I learned from both.",
+			"When I was seven I sold my brother's boots to a traveller. He was still wearing them at the time. Long story.",
+			"I learned to count by counting coins and to read by reading the price signs. My first word was 'bargain'. Probably.",
+			"We lived on a houseboat. Every morning I woke up somewhere slightly different. I think that's why I can't sit still."
+		],
+		"family": [
+			"My mother still runs her fish stall. She's the toughest haggler alive. She once sold a fish to a man who was allergic to fish.",
+			"[happy]My father told stories so tall you needed a ladder. I got that from him. And his nose, sadly.",
+			"I've got four brothers. Four! They're all fishermen. I was the only one who wanted to see what was beyond the river.",
+			"[sad]I haven't been home in six years. I send money and silly gifts. I should go back. I keep not going."
+		],
+		"background": [
+			"I've been to fifty-two towns. I counted. I've been thrown out of nine. I'm proud of every single one.",
+			"I came here to sell a cart of pots. Mara bought one, Elias fed me, and Tomas grumbled at me. I never left.",
+			"I was supposed to stay one night. The cart broke. Mara fixed it. I 'forgot' to leave. Three years ago."
+		],
+		"work": [
+			"Trading isn't about things. It's about people. Find out what they want, and the price makes itself.",
+			"[laughing]The secret to selling is believing in what you sell. I believe in everything. That's my problem.",
+			"A good trader never cheats. Well, never cheats twice. Reputation travels faster than any cart.",
+			"I bring the world to the village. Salt from the coast, cloth from the city, stories from everywhere.",
+			"Every object has a story. My job is to tell it so well that people want to own the story."
+		],
+		"skills": [
+			"[laughing]I can haggle in four languages and insult people in seven. The insults are more useful than you'd think.",
+			"I can tell what someone will buy by the way they walk up to my stall. You, for instance: something shiny.",
+			"I can juggle three apples. Four if nobody's watching. Five once, but there were witnesses who disagree."
+		],
+		"hobbies": [
+			"[happy]I collect coins from every town I've visited. Fifty-two coins. Well, fifty-one. I spent one on a pie.",
+			"I play the fiddle. Badly. Loudly. With great feeling. The dogs howl along. That's a duet.",
+			"I write down every story I hear. One day I'll make a book. It'll be called 'Mostly True Things'."
+		],
+		"ambitions": [
+			"[happy]I want to open a proper shop here. With a sign! And a bell on the door! And customers who come back!",
+			"One day I'd like a trade road from here to the coast. Salt, fish, silk, gossip. All flowing through our village.",
+			"My real dream? Stay somewhere long enough to be part of it. I think I'm doing it. Don't jinx it."
+		],
+		"home": [
+			"My house is full of things I'm going to sell 'soon'. Some of them have been there since I arrived.",
+			"[laughing]Mara calls my house 'the cave of wonders'. Nia calls it 'a fire hazard'. They're both right.",
+			"I've got a map of everywhere I've been pinned to my wall. Every pin's a story. I'm running out of wall."
+		],
+		"furniture": [
+			"[laughing]I have seven chairs and none of them match. That's not bad taste, that's a collection.",
+			"I sleep in a hammock. Old habit from the boats. Tomas says it's 'barely furniture'. It's barely anything. I love it.",
+			"My table was made by Tomas. He gave it to me in exchange for one hour of silence. I managed forty minutes."
+		],
+		"village": [
+			"[happy]For a place this small, there's so much going on. Weddings, babies, feuds about fences. Better than any city.",
+			"This village is the only place I've ever been where people miss me when I go on a trip. That's new.",
+			"I came for one night. Now I know everybody's secrets and nobody's charged me rent. Best deal I've ever made."
+		],
+		"friendship": [
+			"Friends are the best trade there is. You give a bit, you get a bit, and both of you come out richer.",
+			"[happy]I used to make friends in every town and leave them behind. Now I keep them. It's a whole new skill.",
+			"A real friend laughs at your joke even when they've heard it before. I've tested this extensively."
+		],
+		"disagreements": [
+			"Mara still hasn't forgiven me for selling her chisel. In my defence, it looked lonely.",
+			"[laughing]Tomas and I argue about prices every week. He says I'm a thief, I say he's a miser. It's very affectionate.",
+			"Nia says my dragon scale is a fish scale. I say she's never seen a dragon. We're at a stalemate."
+		],
+		"animals": [
+			"I once owned a goat named Duchess. She ate my maps, my hat and a very important letter. I miss her terribly.",
+			"[laughing]The cats here follow me around because I smell like fish. My mother's revenge, from fifty miles away.",
+			"I'd love a parrot. One that says 'what a bargain!' every time someone walks past. Business would triple."
+		],
+		"nature": [
+			"I've seen deserts, mountains and the sea, but this valley in spring? Hard to beat. Don't tell the sea I said that.",
+			"[happy]The sea's in my blood, but I'm learning to love trees. They're like the sea, but they stay still. Mostly.",
+			"Nia keeps telling me plant facts. I've started selling them. 'Fun facts, one copper each'."
+		],
+		"seasons": [
+			"[happy]Summer's my season. Long days, lots of travellers, lots of stories.",
+			"Autumn's for harvest festivals, and festivals are for selling things to happy people.",
+			"Winter's hard for a trader. Nobody travels. I get restless. Ask me about my winter knitting. Don't."
+		],
+		"mornings": [
+			"[laughing]I'm not a morning person. I'm a morning-after-two-cups-of-tea person.",
+			"Every morning I set up the stall like it's the first day. It makes the old junk look new. Mostly."
+		],
+		"evenings": [
+			"[happy]Evenings are for the fire and the stories. I tell one, Tomas corrects it, everyone laughs.",
+			"In the evenings I count the day's coins and the day's laughs. I'm usually richer in laughs."
+		],
+		"events": [
+			"[laughing]Festivals are my favourite. I sell ribbons, sweets and 'lucky charms'. They're buttons. The luck is real, though.",
+			"[worried]When the monsters come, I hide the good stock and hand out pots and pans as weapons. Good pots, too.",
+			"When a new baby comes, I bring a little coin from my collection. For luck. And to teach them the value of money."
+		],
+		"worries": [
+			"[worried]I worry I'll get bored and leave. I don't want to. But my feet have their own opinions.",
+			"[worried]I worry I've told so many stories that people don't believe the true ones.",
+			"I worry about my mother. She's getting older and she won't stop working. Like daughter, like mother."
+		],
+		"hopes": [
+			"[happy]I hope this village becomes a market town. With festivals every season and travellers every week.",
+			"I hope I'm still here in ten years, telling the same stories to new children. That'd be a happy ending.",
+			"I'd love to take my mother to see the valley. She'd haggle with everyone. She'd love it."
+		],
+		"surprises": [
+			"[surprised]Someone bought the cursed teapot! I've been trying to sell it for two years. I almost miss it.",
+			"[surprised]Tomas laughed at one of my jokes yesterday. Out loud. I've been chasing that laugh for three years."
+		],
+		"funny": [
+			"[laughing]I once sold a man his own horse. He'd lost it the day before. He was so happy he paid double.",
+			"[laughing]I told the tinker Nia was a witch. He bought six remedies and ran. She was furious. Then she counted the coins.",
+			"[laughing]I tried to teach Elias to haggle. He ended up paying more than the asking price. Out of guilt."
+		]
+	},
+	"opinions": {
+		"mara": [
+			"[laughing]Mara's the only person who's ever out-bargained me. She threatened to fix my cart wrong. I folded.",
+			"Mara acts tough, but she built me a stall roof without being asked when the rain came. Then denied it.",
+			"Don't tell Mara I said this, but she's the reason this village stands. Literally. She built it."
+		],
+		"elias": [
+			"[happy]Elias is the kindest man I've ever met, and I've met a lot of men. Most of them were trying to sell me things.",
+			"Elias overpays for everything. It breaks my heart. I keep giving him discounts he doesn't notice.",
+			"He fed me the night I arrived. Never asked for anything. I've been trying to repay him for three years."
+		],
+		"nia": [
+			"[laughing]Nia's my favourite. She's the only person who gets more excited about a weed than I do about a gold coin.",
+			"I bring Nia seeds from everywhere. She cries a little every time. It's adorable. Don't tell her I said adorable.",
+			"She's the cleverest person I know, and she has no idea. I'll tell her one day. When she's least expecting it."
+		],
+		"tomas": [
+			"[laughing]Tomas pretends he hates my stories. He's always first at the fire when I start one.",
+			"He gave me a table in exchange for an hour of silence. I didn't make it. He gave me the table anyway.",
+			"Tomas is the only person who's ever told me to slow down and meant it kindly. I'm trying. Slowly."
+		]
+	},
+	"player": {
+		"achievement": [
+			"[laughing]You {thing}? Brilliant! I'm going to tell everyone. With extra dragons.",
+			"[happy]I heard you {thing}! That's going in my book. Chapter one, probably."
+		],
+		"gift": [
+			"[surprised]A gift? For me? I'm usually on the selling end of these! Thank you. Truly. I won't sell it. Probably.",
+			"[happy]Oh, you shouldn't have! But you did! And now I like you even more. Dangerous."
+		],
+		"house": [
+			"[happy]Your house! It's lovely. If you ever want to fill it with mismatched treasures, you know where to find me.",
+			"I walked past your house. It needs a bell on the door. I happen to sell bells."
+		],
+		"discovery": [
+			"[laughing]You found {thing}? Was there treasure? Tell me there was treasure. Tell me even if there wasn't.",
+			"Exploring! A traveller after my own heart. Next time, bring me back a story."
+		]
+	},
+	"life": {
+		"new_home": [
+			"[laughing]A new house! With more walls for my maps and more corners for my clutter. Paradise.",
+			"I've never had a house of my own before. I keep walking round it, touching the walls. It's ridiculous. I love it."
+		],
+		"partner": [
+			"[happy]I always thought I'd travel alone. Turns out it's nicer to stay somewhere with someone.",
+			"They laugh at all my jokes. Even the bad ones. Especially the bad ones. That's love, I think."
+		],
+		"child": [
+			"[laughing]My little one already grabs at shiny things. Born trader. I couldn't be prouder.",
+			"I'm teaching my child to count with coins. They keep trying to eat the coins. Expensive lessons."
+		],
+		"friend": [
+			"[happy]I used to have a friend in every town and a home in none. Now I have friends and a home in one place.",
+			"Somebody saved me a seat at the fire last night without me asking. I nearly cried. Don't tell anyone."
+		],
+		"grief": [
+			"[sad]I don't have a funny story for this one. I just miss them.",
+			"[sad]I tell their stories now, at the fire. Somebody has to keep them alive."
+		]
+	},
+	"stories": [
+		[
+			"[laughing]Gather round! The story of Duchess the goat. You'll want to sit for this.",
+			"I was crossing the mountains with a cart of silk and a goat for company. The goat was called Duchess.",
+			"At the top of the pass, Duchess ate the silk. All of it. Then she ate my map. Then she ate my hat.",
+			"[laughing]I had to follow her down the mountain because she seemed to know the way. She did. She led me to a cheese farm. Best detour of my life."
+		],
+		[
+			"Here's a true one. I swear on my coin collection.",
+			"In a city to the south, I accidentally sold a fake crown to a real duke.",
+			"He wore it to a ball. Someone noticed. Guards came looking for me.",
+			"[laughing]I hid in a barrel of pickled herring for six hours. I couldn't eat fish for a year. My mother was devastated."
+		],
+		[
+			"Want to hear something I don't usually tell?",
+			"When I was sixteen, I left home without saying goodbye. I just packed a bag and walked.",
+			"My mother didn't hear from me for a whole year. When I finally wrote, she wrote back one line.",
+			"[sad]'The stall's still here. So am I.' I still have the letter. It's the only thing I've never sold."
+		],
+		[
+			"[laughing]The story of how I came to this village. The real one.",
+			"My cart broke a wheel at the bottom of the hill. I sat on it and cursed every wheelwright ever born.",
+			"Mara walked by, looked at the wheel, fixed it in ten minutes and refused payment. Then Elias brought soup. Then Tomas told me to stop cursing near the children.",
+			"[happy]I thought, 'These people are strange.' Then I thought, 'I could stay a night.' That was three years ago."
+		]
+	],
+	"questions": [
+		{
+			"id": "sera_travel",
+			"ask": "If you could travel anywhere at all, where would you go?",
+			"free": true,
+			"options": {
+				"sea": [
+					"sea",
+					"coast",
+					"ocean",
+					"beach"
+				],
+				"mountains": [
+					"mountain",
+					"mountains"
+				],
+				"city": [
+					"city",
+					"town"
+				],
+				"here": [
+					"here",
+					"nowhere",
+					"stay",
+					"village"
+				],
+				"forest": [
+					"forest",
+					"woods"
+				]
+			},
+			"react": {
+				"sea": "[happy]The sea! A person after my own heart. I'll tell you every secret of the coast.",
+				"mountains": "Mountains? Cold, beautiful and full of goats. Watch your hat.",
+				"city": "[laughing]The city! Noisy, smelly, wonderful. You'd be fleeced in a day. I'd come along to protect you.",
+				"here": "[happy]Here? That's the sweetest answer I've ever heard. And the cheapest.",
+				"forest": "The forest! Deep, quiet, full of stories. Bring a lantern. And snacks.",
+				"other": "[laughing]{answer}? I've never been! I'll add it to the map. Then I'll make up a story about it."
+			},
+			"recall": "You said you'd travel to {answer}. I found an old map with it on. Want it? For a friend price."
+		},
+		{
+			"id": "sera_bargain",
+			"ask": "Be honest. Are you any good at haggling?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"good",
+					"great",
+					"very"
+				],
+				"no": [
+					"no",
+					"not",
+					"terrible",
+					"bad",
+					"awful",
+					"nope"
+				]
+			},
+			"react": {
+				"yes": "[laughing]Oh, a rival! Good. I'll raise my prices for you specially.",
+				"no": "[happy]Wonderful! I mean, terrible! Let me teach you. For a small fee.",
+				"other": "That's what a good haggler would say. Very suspicious."
+			},
+			"recall": {
+				"yes": "You claimed you're good at haggling. I've been watching you shop. I have notes. Many notes.",
+				"no": "You admitted you can't haggle. Lesson two is free. Lesson one was also free. I'm terrible at business.",
+				"other": "I still remember your answer about haggling. Very suspicious."
+			}
+		},
+		{
+			"id": "sera_secret",
+			"ask": "Tell me a secret. Any secret. I'll keep it. Probably. Actually, I will. Promise.",
+			"free": true,
+			"options": {
+				"no": [
+					"no",
+					"nope",
+					"never",
+					"not telling",
+					"won t"
+				]
+			},
+			"react": {
+				"no": "[laughing]A person who keeps secrets! I respect that. I'm terrible at it, but I respect it.",
+				"other": "[surprised]Really? I won't tell a soul. Not even the cats. Your secret's safe."
+			},
+			"recall": "Don't worry, I've kept your secret. Mostly from myself, I forget things."
+		},
+		{
+			"id": "sera_story",
+			"ask": "Do you like stories? True ones, made-up ones, the ones in between?",
+			"options": {
+				"yes": [
+					"yes",
+					"yeah",
+					"love",
+					"sure",
+					"of course"
+				],
+				"no": [
+					"no",
+					"not",
+					"nope"
+				]
+			},
+			"react": {
+				"yes": "[happy]Then sit down. You're going to be here a while. Years, possibly.",
+				"no": "[surprised]No? Everyone likes stories! You've just never heard a good one. Challenge accepted.",
+				"other": "I'll take that as a yes. I always do."
+			},
+			"recall": {
+				"yes": "You said you love stories. Good, because I've saved a new one for you.",
+				"no": "You said you didn't like stories. I've been working on one that'll change your mind.",
+				"other": "I've saved a new story for you. Whether you like it or not."
+			}
+		}
+	]
+}

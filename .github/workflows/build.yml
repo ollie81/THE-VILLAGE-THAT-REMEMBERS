@@ -1,0 +1,216 @@
+# Runs the smoke test and builds an installable Android APK on every push.
+# Download the APK from the run's "Artifacts" section on GitHub.
+name: Test and build Android APK
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.3"
+
+jobs:
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-22.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Leave out assets the game never uses (so tests run on what ships)
+        run: godot --headless --path . -s res://tools/strip_unused_assets.gd -- --apply
+      - name: Import project
+        run: godot --headless --path . --import || true
+      - name: Run smoke test
+        run: timeout 900 godot --headless --path . res://tests/smoke_test.tscn
+      - name: Run gameplay test
+        run: timeout 900 godot --headless --path . res://tests/gameplay_test.tscn
+      - name: Run population test
+        run: timeout 900 godot --headless --path . res://tests/population_test.tscn
+      - name: Run life test
+        run: timeout 900 godot --headless --path . res://tests/life_test.tscn
+      - name: Run hooks test
+        run: timeout 900 godot --headless --path . res://tests/hooks_test.tscn
+      - name: Run build test
+        run: timeout 900 godot --headless --path . res://tests/build_test.tscn
+      - name: Run sound test
+        run: timeout 900 godot --headless --path . res://tests/sound_test.tscn
+      - name: Run guide test
+        run: timeout 900 godot --headless --path . res://tests/guide_test.tscn
+      - name: Run retention test
+        run: timeout 900 godot --headless --path . res://tests/retention_test.tscn
+      - name: Run adventure test
+        run: timeout 900 godot --headless --path . res://tests/adventure_test.tscn
+      - name: Run home test
+        run: timeout 900 godot --headless --path . res://tests/home_test.tscn
+      - name: Run quality test
+        run: timeout 900 godot --headless --path . res://tests/quality_test.tscn
+      - name: Run economy test
+        run: timeout 900 godot --headless --path . res://tests/economy_test.tscn
+      - name: Run pilot test
+        run: timeout 900 godot --headless --path . res://tests/pilot_test.tscn
+      - name: Run world test
+        run: timeout 900 godot --headless --path . res://tests/world_test.tscn
+      - name: Run animals test
+        run: timeout 900 godot --headless --path . res://tests/animals_test.tscn
+      - name: Run riding test
+        run: timeout 900 godot --headless --path . res://tests/riding_test.tscn
+      - name: Run lives test
+        run: timeout 900 godot --headless --path . res://tests/lives_test.tscn
+      - name: Run monsters test
+        run: timeout 900 godot --headless --path . res://tests/monsters_test.tscn
+      - name: Run defence test
+        run: timeout 900 godot --headless --path . res://tests/defence_test.tscn
+      - name: Run housing test
+        run: timeout 900 godot --headless --path . res://tests/housing_test.tscn
+      - name: Run monetization test
+        run: timeout 900 godot --headless --path . res://tests/monetization_test.tscn
+      - name: Run home life test
+        run: timeout 900 godot --headless --path . res://tests/home_life_test.tscn
+      - name: Run first day test
+        run: timeout 900 godot --headless --path . res://tests/first_day_test.tscn
+      - name: Run conversation test
+        run: timeout 900 godot --headless --path . res://tests/conversation_test.tscn
+      - name: Run dialogue content test
+        run: timeout 900 godot --headless --path . res://tests/dialogue_content_test.tscn
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-22.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up export templates and Android SDK
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates ~/.config
+          if [ -d /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ] && [ ! -d ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable ]; then
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/
+          fi
+          if [ -d /root/.config/godot ] && [ ! -d ~/.config/godot ]; then
+            cp -r /root/.config/godot ~/.config/godot
+          fi
+          mkdir -p ~/.config/godot
+          for f in ~/.config/godot/editor_settings-4.tres ~/.config/godot/editor_settings-${GODOT_VERSION}.tres; do
+            if [ ! -f "$f" ]; then
+              printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\n' > "$f"
+            fi
+            echo 'export/android/android_sdk_path = "/usr/lib/android-sdk"' >> "$f"
+            echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> "$f"
+          done
+          ls ~/.local/share/godot/export_templates/
+
+      - name: Signing key (your permanent key from secrets, or a temporary one)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > release.keystore
+            echo "Using your permanent signing key: updates install over the old version."
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$GITHUB_WORKSPACE/release.keystore" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$KEY_ALIAS" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
+          else
+            echo "::warning::No permanent signing key in secrets: using a temporary one (uninstall the old version before installing)."
+            keytool -genkeypair -v -keystore release.keystore -storepass android -alias temporary \
+              -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Temporary,O=Village,C=US"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$GITHUB_WORKSPACE/release.keystore" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=temporary" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=android" >> $GITHUB_ENV
+          fi
+
+      - name: AdMob settings (real IDs only from secrets; test IDs otherwise)
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID }}
+        run: |
+          mkdir -p config
+          {
+            echo "[units]"
+            echo "rewarded=\"${ADMOB_REWARDED_ID}\""
+            echo "interstitial=\"${ADMOB_INTERSTITIAL_ID}\""
+            echo "banner=\"${ADMOB_BANNER_ID}\""
+          } > config/admob.cfg
+          if echo "$ADMOB_APP_ID" | grep -Eq '^ca-app-pub-[0-9]+~[0-9]+$'; then
+            sed -i "s|^const APPLICATION_ID := \".*\"|const APPLICATION_ID := \"${ADMOB_APP_ID}\"|" addons/admob/android/config.gd
+            echo "Using your AdMob App ID from secrets."
+          else
+            echo "No ADMOB_APP_ID secret: using Google's test App ID."
+          fi
+          grep -c "ca-app-pub" addons/admob/android/config.gd
+
+      - name: Leave out assets the game never uses (so tests run on what ships)
+        run: godot --headless --path . -s res://tools/strip_unused_assets.gd -- --apply
+      - name: Import project
+        run: godot --headless --path . --import || true
+
+      - name: Install the Android build template (needed for the AdMob SDK)
+        run: |
+          # What the editor's "Install Android Build Template" does.
+          SRC=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip
+          ls -la "$SRC"
+          rm -rf android && mkdir -p android/build
+          unzip -q "$SRC" -d android/build
+          echo "${GODOT_VERSION}.stable" > android/.build_version
+          touch android/build/.gdignore
+          test -f android/build/build.gradle
+          ls android/build | head -20
+
+      - name: Add the game's reminder plugin to the Android build
+        run: |
+          grep -n "srcDirs" android/build/build.gradle | head -5 || true
+          cp -r android_plugin/src/. android/build/src/
+          find android/build/src -name "*.java" | grep -i "village\|GodotApp"
+
+      - name: Stamp the build
+        env:
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          SHORT=$(echo "$COMMIT_SHA" | cut -c1-7)
+          sed -i "s/^const COMMIT := \"dev\"/const COMMIT := \"$SHORT\"/; s/^const BUILT := \"\"/const BUILT := \"$(date -u +%Y-%m-%d)\"/" scripts/core/build_info.gd
+          grep -n "^const" scripts/core/build_info.gd
+
+      - name: Export APK
+        run: |
+          mkdir -p build/android
+          godot --headless --path . --export-release "Android" build/android/TheVillageThatRemembers.apk
+          ls -la build/android
+          test -s build/android/TheVillageThatRemembers.apk
+
+      - name: Check the Google Mobile Ads SDK is in the APK
+        run: |
+          APK=build/android/TheVillageThatRemembers.apk
+          unzip -l "$APK" | grep "classes" || true
+          N=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "com/google/android/gms/ads" || true)
+          echo "Mobile Ads SDK references in the app code: $N"
+          test "$N" -gt 0
+          P=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "poingstudios" || true)
+          echo "AdMob plugin references: $P"
+          test "$P" -gt 0
+
+      - name: Check the reminder plugin is in the APK
+        run: |
+          APK=build/android/TheVillageThatRemembers.apk
+          R=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "com/ollie81/village/VillageNotify" || true)
+          echo "Reminder plugin classes in the app code: $R"
+          test "$R" -gt 0
+          AAPT=$(ls /usr/lib/android-sdk/build-tools/*/aapt 2>/dev/null | tail -1)
+          if [ -n "$AAPT" ]; then
+            "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -E "POST_NOTIFICATIONS|ReminderReceiver|plugin.v2.VillageNotify" || (echo "manifest entries missing" && exit 1)
+          else
+            echo "aapt not found: manifest not checked"
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheVillageThatRemembers-apk
+          path: build/android/TheVillageThatRemembers.apk
+          if-no-files-found: error

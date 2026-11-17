@@ -1,0 +1,16 @@
+# Godot 4 generated data
+.godot/
+*.tmp
+/android/
+/export/
+*.apk
+*.aab
+export_credentials.cfg
+/build/
+
+# AdMob IDs are written here by CI from secrets; never commit real IDs.
+/config/admob.cfg
+
+# Signing keys never go in the repository (CI reads yours from secrets).
+*.keystore
+*.jks

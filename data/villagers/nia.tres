@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.36, 0.22, 0.15, 1)
+hair_color = Color(0.07, 0.05, 0.04, 1)
+eye_color = Color(0.14, 0.08, 0.05, 1)
+shirt_color = Color(0.94, 0.91, 0.84, 1)
+pants_color = Color(0.27, 0.21, 0.16, 1)
+accent_color = Color(0.92, 0.62, 0.18, 1)
+shoe_color = Color(0.36, 0.24, 0.14, 1)
+skirt_color = Color(0.28, 0.42, 0.27, 1)
+apron_color = Color(0.42, 0.52, 0.33, 1)
+hair_style = "locs"
+accessories = PackedStringArray("headwrap", "earrings", "apron")
+work_tool = "basket"
+height_scale = 0.95
+build_width = 0.95
+shoulder_width = 0.9
+hip_width = 1.06
+chest_shape = 0.6
+sleeve_length = 0.25
+tunic_length = 0.8
+stoop = 0.0
+face_width = 0.97
+jaw_width = 0.94
+chin = 0.95
+cheekbones = 0.7
+brow_ridge = 0.3
+brow_thickness = 0.95
+brow_arch = 0.7
+eye_size = 1.18
+eye_tilt = 0.05
+lash_weight = 0.85
+nose_length = 0.94
+nose_width = 1.18
+lip_fullness = 1.3
+mouth_width = 1.04
+resting_face = {"smile": 0.3, "brow_up": 0.12}
+
+[resource]
+script = ExtResource("1_data")
+id = &"nia"
+display_name = "Nia"
+age = 24
+role = "Gardener & Herbalist"
+traits = PackedStringArray("Intelligent", "Curious", "Creative")
+biography = "Nia keeps the herb garden and a notebook full of sketches of every plant within a day's walk. She's sure the forest across the river hides remedies no one has named yet."
+appearance = SubResource("Resource_look")
+home_location = "home_nia"
+walk_speed = 1.7
+schedule = [{"hour": 6.5, "activity": "gather", "location": "garden", "label": "Watering the herb beds"}, {"hour": 10.0, "activity": "gather", "location": "forest_edge", "label": "Searching the forest edge for herbs"}, {"hour": 12.5, "activity": "gather", "location": "riverbank", "label": "Collecting reeds by the river"}, {"hour": 14.0, "activity": "gather", "location": "garden", "label": "Tending the herb garden"}, {"hour": 17.5, "activity": "wander", "location": ""}, {"hour": 19.5, "activity": "socialize", "location": "plaza"}, {"hour": 22.5, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("garden", "bridge", "riverbank", "forest_edge")
+first_meeting_lines = PackedStringArray("[surprised]Oh! Careful, you nearly stepped on the chamomile. It's fine. Hello!", "[happy]Did you know willow bark eases fever? The trees across the river are full of it.")
+returning_lines = PackedStringArray("[laughing]I found a mushroom yesterday that glows faintly at night. I'm calling it 'Nia's lantern'. Too vain?", "Lavender for sleep, sage for memory. Fitting, for this village.", "Every plant has a story. Most of them involve someone getting a stomach ache.")
+activity_comments = {"gather": "[worried]Hold on, I need to remember where this one grows.", "socialize": "Sera's telling the story about the river spirit again. I love that one.", "wander": "I'm just looking. You never know what's sprouted overnight."}
+personality = {"openness": 0.95, "conscientiousness": 0.6, "extraversion": 0.55, "agreeableness": 0.7, "neuroticism": 0.4, "curiosity": 0.95}

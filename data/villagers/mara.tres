@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.8, 0.58, 0.44, 1)
+hair_color = Color(0.12, 0.08, 0.06, 1)
+eye_color = Color(0.24, 0.15, 0.08, 1)
+shirt_color = Color(0.93, 0.89, 0.8, 1)
+pants_color = Color(0.37, 0.33, 0.25, 1)
+accent_color = Color(0.88, 0.42, 0.16, 1)
+shoe_color = Color(0.42, 0.27, 0.15, 1)
+hair_style = "bun"
+accessories = PackedStringArray("scarf", "tool_belt", "suspenders")
+work_tool = "hammer"
+height_scale = 0.97
+build_width = 1.0
+shoulder_width = 0.95
+hip_width = 1.03
+chest_shape = 0.55
+sleeve_length = 0.35
+tunic_length = 0.0
+stoop = 0.0
+jaw_width = 1.06
+chin = 1.12
+cheekbones = 0.8
+brow_ridge = 0.6
+brow_thickness = 1.15
+brow_arch = 0.2
+eye_size = 1.0
+eye_tilt = 0.08
+lash_weight = 0.6
+nose_length = 1.0
+nose_width = 0.95
+lip_fullness = 0.95
+mouth_width = 1.0
+resting_face = {"smirk": 0.35, "brow_down": 0.15}
+
+[resource]
+script = ExtResource("1_data")
+id = &"mara"
+display_name = "Mara"
+age = 29
+role = "Builder"
+traits = PackedStringArray("Practical", "Courageous", "Protective")
+biography = "Mara raised half the roofs in the village with her own hands. She is building a sixth house on the western edge, for whoever the village needs next."
+appearance = SubResource("Resource_look")
+home_location = "home_mara"
+walk_speed = 1.75
+schedule = [{"hour": 5.5, "activity": "socialize", "location": "plaza", "label": "Warming up by the morning fire"}, {"hour": 7.0, "activity": "work", "location": "build_site", "label": "Raising the frame of the new house", "anim": "work"}, {"hour": 12.0, "activity": "socialize", "location": "plaza", "label": "Eating lunch at the meeting circle"}, {"hour": 13.0, "activity": "work", "location": "storage", "label": "Hauling timber from the storehouse"}, {"hour": 15.0, "activity": "work", "location": "build_site", "label": "Fitting planks on the new house"}, {"hour": 18.0, "activity": "wander", "location": ""}, {"hour": 19.5, "activity": "socialize", "location": "plaza"}, {"hour": 22.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("bridge", "riverbank", "workshop", "plaza")
+first_meeting_lines = PackedStringArray("[worried]Mind the frame by the west path, it isn't braced yet.", "[angry]If anything ever threatens this village, you come find me first. Understood?")
+returning_lines = PackedStringArray("[happy]The new house is coming along. Slowly, but it'll stand for a hundred years.", "[laughing]Tomas says I hammer like I'm angry at the nails. I'm not. Mostly.", "Walls keep out the weather. People keep out everything else.")
+activity_comments = {"work": "[worried]I can't stop long, these beams won't lift themselves.", "socialize": "A fire, some company... that's what we build for, isn't it?", "wander": "Just walking the village, checking every roof I've made."}
+personality = {"openness": 0.45, "conscientiousness": 0.85, "extraversion": 0.5, "agreeableness": 0.55, "neuroticism": 0.3, "courage": 0.9}

@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/villagers/villager_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/characters/character_appearance.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_look"]
+script = ExtResource("2_look")
+skin_color = Color(0.8, 0.58, 0.42, 1)
+hair_color = Color(0.3, 0.19, 0.11, 1)
+eye_color = Color(0.3, 0.2, 0.1, 1)
+shirt_color = Color(0.42, 0.48, 0.28, 1)
+pants_color = Color(0.66, 0.6, 0.47, 1)
+accent_color = Color(0.45, 0.28, 0.15, 1)
+shoe_color = Color(0.38, 0.25, 0.15, 1)
+hair_style = "short"
+accessories = PackedStringArray("straw_hat", "beard", "suspenders")
+work_tool = "hoe"
+height_scale = 1.05
+build_width = 1.08
+shoulder_width = 1.08
+hip_width = 1.0
+chest_shape = 0.0
+sleeve_length = 0.55
+tunic_length = 0.0
+stoop = 0.0
+face_width = 1.04
+jaw_width = 1.1
+chin = 1.0
+cheekbones = 0.5
+brow_ridge = 0.5
+brow_thickness = 1.3
+brow_arch = 0.35
+eye_size = 1.0
+nose_length = 1.06
+nose_width = 1.12
+lip_fullness = 1.0
+resting_face = {"smile": 0.4, "squint": 0.2, "brow_up": 0.1}
+
+[resource]
+script = ExtResource("1_data")
+id = &"elias"
+display_name = "Elias"
+age = 35
+role = "Farmer"
+traits = PackedStringArray("Generous", "Hardworking", "Patient")
+biography = "Elias was first in the fields every morning and the last to leave. Whatever the harvest, he makes sure nobody in the village goes hungry."
+appearance = SubResource("Resource_look")
+home_location = "home_elias"
+walk_speed = 1.5
+schedule = [{"hour": 5.0, "activity": "work", "location": "farm", "label": "Tending the crops at dawn", "anim": "work"}, {"hour": 12.0, "activity": "socialize", "location": "plaza", "label": "Sharing lunch at the meeting circle"}, {"hour": 13.0, "activity": "work", "location": "farm", "label": "Working the fields", "anim": "work"}, {"hour": 16.5, "activity": "work", "location": "storage", "label": "Storing the day's harvest"}, {"hour": 18.0, "activity": "socialize", "location": "plaza"}, {"hour": 21.0, "activity": "sleep", "location": "home"}]
+wander_locations = PackedStringArray("farm", "plaza", "garden")
+first_meeting_lines = PackedStringArray("[happy]Welcome! You look like you could use a meal. There's always bread to spare at my table.", "The soil here is good. Treat it kindly and it remembers.")
+returning_lines = PackedStringArray("The wheat's turning gold. Another few weeks.", "[laughing]Nothing grows faster for being shouted at. I've tried.", "[happy]Take a cabbage if you need one. Really, take two.")
+activity_comments = {"work": "Each row in its own time. You can't rush a field.", "socialize": "Good food tastes better when it's shared.", "rest": "Even the land rests. So should we."}
+personality = {"openness": 0.4, "conscientiousness": 0.8, "extraversion": 0.45, "agreeableness": 0.95, "neuroticism": 0.2, "patience": 0.95}

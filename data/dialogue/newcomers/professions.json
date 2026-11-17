@@ -1,0 +1,192 @@
+{
+	"farmer": {
+		"topics": {
+			"work": ["You can't hurry a field. You can only be ready when it's ready.", "I check the soil every morning. Crumble it in my hand. It tells you more than any almanac.", "Weeding is most of farming. The rest is worrying about the weather."],
+			"skills": ["I can tell when rain's coming by the smell of the earth. Never been wrong. Well, twice.", "I can plough a straight line with my eyes shut. Not that I'd try. The ox would notice."],
+			"hobbies": ["I save seeds from the best plants each year. I've got jars of them, all labelled.", "I like whittling scarecrows. Each one gets a name and a hat."],
+			"home": ["My house smells of drying herbs and wet boots. I wouldn't change it.", "There's always a basket of something by my door. Beans, onions, whatever's in."],
+			"furniture": ["My kitchen table's covered in seed packets. Eating happens around them.", "I've got a big chair by the window so I can watch the fields while I rest."],
+			"nature": ["The worms are the real farmers. I'm just their assistant.", "Bees are a farmer's best friend. I'd plant flowers for them even if I grew nothing else."],
+			"animals": ["Chickens have personalities. One of mine only lays if you sing to her.", "I've a soft spot for pigs. Clever, clean, and terrible at keeping secrets."],
+			"seasons": ["Spring's the hopeful season. Every seed's a promise.", "Harvest is hard work and the best feeling in the world, all at once."],
+			"funny": ["[laughing]I once grew a turnip so big I needed help to lift it. We ate turnip for a month. Nobody's forgiven me."],
+			"worries": ["[worried]A late frost can kill a whole season's work in one night. I sleep badly in spring."]
+		},
+		"stories": [["My first harvest was a disaster. Blight took half the potatoes.", "I sat in the field and cried, I'm not ashamed to say.", "An old neighbour came and sat beside me. Didn't say anything. Just helped me dig up what was left.", "[happy]That's farming. You lose, you dig, you plant again. And someone usually helps."]],
+		"questions": [{"id": "job_farmer_crop", "ask": "If you could grow anything at all, what would it be?", "free": true,
+			"options": {"wheat": ["wheat", "grain", "bread"], "vegetables": ["carrot", "carrots", "potato", "potatoes", "vegetables", "turnip"], "fruit": ["apple", "apples", "fruit", "berries", "strawberries"], "flowers": ["flowers", "flower", "roses"]},
+			"react": {"wheat": "Wheat. Good choice. Bread for the whole village.", "vegetables": "[happy]A vegetable lover! I'll set aside the best ones for you.", "fruit": "[happy]Fruit! I've got a few trees in mind. Patience, though, they take years.", "flowers": "Flowers! Not much use for eating, but they feed the soul. And the bees.", "other": "{answer}? I've never tried that. I might, now."},
+			"recall": "You said you'd grow {answer}. I've been reading up on it."}]
+	},
+	"builder": {
+		"topics": {
+			"work": ["Measure twice, cut once. Then measure again because somebody moved your mark.", "A good building's like a good friend. It stands up when things get rough.", "I'm happiest on a roof. Up there, the whole village looks like it fits in your hand."],
+			"skills": ["I can tell if a wall's straight just by looking along it. Saves a lot of string.", "I can carry two beams at once. Shouldn't. Do anyway."],
+			"hobbies": ["I build little model houses in the evenings. Tiny doors and all.", "I collect odd nails. Old ones, bent ones. Every nail's held something up once."],
+			"home": ["My house is half finished. A builder's house always is. Too busy with everyone else's.", "I built my own front step three times before I was happy with it."],
+			"furniture": ["Everything in my house is a little bit over-built. My chairs could hold an ox.", "I made my bed frame from the beams of an old barn. It creaks with stories."],
+			"nature": ["Good timber comes from slow-grown trees. Same with good people.", "I watch how birds build nests. They know things about balance we've forgotten."],
+			"animals": ["A cat moved into my workshop. She inspects everything I build. Harsh critic.", "Oxen are the real builders. I just tell them where to pull."],
+			"seasons": ["Summer's building season. Long days, dry wood, no frost in the mortar.", "Winter I fix things indoors and plan what to build in spring."],
+			"funny": ["[laughing]I once built a whole shed and forgot to put in a door. Climbed in through the window for a week."],
+			"worries": ["[worried]Every storm, I lie awake wondering if I built that last roof right."]
+		},
+		"stories": [["The first house I ever built fell down.", "Not all at once. Slowly. Over a winter. A wall leaned a little more each week.", "The family living there never complained. They just propped it up with a tree trunk.", "[happy]I rebuilt it for free the next spring. Better. It's still standing. I visit it sometimes."]],
+		"questions": [{"id": "job_builder_house", "ask": "If I built you something, what would you want?", "free": true,
+			"options": {"house": ["house", "home", "cottage"], "tower": ["tower", "lookout"], "bridge": ["bridge"], "nothing": ["nothing", "none"]},
+			"react": {"house": "A house. The best answer. Everyone deserves good walls.", "tower": "[happy]A tower! I'd love to build something tall. Let me sketch it.", "bridge": "A bridge! Connects things. I like how you think.", "nothing": "Nothing? You're the first person to say that. I'll build you something anyway.", "other": "{answer}? I've never built one. Challenge accepted."},
+			"recall": "You said you'd want {answer}. I've been drawing plans in the evenings."}]
+	},
+	"herbalist": {
+		"topics": {
+			"work": ["Every plant is either medicine, food, or poison. Sometimes all three, depending on how much.", "I dry my herbs upside down in bunches. The house smells like a summer meadow all year.", "People think herbalism is gentle. It's mostly knowing what will hurt you."],
+			"skills": ["I can make a tea for almost anything. Headache, heartache, stubbornness. The last one rarely works.", "I can find chamomile in a field from twenty paces by smell alone."],
+			"hobbies": ["I press flowers into a big book. Every page is a different summer.", "I make little scented bags for people's pillows. Lavender for sleep, mint for dreams."],
+			"home": ["There's not a bare wall in my house. Every hook has something drying on it.", "My shelves are full of jars. Labelled, mostly. I know what's in the unlabelled ones. Probably."],
+			"furniture": ["I've a long table for sorting herbs. It's stained every colour of green.", "My chair is right by the stove, where the herbs dry best. I dry with them."],
+			"nature": ["The forest is a pharmacy, if you know where to look.", "Willow bark eases pain. The trees knew before we did."],
+			"animals": ["Cats love valerian root. I have to hide mine, or I'd have every cat in the valley.", "Sick animals know which plants to eat. I've learned a lot by watching goats."],
+			"seasons": ["Spring's for fresh leaves. Autumn's for roots. Summer's for flowers. Winter's for patience.", "Gathering after rain is best. Everything's fresh and fragrant."],
+			"funny": ["[laughing]I once mixed up a sleeping tea and a waking tea. The poor man was very confused for two days."],
+			"worries": ["[worried]Someone always waits too long to come to me. I wish people asked for help sooner."]
+		},
+		"stories": [["When I was young, I made my grandmother a remedy for her cough.", "I got it wrong. It turned her tongue green for a week.", "She laughed so hard the cough went away anyway.", "[happy]She told everyone I'd cured her. I didn't correct her. I think she knew."]],
+		"questions": [{"id": "job_herbalist_ail", "ask": "Do you sleep well? I've got teas, if you don't.",
+			"options": {"yes": ["yes", "well", "fine", "good"], "no": ["no", "not", "badly", "bad", "never"]},
+			"react": {"yes": "[happy]Good! Sleep's the best medicine I know.", "no": "[worried]I'll make you lavender and chamomile. Come by this evening.", "other": "Hm. Come see me if it gets worse."},
+			"recall": {"yes": "You said you sleep well. Still true? You look rested.", "no": "You said you sleep badly. Did the tea help? I've made a stronger one.", "other": "I've been thinking about how you sleep. Is that strange? It's professional."}}]
+	},
+	"craftsman": {
+		"topics": {
+			"work": ["A good tool should feel like part of your hand. If it doesn't, it's not your tool yet.", "I make things that are meant to last longer than me. That's the whole point.", "The difference between good work and great work is the bit nobody sees."],
+			"skills": ["I can fix almost anything with a bit of wire and some patience. Mostly patience.", "I can carve a spoon in an evening. A good spoon takes a week."],
+			"hobbies": ["I make puzzle boxes. Little secret drawers. Nobody's opened my best one yet.", "I like taking broken things apart just to see how they worked."],
+			"home": ["My house is my workshop, and my workshop is my house. The line got blurry years ago.", "There are shavings in every corner of my home. I've stopped sweeping. I've given up."],
+			"furniture": ["I made every piece of furniture I own. None of them match. All of them are sturdy.", "My favourite chair took me a whole winter. It's the most comfortable thing I've ever sat in."],
+			"nature": ["Every piece of wood has a grain. Work with it, never against. True of people too.", "I like collecting fallen branches with odd shapes. They become handles, hooks, toys."],
+			"animals": ["I carved a wooden dog once so lifelike a real dog barked at it.", "Birds steal my wood shavings for their nests. I leave piles out for them now."],
+			"seasons": ["Winter's my season. Long nights by the fire with something to shape.", "In summer I work outside, where the light's better and the shavings blow away."],
+			"funny": ["[laughing]I made a chair so sturdy it outlived the house it was in. They built a new house around it."],
+			"worries": ["[worried]My hands are getting stiffer. I worry about the day they won't do what I tell them."]
+		},
+		"stories": [["My master made me carve the same bowl a hundred times.", "Every time, he'd look at it and say 'again'. I hated him for a year.", "On the hundredth bowl, he didn't say anything. He just used it for his supper.", "[happy]He ate from that bowl every day until he died. I have it now."]],
+		"questions": [{"id": "job_craft_make", "ask": "Have you ever made something with your own hands? Something you were proud of?",
+			"options": {"yes": ["yes", "yeah", "made", "built"], "no": ["no", "never", "not"]},
+			"react": {"yes": "[happy]Good. There's nothing like that feeling. Keep making things.", "no": "Never? Then come to the workshop. We'll fix that by evening.", "other": "Hm. Bring it to me sometime. I'd like to see."},
+			"recall": {"yes": "You told me you've made things you're proud of. Bring one by. I'd like to see.", "no": "You said you'd never made anything. The offer stands. Workshop's always open.", "other": "The workshop's open whenever you want to make something."}}]
+	},
+	"trader": {
+		"topics": {
+			"work": ["Trade's about trust. Cheat someone once and the whole road hears about it.", "Buy cheap where there's plenty, sell fair where there's need. That's the whole secret.", "I keep a ledger of every deal I've ever made. It reads like a diary."],
+			"skills": ["I can weigh coins in my hand and know if one's fake.", "I can tell what someone really wants within three sentences. It's usually not what they ask for."],
+			"hobbies": ["I collect little carvings from every town. Small ones. A trader's pack has no room for big ones.", "I keep a list of the strangest things anyone's ever tried to sell me. A stuffed eel is near the top."],
+			"home": ["My house is full of crates. Some are stock. Some are just crates I'm fond of.", "I sleep near the door. Old habit from road inns. You learn to leave quickly."],
+			"furniture": ["My table folds up. So does my chair. So does my bed. I could pack my house in an hour.", "I keep a lockbox under the floorboard. Don't tell anyone. Well, now you know."],
+			"nature": ["Roads follow rivers. Rivers follow valleys. A trader learns the land by walking it.", "I can find water anywhere along the old trade roads. You learn, or you go thirsty."],
+			"animals": ["A good mule is worth more than any cart. Mine was called Pennywise. Stubborn as a mountain.", "Dogs on the road know who to bark at. I've learned to trust them."],
+			"seasons": ["Spring roads are mud. Summer roads are dust. Autumn's the best season for trading.", "Winter's quiet for traders. I count stock and dream of spring roads."],
+			"funny": ["[laughing]I once sold a cartload of umbrellas in a drought. Then it rained for a month. Lucky me, not lucky them."],
+			"worries": ["[worried]If the roads get dangerous, trade stops. And when trade stops, villages suffer."]
+		},
+		"stories": [["Once I was robbed on the road. Lost everything. Cart, mule, coin.", "I walked into the next town with nothing but my boots.", "A baker there gave me bread and said I could pay her back whenever.", "[happy]I've paid her back ten times over since. She still says I don't owe her a thing."]],
+		"questions": [{"id": "job_trader_value", "ask": "What's the most valuable thing you own? Not the most expensive. The most valuable.", "free": true,
+			"options": {"nothing": ["nothing", "none"], "family": ["family", "friends", "memories"]},
+			"react": {"nothing": "Nothing? Then you're free. That's worth more than gold.", "family": "[happy]The right answer. Can't buy it, can't sell it.", "other": "{answer}. I wouldn't trade that for anything either."},
+			"recall": "You told me your most valuable thing is {answer}. I've been thinking about mine."}]
+	},
+	"woodcutter": {
+		"topics": {
+			"work": ["You don't fight a tree. You listen to which way it wants to fall.", "A sharp axe is safer than a blunt one. Same goes for a mind.", "I plant two saplings for every tree I cut. The forest and I have an understanding."],
+			"skills": ["I can split a log in one swing. On a good day. On a bad day, five, and a lot of language.", "I can tell a tree's age by the sound it makes when you knock on it."],
+			"hobbies": ["I stack firewood in patterns. Spirals, waves. People think I'm odd. My stacks are beautiful.", "I like to carve little animals from offcuts for the children."],
+			"home": ["My house smells of pine resin and smoke. Best smell in the world.", "There's always a woodpile by my door taller than me. I sleep better knowing it's there."],
+			"furniture": ["My table is one slab of oak. Took four of us to carry it in.", "I've got a stump by the fire for a stool. Most comfortable seat I own."],
+			"nature": ["The forest is quiet but never silent. Listen and it'll tell you everything.", "Old trees are like old people. They've seen a lot and they're in no hurry."],
+			"animals": ["A fox follows me sometimes in the woods. Keeps her distance. We've an arrangement.", "Woodpeckers are the only ones who work harder than me in the forest."],
+			"seasons": ["Winter's for felling. The sap's down and the wood's dry.", "Autumn in the forest... the colours stop me in my tracks every year."],
+			"funny": ["[laughing]I once cut a tree that fell exactly the wrong way. Right onto my own lunch."],
+			"worries": ["[worried]Some trees are too old to cut. I worry someone will cut them anyway."]
+		},
+		"stories": [["When I was small, my father showed me the oldest tree in our forest.", "He said it was older than our village, older than his grandfather's grandfather.", "Years later, after he'd gone, I went back. The tree was still there.", "[happy]I sat under it and told it everything I'd done. I swear it listened."]],
+		"questions": [{"id": "job_wood_tree", "ask": "What's your favourite tree? Everyone has one, even if they don't know it.", "free": true,
+			"options": {"oak": ["oak"], "pine": ["pine", "fir"], "birch": ["birch"], "willow": ["willow"], "apple": ["apple", "cherry"]},
+			"react": {"oak": "Oak. Strong, slow, honest. Good choice.", "pine": "[happy]Pine! The smell alone. Wonderful.", "birch": "Birch. Pretty and tougher than it looks. Like you.", "willow": "Willow. Bends but doesn't break. Wise pick.", "apple": "A fruit tree! Practical and pretty.", "other": "{answer}. I'll look for one in the forest for you."},
+			"recall": "You said your favourite tree is {answer}. I found one in the forest. I'll show you."}]
+	},
+	"stonemason": {
+		"topics": {
+			"work": ["Stone remembers. Every chisel mark stays for a hundred years.", "Each stone has a face that wants to be seen. You find it and turn it outward.", "A dry-stone wall has no mortar. Just stones that agree to hold each other up."],
+			"skills": ["I can split a boulder along its grain with one blow. If I've read it right.", "I can lift stones twice my weight. Using levers. I'm not a madman."],
+			"hobbies": ["I carve little faces into hidden corners of my walls. Count them, if you can find them.", "I collect stones with fossils in them. Shells from mountains. Think about that."],
+			"home": ["My house will be standing long after I'm gone. That's the only legacy I need.", "My walls are two feet thick. Warm in winter, cool in summer, quiet always."],
+			"furniture": ["My hearth is the finest stonework I've ever done. I sit and admire it more than I should.", "I've got a stone bench outside my door. Cold in the morning. Warm by evening."],
+			"nature": ["Mountains are just very patient stone. Rivers are just very patient stonemasons.", "I love the way moss claims stone. Like the land saying 'this is mine now'."],
+			"animals": ["Lizards sun themselves on my walls. They approve of my work.", "A pair of wrens nest in a gap I left on purpose. My best tenants."],
+			"seasons": ["Frost is my enemy. Water gets in the stone and splits it come winter.", "Summer's for quarrying. The stone's dry and the days are long."],
+			"funny": ["[laughing]I once built a beautiful arch. Took the support out. It held. Then I sneezed. It didn't."],
+			"worries": ["[worried]My back aches every morning now. Stone always wins in the end."]
+		},
+		"stories": [["My grandfather built a bridge that's stood two hundred years.", "When floods took every other bridge in the valley, his stood.", "People crossed it to safety all night. My grandmother counted them. Three hundred and six.", "[happy]That's why I cut stone. Somewhere, someday, someone might need my work to hold."]],
+		"questions": [{"id": "job_stone_last", "ask": "If you could build one thing to last a thousand years, what would it be?", "free": true,
+			"options": {"wall": ["wall", "walls"], "house": ["house", "home"], "statue": ["statue", "monument"], "bridge": ["bridge"]},
+			"react": {"wall": "A wall. Protects people. Solid answer.", "house": "[happy]A home that lasts a thousand years. Generations growing up in it. Beautiful.", "statue": "A statue! Of who? No, don't tell me. Keep it secret.", "bridge": "A bridge. My grandfather would have liked you.", "other": "{answer}... I'll think on how I'd build it in stone."},
+			"recall": "You said you'd build {answer} to last a thousand years. I've been sketching it."}]
+	},
+	"fisher": {
+		"topics": {
+			"work": ["Fishing's mostly waiting. The fish know that. They're very patient too.", "Best time to fish is dawn. The water's still and the fish are hungry.", "I mend my nets every evening. A torn net catches nothing but regret."],
+			"skills": ["I can tell where fish are by the way the water moves. Ripples talk.", "I can tie forty kinds of knot. Thirty-nine more than most people need."],
+			"hobbies": ["I carve fishing floats into little faces. Each one's a different villager. Don't ask which is you.", "I swim every morning, even in autumn. Wakes you up properly."],
+			"home": ["My house smells of fish. I don't notice anymore. Visitors do.", "I've nets hanging from every beam. My ceiling looks like the sea."],
+			"furniture": ["I sit on an old upturned boat in my kitchen. It's my favourite seat.", "My shelf is made from driftwood. Every knot is a little wave."],
+			"nature": ["The river changes every day but stays the same river. I find that comforting.", "Herons are the best fishers I know. I learn from them. They don't teach on purpose."],
+			"animals": ["An otter steals my catch sometimes. I let him. He's earned it, the cheeky thing.", "The cats know when I come back from fishing. They line up like soldiers."],
+			"seasons": ["Spring's when the fish run upriver. The best weeks of the year.", "Winter fishing through ice is cold, quiet, and strangely peaceful."],
+			"funny": ["[laughing]I once caught a boot. Then the other boot. I wear them now. They fit."],
+			"worries": ["[worried]The river's lower than last year. I worry about what that means."]
+		},
+		"stories": [["My mother could catch fish with her bare hands. I swear it.", "She'd lie on the bank, slip her hand in the water, and wait.", "Hours, sometimes. Then, quick as anything, there'd be a trout on the grass.", "[happy]I've tried for twenty years. I've caught one. She'd have laughed. Then she'd have hugged me."]],
+		"questions": [{"id": "job_fisher_water", "ask": "Do you like the water? Swimming, boats, any of it?",
+			"options": {"yes": ["yes", "love", "yeah", "swim", "swimming"], "no": ["no", "not", "scared", "afraid", "hate"]},
+			"react": {"yes": "[happy]A water lover! Come fishing with me some dawn.", "no": "That's alright. The water's not for everyone. You can hold the bucket.", "other": "Hm. Come down to the river sometime and see."},
+			"recall": {"yes": "You told me you love the water. The fish are running. Come with me tomorrow.", "no": "You said you're not fond of the water. I found a spot on the bank that's very dry. Just saying.", "other": "Come down to the river sometime. I'll show you how it's done."}}]
+	},
+	"cook": {
+		"topics": {
+			"work": ["Good food is just good ingredients and a cook who's paying attention.", "I taste everything three times. Once for salt, once for heat, once for love.", "Feeding people is the oldest way of saying you care."],
+			"skills": ["I can make a meal for twenty out of whatever's in the cupboard. Ask me. Go on.", "I can tell when bread's done by tapping it. It sounds hollow, like a drum."],
+			"hobbies": ["I keep a book of recipes from everyone I meet. I've got a hundred and twelve.", "I grow my own herbs on the windowsill. Basil, thyme, a little rosemary."],
+			"home": ["My kitchen is the biggest room in my house. Obviously.", "There's always a pot on the stove at my house. Always. Even at night."],
+			"furniture": ["My table seats ten, and I've only ever had more people round it than that.", "I've got a whole wall of hanging pans. Copper, iron, clay. Each one's got a job."],
+			"nature": ["Wild garlic in spring. Mushrooms in autumn. The forest feeds you if you know it.", "I go foraging every week. Half for the food, half for the walk."],
+			"animals": ["Every dog in the village knows where I live. And when I'm cooking.", "The chickens and I have an understanding. They give eggs, I give scraps."],
+			"seasons": ["Summer's for fresh salads and fruit. Winter's for stews that cook all day.", "Harvest is when cooks shine. A whole season's work, on one table."],
+			"funny": ["[laughing]I once forgot sugar in a cake for a wedding. Everybody said it was 'interesting'. Interesting!"],
+			"worries": ["[worried]I worry when someone skips meals. I'll find out, and I'll feed them."]
+		},
+		"stories": [["When I was little, my family was very poor.", "My grandmother could make soup out of almost nothing. A bone, an onion, a handful of barley.", "But she always put out one extra bowl, in case someone came by hungry.", "[happy]Someone always did. I put out an extra bowl too, now. Someone always comes."]],
+		"questions": [{"id": "job_cook_dish", "ask": "What's your favourite meal? I might just make it for you.", "free": true,
+			"options": {"soup": ["soup", "stew", "broth"], "bread": ["bread", "pie", "pastry"], "fish": ["fish"], "sweet": ["cake", "sweets", "dessert", "honey", "sweet"]},
+			"react": {"soup": "[happy]A soup lover! The best food. Warms you right through.", "bread": "Bread! Simple and perfect. I'll bake you a loaf.", "fish": "Fish! I'll ask the fishers for the best catch.", "sweet": "[laughing]A sweet tooth! I'll make you something special.", "other": "{answer}? I'll learn to make it. Just for you."},
+			"recall": "You said your favourite was {answer}. I've been practising. Come round tonight?"}]
+	},
+	"weaver": {
+		"topics": {
+			"work": ["Every thread matters. Pull one out and the whole cloth weakens.", "Weaving's like thinking with your hands. Over, under, over, under, until something appears.", "I can tell someone's mood by what colour they ask for."],
+			"skills": ["I can spin wool so fine you can thread a needle with it.", "I can weave a pattern from memory after seeing it once. Took twenty years to learn."],
+			"hobbies": ["I dye wool with plants. Onion skins for gold, berries for purple, nettles for green.", "I make tiny woven bracelets for the children. They trade them like treasure."],
+			"home": ["My house is full of colour. Rugs, blankets, hangings. You can't see the walls.", "My loom sits by the window. It's the heart of my home."],
+			"furniture": ["Every chair in my house has a cushion I wove. You'll never sit on bare wood here.", "My bed has seven blankets. I made every one. I sleep like a bird in a nest."],
+			"nature": ["Spiders are the true weavers. I watch them in the morning dew. They're so patient.", "Every flower's a colour waiting to be a dye."],
+			"animals": ["Sheep are underrated. Gentle, warm, and they grow my wool for free.", "A cat sat on my loom yesterday. Ruined a row. Looked very proud of herself."],
+			"seasons": ["Spring's shearing time. I can't wait to get my hands on new wool.", "Winter's my busiest season. Everyone wants a warm blanket."],
+			"funny": ["[laughing]I once wove a blanket for a wedding and spelled the names wrong. They kept it. They call it 'the lucky mistake'."],
+			"worries": ["[worried]My eyes are getting tired. Fine work needs fine eyes."]
+		},
+		"stories": [["My grandmother wove a blanket for every baby born in our village.", "Every pattern was different. She said each one told that child's story before it happened.", "Mine has a river and a road and a house on a hill.", "[happy]I didn't understand it until I came here. Look outside. There's the river. There's the hill."]],
+		"questions": [{"id": "job_weaver_colour", "ask": "What's your favourite colour? I'm always looking for someone to weave for.", "free": true,
+			"options": {"blue": ["blue"], "red": ["red"], "green": ["green"], "yellow": ["yellow", "gold"], "purple": ["purple"]},
+			"react": {"blue": "Blue! Like the sky and the river. Calming.", "red": "[happy]Red! Bold and warm. I've got the perfect berries for that.", "green": "Green, like the valley. Nettle dye. I'll start tomorrow.", "yellow": "Yellow! Onion skins make a lovely gold. Sunny choice.", "purple": "Purple! The hardest dye to make. Of course you'd pick it.", "other": "{answer}? I'll experiment. Might take a few tries."},
+			"recall": "You said you love {answer}. I've been working on something in that colour."}]
+	}
+}
