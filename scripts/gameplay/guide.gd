@@ -9,6 +9,8 @@ static var instance: Guide
 
 ## What finishing each objective gives (and the thank-you line).
 const REWARDS := {
+	"hello": {"items": {&"food": 2}, "text": "\"Welcome! Here, you must be hungry after the road.\""},
+	"home": {"items": {&"wood": 5, &"herbs": 2}, "text": "Your first home in the village. Come back tomorrow: everyone has something for you."},
 	"meet": {"items": {&"food": 3}, "text": "The villagers bring you a little food to welcome you."},
 	"gather": {"items": {&"wood": 6, &"stone": 4}, "text": "Tomas adds some of his own wood and stone to your pile."},
 	"farm_plot": {"items": {&"herbs": 2}, "text": "Nia gives you seedlings for the garden."},
@@ -94,10 +96,17 @@ func refresh() -> void:
 		return
 	var from: Vector3 = player.global_position
 	match String(GameState.current_objective()["id"]):
-		"meet":
+		"hello", "meet":
 			var who = _nearest_villager(from, true)
 			if who:
 				_aim(who.global_position, who.data.display_name, "Find %s and tap Talk." % who.data.display_name)
+		"home":
+			if Interiors.instance and Interiors.instance.is_inside() and Interiors.is_player_house(Interiors.instance.current):
+				step = "Tap Furnish: place something new, or Arrange to move a piece."
+			else:
+				var own = _nearest_house(from)
+				if own:
+					_aim(own.doorstep(), "Your house", "Go into your house.")
 		"gather":
 			var wood := int(GameState.collected[&"wood"])
 			var stone := int(GameState.collected[&"stone"])
@@ -183,6 +192,19 @@ func _aim_build(from: Vector3, type: StringName, name_text: String) -> void:
 		return
 	wanted_build = type
 	step = "Tap Build and choose %s." % name_text
+
+
+## Your nearest house (finished, unless `finished` is false).
+func _nearest_house(from: Vector3, finished: bool = true):
+	var best = null
+	if StructureManager.instance == null:
+		return null
+	for s in StructureManager.instance.structures():
+		if not HouseDesigns.is_house(s.get_type()) or (finished and not s.is_complete()) or Population.is_given_house(s.record):
+			continue
+		if best == null or from.distance_to(s.global_position) < from.distance_to(best.global_position):
+			best = s
+	return best
 
 
 func _nearest_villager(from: Vector3, unmet_founders: bool):

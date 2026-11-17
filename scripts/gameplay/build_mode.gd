@@ -41,6 +41,10 @@ var _found: Vector3 = Vector3.INF
 
 ## How far from the spot ahead to look for room when that spot is taken.
 const SEARCH_RADIUS := 9.0
+## If nothing fits that close (a busy spot full of paths), look further out
+## in coarser steps, so a first house always finds a place nearby.
+const FAR_SEARCH_RADIUS := 30.0
+const FAR_SEARCH_STEP := 2.0
 
 
 func _ready() -> void:
@@ -283,10 +287,11 @@ static func nearest_free_spot(structure_type: StringName, around: Vector3, yaw: 
 		return Vector3.INF
 	var keep_clear := StructureCatalog.radius(structure_type) + 0.8
 	var ring := 1.0
-	while ring <= SEARCH_RADIUS:
+	while ring <= FAR_SEARCH_RADIUS:
 		var best := Vector3.INF
 		var best_distance := INF
-		var steps := int(ceil(TAU * ring / 1.0))
+		var spacing := 1.0 if ring <= SEARCH_RADIUS else FAR_SEARCH_STEP
+		var steps := int(ceil(TAU * ring / spacing))
 		for i in steps:
 			var a := TAU * i / steps
 			var spot := around + Vector3(cos(a) * ring, 0.0, sin(a) * ring)
@@ -302,7 +307,7 @@ static func nearest_free_spot(structure_type: StringName, around: Vector3, yaw: 
 				best = spot
 		if best != Vector3.INF:
 			return best
-		ring += 1.0
+		ring += 1.0 if ring < SEARCH_RADIUS else FAR_SEARCH_STEP
 	return Vector3.INF
 
 

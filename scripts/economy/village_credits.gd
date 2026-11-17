@@ -28,7 +28,8 @@ var owned: Dictionary = {}
 func _ready() -> void:
 	name = "VillageCredits"
 	instance = self
-	GameState.objective_completed.connect(func(index: int, _title: String): award("objective", "objective_%d" % index, "a goal reached"))
+	# One payment per goal, by its id (goals were reordered once; ids don't move).
+	GameState.objective_completed.connect(func(index: int, _title: String): award("objective", "objective_" + GameState.objective_id(index), "a goal reached"))
 	AdRewards.reward_granted.connect(_on_ad_reward)
 
 

@@ -10,6 +10,7 @@ var _voice_buttons: Array[Button] = []
 const YEAR_CHOICES: Array[int] = [30, 10, 4]
 var _sensitivity: HSlider
 var _fps_toggle: CheckButton
+var _reminder_toggle: CheckButton
 
 
 func _ready() -> void:
@@ -122,6 +123,15 @@ func _ready() -> void:
 	_fps_toggle.toggled.connect(GameSettings.set_show_fps)
 	box.add_child(_fps_toggle)
 
+	_reminder_toggle = CheckButton.new()
+	_reminder_toggle.name = "ReminderToggle"
+	_reminder_toggle.text = "Daily reminder when your gift is ready (at most once a day)"
+	_reminder_toggle.focus_mode = Control.FOCUS_NONE
+	_reminder_toggle.toggled.connect(func(on: bool):
+		if Reminders.instance:
+			Reminders.instance.set_enabled(on))
+	box.add_child(_reminder_toggle)
+
 	box.add_child(UiTheme.label("Something not working?"))
 	var report := UiTheme.button("Report a problem", 260)
 	report.name = "ReportButton"
@@ -147,6 +157,7 @@ func _ready() -> void:
 	actions.add_child(close)
 
 	GameSettings.settings_changed.connect(_sync)
+	visibility_changed.connect(_sync)
 	_sync()
 
 
@@ -161,6 +172,8 @@ func _sync() -> void:
 		_year_buttons[i].set_pressed_no_signal(YEAR_CHOICES[i] == Person.year_days)
 	_sensitivity.set_value_no_signal(GameSettings.camera_sensitivity)
 	_fps_toggle.set_pressed_no_signal(GameSettings.show_fps)
+	_reminder_toggle.set_pressed_no_signal(Reminders.instance != null and Reminders.instance.enabled)
+	_reminder_toggle.visible = Reminders.instance != null
 
 
 func _reset_world() -> void:

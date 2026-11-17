@@ -70,8 +70,8 @@ func _run() -> void:
 			v.mind.record_interaction(GameManager.PLAYER_ID, "talk", 1, 9.0)
 	GameState.check_objectives()
 	await _frames(3)
-	_check(String(GameState.current_objective()["id"]) == "gather" and GameState.count(&"food") == food + 3,
-		"meeting everyone is rewarded (+3 food)")
+	_check(String(GameState.current_objective()["id"]) == "gather" and GameState.count(&"food") == food + int(Guide.REWARDS["hello"]["items"][&"food"]),
+		"saying hello is rewarded (+%d food), then: gather" % int(Guide.REWARDS["hello"]["items"][&"food"]))
 
 	# --- Gathering ----------------------------------------------------------------------------
 	guide.refresh()
@@ -87,8 +87,12 @@ func _run() -> void:
 	_check(guide.target_label == "Mine", "with enough wood, a rock: %s" % guide.step)
 	GameState.add(&"stone", 6)
 	await _frames(3)
+	guide.refresh()
+	_check(String(GameState.current_objective()["id"]) == "house" and (guide.wanted_build == &"house" or guide.step.contains("for a house")),
+		"then your own house, on the first day: %s" % guide.step)
 
 	# --- Farm plot: the Build menu -------------------------------------------------------------
+	GameState.objective_index = GameState.OBJECTIVES.map(func(o): return o["id"]).find("farm_plot")
 	guide.refresh()
 	_check(String(GameState.current_objective()["id"]) == "farm_plot" and guide.wanted_build == &"farm_plot" and guide.step.contains("Build"),
 		"then it says to tap Build and choose a farm plot")

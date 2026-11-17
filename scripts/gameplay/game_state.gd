@@ -13,22 +13,31 @@ const RESOURCE_NAMES := {&"wood": "Wood", &"stone": "Stone", &"food": "Food", &"
 
 ## The introductory week. Each objective is a suggestion: everything stays
 ## available whether or not it is done, and they can be finished early.
+## The first days, in order. The first four get a new player to the heart of
+## the game in about ten minutes: say hello, gather, build your own house and
+## make it home. (Saved by id; older saves are migrated, see from_dict.)
 const OBJECTIVES := [
-	{"id": "meet", "day": 1, "title": "Meet the villagers",
-		"hint": "Walk up to each villager and talk to them."},
-	{"id": "gather", "day": 2, "title": "Gather supplies",
+	{"id": "hello", "day": 1, "title": "Say hello",
+		"hint": "Walk up to a villager and tap Talk. Say hello to two of them."},
+	{"id": "gather", "day": 1, "title": "Gather supplies",
 		"hint": "Walk up to any tree and tap Chop, and any rock and tap Mine."},
+	{"id": "house", "day": 1, "title": "Build your own house",
+		"hint": "Open Build and place a House, then tap Build at the site until it's finished."},
+	{"id": "home", "day": 1, "title": "Make it home",
+		"hint": "Go into your house, tap Furnish and place or move a piece of furniture."},
+	{"id": "meet", "day": 2, "title": "Meet the villagers",
+		"hint": "Walk up to each villager and talk to them."},
 	{"id": "farm_plot", "day": 3, "title": "Prepare a farm plot",
 		"hint": "Open Build and place a Farm plot, then work on it until it's finished."},
 	{"id": "harvest", "day": 4, "title": "Plant and harvest crops",
 		"hint": "Plant seeds in your farm plot and come back when they've grown."},
 	{"id": "help", "day": 5, "title": "Ask a villager for help",
 		"hint": "Talk to someone and ask them to help with a task."},
-	{"id": "house", "day": 6, "title": "Raise a new house",
-		"hint": "Place a House and build it. Mara and Tomas are good builders."},
-	{"id": "meeting", "day": 7, "title": "Hold a village meeting",
+	{"id": "meeting", "day": 6, "title": "Hold a village meeting",
 		"hint": "In the evening, call a meeting at the fire in the meeting circle."},
 ]
+## The order before the first day was reworked (to migrate older saves).
+const OLD_OBJECTIVES := ["meet", "gather", "farm_plot", "harvest", "help", "house", "meeting"]
 
 var inventory: Dictionary = {}
 ## Lifetime totals, for objectives and the story stone.
@@ -88,9 +97,11 @@ const STARTER_KIT := {&"wood": 20, &"stone": 10, &"food": 4, &"herbs": 3}
 
 
 func give_starter_kit() -> void:
+	CreditRewards.quiet = true  # given, not gathered (no daily challenge for it)
 	for resource in STARTER_KIT:
 		inventory[resource] = count(resource) + int(STARTER_KIT[resource])
 		inventory_changed.emit(resource, int(STARTER_KIT[resource]), count(resource))
+	CreditRewards.quiet = false
 
 
 func can_afford(cost: Dictionary) -> bool:
@@ -189,6 +200,10 @@ func objective_progress() -> String:
 	if objective.is_empty():
 		return ""
 	match String(objective["id"]):
+		"hello":
+			return "%d / 2 villagers met" % mini(villagers_met(), 2)
+		"home":
+			return "Done" if get_flag(&"furnished_home") else "Place or move furniture in your house"
 		"meet":
 			return "%d / 5 villagers met" % villagers_met()
 		"gather":
@@ -200,7 +215,7 @@ func objective_progress() -> String:
 		"help":
 			return "Villagers helping: %d / 1" % int(get_flag(&"tasks_accepted", 0))
 		"house":
-			return "Houses built: %d / 1" % completed_structures(&"house")
+			return "Houses built: %d / 1" % mini(own_houses(), 1)
 		"meeting":
 			return "Meeting held" if get_flag(&"meeting_held") else "Call it at the fire, 17:00-21:30"
 	return ""
@@ -217,8 +232,20 @@ func villagers_met() -> int:
 	return met
 
 
+## Finished houses of any size (yours or given away).
+func own_houses() -> int:
+	var n := 0
+	for type in HouseDesigns.SIZES:
+		n += completed_structures(type)
+	return n
+
+
 func _objective_done(id: String) -> bool:
 	match id:
+		"hello":
+			return villagers_met() >= 2
+		"home":
+			return bool(get_flag(&"furnished_home"))
 		"meet":
 			return villagers_met() >= 5
 		"gather":
@@ -230,19 +257,61 @@ func _objective_done(id: String) -> bool:
 		"help":
 			return int(get_flag(&"tasks_accepted", 0)) >= 1
 		"house":
-			return completed_structures(&"house") >= 1
+			return own_houses() >= 1
 		"meeting":
 			return bool(get_flag(&"meeting_held"))
 	return false
 
 
-## Advances through every objective that is already satisfied.
+## Advances through every objective that is already satisfied. Goals done
+## before (in an older save's order) are passed silently: no second reward.
 func check_objectives() -> void:
-	while not is_week_complete() and _objective_done(String(current_objective()["id"])):
+	var done: Array = get_flag(&"objectives_done", [])
+	while not is_week_complete():
+		var id := String(current_objective()["id"])
+		if done.has(id):
+			objective_index += 1
+			continue
+		if not _objective_done(id):
+			break
 		var title := String(current_objective()["title"])
+		done.append(id)
+		flags["objectives_done"] = done
 		objective_index += 1
 		objective_completed.emit(objective_index - 1, title)
 	objective_changed.emit(objective_index)
+
+
+## Where the player is in the first days. Saves now keep the goal by id; an
+## older save kept a position in the old order, so everything before it
+## counts as done (rewarded already) and the new first-day goals count as
+## done too if that save was past them.
+func _restore_objective(data: Dictionary) -> void:
+	if data.has("objective_id"):
+		var id := String(data["objective_id"])
+		objective_index = OBJECTIVES.size() if id == "" else maxi(OBJECTIVES.map(func(o): return o["id"]).find(id), 0)
+		if not flags.has("objectives_done"):
+			var done: Array = []
+			for i in objective_index:
+				done.append(objective_id(i))
+			flags["objectives_done"] = done
+		return
+	var old := clampi(int(data.get("objective_index", 0)), 0, OLD_OBJECTIVES.size())
+	var done: Array = OLD_OBJECTIVES.slice(0, old)
+	if old >= 1:
+		done.append("hello")  # they'd met everyone
+	if old > OLD_OBJECTIVES.find("house"):
+		done.append("home")  # they'd built a house long ago
+	flags["objectives_done"] = done
+	objective_index = 0
+	# Skip to the first goal not done yet (check_objectives passes done ones).
+	while objective_index < OBJECTIVES.size() and done.has(objective_id(objective_index)):
+		objective_index += 1
+
+
+## The id of the objective at `index` ("" past the end).
+static func objective_id(index: int) -> String:
+	return String(OBJECTIVES[index]["id"]) if index >= 0 and index < OBJECTIVES.size() else ""
 
 
 # --- Persistence ---------------------------------------------------------------------
@@ -255,7 +324,7 @@ func to_dict() -> Dictionary:
 		col[String(resource)] = int(collected.get(resource, 0))
 	return {
 		"inventory": inv, "collected": col, "structures": structures.duplicate(true),
-		"depleted": depleted.duplicate(), "objective_index": objective_index,
+		"depleted": depleted.duplicate(), "objective_index": objective_index, "objective_id": objective_id(objective_index),
 		"flags": flags.duplicate(true), "next_uid": _next_uid,
 		"furniture": furniture.duplicate(true),
 	}
@@ -272,9 +341,9 @@ func from_dict(data: Dictionary) -> void:
 	structures = saved_structures.duplicate(true) if saved_structures is Array else []
 	var saved_depleted: Variant = data.get("depleted", {})
 	depleted = saved_depleted.duplicate() if saved_depleted is Dictionary else {}
-	objective_index = int(data.get("objective_index", 0))
 	var saved_flags: Variant = data.get("flags", {})
 	flags = saved_flags.duplicate(true) if saved_flags is Dictionary else {}
+	_restore_objective(data)
 	_next_uid = int(data.get("next_uid", structures.size() + 1))
 	var saved_furniture: Variant = data.get("furniture", [])
 	furniture = saved_furniture.duplicate(true) if saved_furniture is Array else []

@@ -199,6 +199,8 @@ func confirm() -> String:
 		GameManager.notify("%s placed. Tap Arrange any time to move it." % info["name"])
 	else:
 		Furnishings.instance.move(moving, place, _position, current_yaw())
+	if place != "outside" and Furnishings.instance.is_players_place(place):
+		GameState.set_flag(&"furnished_home")  # the first day's "Make it home"
 	Sounds.play("built", null, -10.0)
 	_finish()
 	return ""

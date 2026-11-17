@@ -226,7 +226,9 @@ func _run() -> void:
 	GameManager.end_conversation()
 	await _frames(3)
 	_check(GameState.get_flag(&"meeting_held"), "the meeting is remembered")
-	_check(GameState.is_week_complete(), "all seven objectives are complete (%d / 7)" % GameState.objective_index)
+	# "Make it home" (furnishing) is played through in first_day_test.
+	GameState.set_flag(&"furnished_home")
+	_check(GameState.is_week_complete(), "all the first days' goals are complete (%d / %d)" % [GameState.objective_index, GameState.OBJECTIVES.size()])
 
 	# --- Saving -------------------------------------------------------------------------
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(GameState.to_dict()))

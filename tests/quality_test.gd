@@ -67,7 +67,7 @@ func _guidance() -> void:
 	_check(TutorialTips.seen("talk"), "\"Got it\" dismisses a tip for good")
 	var journal: JournalPanel = _main.find_child("JournalPanel", true, false)
 	var text := JournalPanel.build_text()
-	_check(text.contains("Day 1") and text.contains("Next:") and text.contains("Reward: +3 food"), "the journal shows the goal, the next step and its reward")
+	_check(text.contains("Day 1") and text.contains("Next:") and text.contains("Reward: " + Guide.instance.reward_text()) and Guide.instance.reward_text() != "", "the journal shows the goal, the next step and its reward (%s)" % Guide.instance.reward_text())
 	_check(text.contains("What you can do") and text.contains("Chop and mine") and text.contains("Coming later") and text.contains("Fish: Craft tools at the workshop first"),
 		"it lists what you can do now and what opens later")
 	_check(text.contains("Controls"), "and a reminder of the controls")

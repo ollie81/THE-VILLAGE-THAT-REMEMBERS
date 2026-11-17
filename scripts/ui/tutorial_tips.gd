@@ -72,7 +72,7 @@ func _wanted(id: String) -> bool:
 		"move":
 			return true
 		"talk":
-			return not GameState.is_week_complete() and String(GameState.current_objective()["id"]) == "meet"
+			return not GameState.is_week_complete() and String(GameState.current_objective()["id"]) in ["hello", "meet"]
 		"chop":
 			return GameState.objective_index >= 1 or WorldClock.day >= 2
 		"build":

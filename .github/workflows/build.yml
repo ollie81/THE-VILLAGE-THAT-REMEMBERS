@@ -68,6 +68,8 @@ jobs:
         run: timeout 900 godot --headless --path . res://tests/monetization_test.tscn
       - name: Run home life test
         run: timeout 900 godot --headless --path . res://tests/home_life_test.tscn
+      - name: Run first day test
+        run: timeout 900 godot --headless --path . res://tests/first_day_test.tscn
 
   android:
     name: Android APK
@@ -157,6 +159,12 @@ jobs:
           test -f android/build/build.gradle
           ls android/build | head -20
 
+      - name: Add the game's reminder plugin to the Android build
+        run: |
+          grep -n "srcDirs" android/build/build.gradle | head -5 || true
+          cp -r android_plugin/src/. android/build/src/
+          find android/build/src -name "*.java" | grep -i "village\|GodotApp"
+
       - name: Stamp the build
         env:
           COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -182,6 +190,19 @@ jobs:
           P=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "poingstudios" || true)
           echo "AdMob plugin references: $P"
           test "$P" -gt 0
+
+      - name: Check the reminder plugin is in the APK
+        run: |
+          APK=build/android/TheVillageThatRemembers.apk
+          R=$(unzip -p "$APK" 'classes*.dex' | grep -a -c "com/ollie81/village/VillageNotify" || true)
+          echo "Reminder plugin classes in the app code: $R"
+          test "$R" -gt 0
+          AAPT=$(ls /usr/lib/android-sdk/build-tools/*/aapt 2>/dev/null | tail -1)
+          if [ -n "$AAPT" ]; then
+            "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -E "POST_NOTIFICATIONS|ReminderReceiver|plugin.v2.VillageNotify" || (echo "manifest entries missing" && exit 1)
+          else
+            echo "aapt not found: manifest not checked"
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
